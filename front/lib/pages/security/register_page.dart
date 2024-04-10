@@ -34,7 +34,7 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     final response = await Dio().post(
-      'http://195.35.29.110:8080/register',
+      'http://10.33.4.40:8080/register',
       data: {
         'email': _emailController.text,
         'password': _passwordController.text,

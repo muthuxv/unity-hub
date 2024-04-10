@@ -1,32 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../home_page.dart';
 import '../intro_page.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class AuthPage extends StatelessWidget {
-  const AuthPage({super.key});
+class AuthPage extends StatefulWidget {
+  const AuthPage({Key? key}) : super(key: key);
 
-  Future<void> checkToken(BuildContext context) async {
-    const storage = FlutterSecureStorage();
+  @override
+  _AuthPageState createState() => _AuthPageState();
+}
+
+class _AuthPageState extends State<AuthPage> {
+  @override
+  void initState() {
+    super.initState();
+    checkToken();
+  }
+
+  Future<void> checkToken() async {
+    final storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
     if (token == null) {
-      Navigator.push(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const IntroPage()),
+        (route) => false,
+      );
+    } else {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+        (route) => false,
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: checkToken(context),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return const HomePage();
-          } else {
-            return const IntroPage();
-          }
-        });
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
   }
 }

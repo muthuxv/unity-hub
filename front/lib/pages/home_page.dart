@@ -59,6 +59,16 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  //logout
+  void _logout() async {
+    const storage = FlutterSecureStorage();
+    await storage.delete(key: 'token');
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const AuthPage()),
+          (route) => false,
+    );
+  }
 
   @override
   void initState() {
@@ -69,7 +79,6 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: Colors.grey[300],
       bottomNavigationBar: MyBottomNavBar(
         onTabChange: (value) => navigateBottomNavBar(value),
       ),
@@ -90,7 +99,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       drawer: Drawer(
-        backgroundColor: Colors.grey[900],
+        backgroundColor: Colors.purple,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -145,12 +154,7 @@ class _HomePageState extends State<HomePage> {
                     'Logout',
                     style: TextStyle(color: Colors.white)),
                 onTap: () {
-                  const storage = FlutterSecureStorage();
-                  storage.delete(key: 'token');
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AuthPage()),
-                  );
+                  _logout();
                 },
               ),
             ),

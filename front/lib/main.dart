@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'pages/intro_page.dart';
 import 'pages/security/auth_page.dart';
 
 void main() {
@@ -14,15 +12,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Shoe Shop',
+      title: 'Unity Hub',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            backgroundColor: Colors.blue,
-          ),
-        ),
-        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: const AuthPage(),
     );

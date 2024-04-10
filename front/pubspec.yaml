@@ -40,6 +40,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   flutter_secure_storage:
   jwt_decoder: ^2.0.1
+  web_socket_channel:
 
 dev_dependencies:
   flutter_test:

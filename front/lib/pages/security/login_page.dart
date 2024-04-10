@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../home_page.dart';
-import 'register_page.dart';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -16,36 +16,74 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  void _login() async {
-    print('Email: ${_emailController.text}');
-    try {
-      final response = await Dio().post(
-        'http://195.35.29.110:8080/login',
-        data: {
-          'email': _emailController.text,
-          'password': _passwordController.text,
-        },
+  bool _isObscure = true;
+  bool _isLoading = false;
+
+  void _login(BuildContext context) async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Erreur'),
+          content: const Text('Veuillez remplir tous les champs.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
       );
-
-      if (response.statusCode == 200) {
-        final token = response.data['token'];
-        const storage = FlutterSecureStorage();
-        await storage.write(key: 'token', value: token);
-
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-          (route) => false,
-        );
-
-      } else {
-        // Handle non-200 status code
-        print('Login failed: ${response.statusCode}');
-      }
-    } catch (error) {
-      // Handle any other errors
-      print('Error during login: $error');
+      return;
     }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final response = await Dio().post(
+      'http://10.0.2.2:8080/login',
+      data: {
+        'email': _emailController.text,
+        'password': _passwordController.text,
+      },
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        validateStatus: (status) {
+          return status! < 500;
+        },
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      final storage = FlutterSecureStorage();
+      await storage.write(key: 'token', value: response.data['token']);
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+        (route) => false,
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Erreur'),
+          content: Text(response.data['error']),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -61,10 +99,9 @@ class _LoginPageState extends State<LoginPage> {
       body: Container(
         decoration: const BoxDecoration(
             image: DecorationImage(
-              image: AssetImage('lib/images/wall1.png'),
-              fit: BoxFit.cover,
-            )
-        ),
+          image: AssetImage('lib/images/wall1.png'),
+          fit: BoxFit.cover,
+        )),
         child: Center(
           child: Container(
             decoration: BoxDecoration(
@@ -120,7 +157,6 @@ class _LoginPageState extends State<LoginPage> {
                       decoration: const InputDecoration(
                         hintText: 'Email',
                         hintStyle: TextStyle(color: Colors.white),
-
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(color: Colors.white),
                         ),
@@ -135,15 +171,31 @@ class _LoginPageState extends State<LoginPage> {
                     TextField(
                       style: const TextStyle(color: Colors.white),
                       controller: _passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
+                      obscureText: _isObscure,
+                      decoration: InputDecoration(
                         hintText: 'Mot de passe',
-                        hintStyle: TextStyle(color: Colors.white),
-                        enabledBorder: UnderlineInputBorder(
+                        hintStyle: const TextStyle(color: Colors.white),
+                        enabledBorder: const UnderlineInputBorder(
                           borderSide: BorderSide(color: Colors.white),
                         ),
-                        focusedBorder: UnderlineInputBorder(
+                        focusedBorder: const UnderlineInputBorder(
                           borderSide: BorderSide(color: Colors.white),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: _isObscure
+                          ? const Icon(
+                          Icons.visibility_off,
+                          color: Colors.white,
+                          )
+                              : const Icon(
+                          Icons.visibility,
+                          color: Colors.white,
+                          ),
+                          onPressed: () {
+                          setState(() {
+                          _isObscure = !_isObscure;
+                          });
+                          },
                         ),
                       ),
                     ),
@@ -152,9 +204,7 @@ class _LoginPageState extends State<LoginPage> {
 
                     //button
                     GestureDetector(
-                      onTap: () =>
-                          _login()
-                      ,
+                      onTap: () => _login(context),
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Container(
@@ -163,19 +213,26 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(25),
                           ),
                           padding: const EdgeInsets.all(25),
-                          child: const Center(
-                            child: Text(
-                                'Se connecter',
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16
+                          child: _isLoading
+                              ? const Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.black
+                                    ),
+                                  ),
+                                )
+                              : const Center(
+                                  child: Text(
+                                    'Se connecter',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                      ),
                         ),
+                      ),
+                    ),
 
                     const SizedBox(height: 16),
 
@@ -191,13 +248,12 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ],
-
-                    ),
-                  ),
                 ),
+              ),
+            ),
           ),
         ),
       ),
-      );
+    );
   }
 }
