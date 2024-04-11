@@ -36,7 +36,10 @@ func MakeMigrations() {
         log.Fatal("Database not initialized. Call InitDB first.")
     }
     db.AutoMigrate(&models.User{})
+    db.AutoMigrate(&models.Notification{})
+    db.AutoMigrate(&models.ActiveNotification{})
     db.AutoMigrate(&models.Media{})
+    log.Println("database create")
 }
 
 func GetDB() *gorm.DB {

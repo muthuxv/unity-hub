@@ -8,3 +8,6 @@
 
 ## Start app
 - docker compose exec app go run main.go
+
+## Generate fixtures 
+- docker compose exec app go run load.go

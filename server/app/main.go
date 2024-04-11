@@ -24,6 +24,9 @@ func main() {
 
     routes.MediaRoutes(r)
     routes.UserRoutes(r)
+    routes.NotificationRoutes(r)
+    routes.ActiveNotificationRoutes(r)
+    routes.WebSocketRoutes(r)
 
     r.Run(":8080")
 }
