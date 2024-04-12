@@ -7,7 +7,7 @@ import (
     "golang.org/x/crypto/bcrypt"
 )
 
-func main() {
+func mainO() {
     db.InitDB()
     database := db.GetDB() 
 

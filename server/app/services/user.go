@@ -1,6 +1,7 @@
 package services
 
 import (
+    "fmt"
     "app/db/models"
     "github.com/gin-gonic/gin"
     "net/http"
@@ -17,30 +18,30 @@ func Register() gin.HandlerFunc {
     return func(c *gin.Context) {
         var inputUser models.User
         if err := c.ShouldBindJSON(&inputUser); err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            c.Error(err)
             return
         }
 
         if validationErr := validate.Struct(inputUser); validationErr != nil {
-            c.JSON(http.StatusBadRequest, gin.H{"error": validationErr.Error()})
+            c.Error(validationErr)
             return
         }
 
         if inputUser.Role != "" && inputUser.Role != "user" {
-            c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized to assign role other than 'user'"})
+            c.Error(fmt.Errorf("Unauthorized to assign role other than 'user'"))
             return
         }
 
         verificationToken, err := controllers.GenerateVerificationToken()
         if err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate verification token"})
+            c.Error(err)
             return
         }
         inputUser.VerificationToken = verificationToken
 
         result := db.GetDB().Create(&inputUser)
         if result.Error != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+            c.Error(result.Error)
             return
         }
 
@@ -61,24 +62,24 @@ func Login() gin.HandlerFunc {
         var user models.User
 
         if err := c.ShouldBindJSON(&payload); err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            c.Error(err)
             return
         }
 
         result := db.GetDB().Where("email = ?", payload.Email).First(&user)
         if result.Error != nil {
-            c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+            c.Error(result.Error)
             return
         }
 
         if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password)); err != nil {
-            c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+            c.Error(err)
             return
         }
 
         tokenString, err := controllers.GenerateJWT(user.ID, user.Email, user.Role)
         if err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
+            c.Error(err)
             return
         }
 
@@ -92,7 +93,7 @@ func VerifyAccount() gin.HandlerFunc {
         var user models.User
         result := db.GetDB().Where("verification_token = ?", token).First(&user)
         if result.Error != nil {
-            c.JSON(http.StatusNotFound, gin.H{"error": "Invalid or expired verification token"})
+            c.Error(result.Error)
             return
         }
 

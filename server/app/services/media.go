@@ -16,32 +16,32 @@ func UploadFile(c *gin.Context) {
 
     file, fileHeader, err := c.Request.FormFile("file")
     if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Aucun fichier fourni"})
+        c.Error(fmt.Errorf("Aucun fichier fourni"))
         return
     }
     defer file.Close()
 
     if err := controllers.ValidateFileUpload(fileHeader); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        c.Error(err)
         return
     }
 
     filePath := filepath.Join("upload", fileHeader.Filename)
     if err := c.SaveUploadedFile(fileHeader, filePath); err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Échec de l'enregistrement du fichier"})
+        c.Error(err)
         return
     }
 
     claims, exists := c.Get("jwt_claims")
     if !exists {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la récupération des informations d'utilisateur"})
+        c.Error(fmt.Errorf("Erreur lors de la récupération des informations d'utilisateur"))
         return
     }
 
     jwtClaims := claims.(jwt.MapClaims)
     userID, ok := jwtClaims["jti"].(string)
     if !ok {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la récupération de l'ID utilisateur"})
+        c.Error(fmt.Errorf("Erreur lors de la récupération de l'ID utilisateur")) 
         return
     }
 
@@ -56,7 +56,7 @@ func UploadFile(c *gin.Context) {
 
     result := db.GetDB().Create(&media)
     if result.Error != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+        c.Error(result.Error) 
         return
     }
 
