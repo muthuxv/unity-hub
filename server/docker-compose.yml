@@ -20,6 +20,8 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       DOMAIN: ${DOMAIN}
+      CLIENT_ID_GITHUB_AUTH: ${CLIENT_ID_GITHUB_AUTH}
+      CLIENT_SECRET_GITHUB_AUTH: ${CLIENT_SECRET_GITHUB_AUTH}
     volumes:
       - ./app:/go/src/app
 

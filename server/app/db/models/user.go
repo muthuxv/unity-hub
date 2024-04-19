@@ -7,11 +7,15 @@ import (
 
 type User struct {
     gorm.Model
-    Email             string `gorm:"unique" validate:"required,email"`
+    Pseudo            string 
+    Email             string `gorm:"unique;validate:required,email"`
     Role              string `gorm:"default:user"`
-    Password          string `validate:"required,min=5,containsany=0123456789"`
+    Password          string `gorm:"validate:required,min=5,containsany=0123456789"`
     VerificationToken string `gorm:"size:255"`
     IsVerified        bool   `gorm:"default:false"`
+    Provider          string
+    ProviderID        string
+    Profile           string `gorm:"default:default.jpg"`
 }
 
 func (u *User) BeforeSave(tx *gorm.DB) (err error) {

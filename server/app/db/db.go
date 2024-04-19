@@ -35,8 +35,36 @@ func MakeMigrations() {
     if db == nil {
         log.Fatal("Database not initialized. Call InitDB first.")
     }
-    db.AutoMigrate(&models.User{})
-    db.AutoMigrate(&models.Media{})
+    err := db.AutoMigrate(
+        &models.User{},
+        &models.Notification{},
+        &models.ActiveNotification{},
+        &models.Media{},
+        &models.Channel{},
+        &models.Event{},
+        &models.Server{},
+        &models.EventServer{},
+        &models.Friend{},
+        &models.Invitation{},
+        &models.Logs{},
+        &models.Message{},
+        &models.OnServer{},
+        &models.Permissions{},
+        &models.React{},
+        &models.ReactMessage{},
+        &models.Report{},
+        &models.Role{},
+        &models.RolePermissions{},
+        &models.RoleUser{},
+        &models.Theme{},
+        &models.ThemeServer{},
+    )
+
+    if err != nil {
+        log.Fatalf("Failed to migrate database: %v", err)
+    }
+
+    log.Println("database create")
 }
 
 func GetDB() *gorm.DB {
