@@ -7,6 +7,7 @@ import (
 
 type User struct {
     gorm.Model
+    Pseudo            string 
     Email             string `gorm:"unique;validate:required,email"`
     Role              string `gorm:"default:user"`
     Password          string `gorm:"validate:required,min=5,containsany=0123456789"`
