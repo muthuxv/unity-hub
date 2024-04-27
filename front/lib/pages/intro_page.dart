@@ -3,6 +3,9 @@ import 'home_page.dart';
 import 'security/login_page.dart';
 import 'security/register_page.dart';
 
+import '../components/google_sign_in_button.dart';
+import '../components/github_sign_in_button.dart';
+
 class IntroPage extends StatelessWidget {
   const IntroPage({super.key});
 
@@ -32,7 +35,7 @@ class IntroPage extends StatelessWidget {
 
                   ),
 
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 16),
                   //title
                   const Text(
                     'Bienvenue sur Unity Hub!',
@@ -115,6 +118,31 @@ class IntroPage extends StatelessWidget {
                                   )
                               ),
                             ),
+                          ),
+                        ),
+                        //Oauth2
+                        Container(
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Ou connecte-toi avec',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    GoogleSignInButton(),
+                                    const GithubSignInButton(),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],

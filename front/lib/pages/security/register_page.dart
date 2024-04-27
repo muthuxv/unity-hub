@@ -11,11 +11,34 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final TextEditingController _pseudoController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
 
+  bool _isLoading = false;
+
   void _register() async {
+    if ( _pseudoController.text.isEmpty ||
+    _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Erreur'),
+          content: const Text('Veuillez remplir tous les champs.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     if (_passwordController.text != _confirmPasswordController.text) {
       showDialog(
         context: context,
@@ -33,12 +56,25 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
     final response = await Dio().post(
-      'http://10.33.4.40:8080/register',
+      'http://10.0.2.2:8080/register',
       data: {
+        'pseudo': _pseudoController.text,
         'email': _emailController.text,
         'password': _passwordController.text,
       },
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        validateStatus: (status) {
+          return status! < 500;
+        },
+      ),
     );
 
     print('Response: ${response.statusCode}');
@@ -48,7 +84,25 @@ class _RegisterPageState extends State<RegisterPage> {
         context,
         MaterialPageRoute(builder: (context) => const LoginPage()),
       );
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Erreur'),
+          content: Text(response.data['error']),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
     }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -118,6 +172,23 @@ class _RegisterPageState extends State<RegisterPage> {
                   //form
                   TextField(
                     style: const TextStyle(color: Colors.white),
+                    controller: _pseudoController,
+                    decoration: const InputDecoration(
+                      hintText: 'Pseudo',
+                      hintStyle: TextStyle(color: Colors.white),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  TextField(
+                    style: const TextStyle(color: Colors.white),
                     controller: _emailController,
                     decoration: const InputDecoration(
                       hintText: 'Email',
@@ -178,13 +249,14 @@ class _RegisterPageState extends State<RegisterPage> {
                           borderRadius: BorderRadius.circular(25),
                         ),
                         padding: const EdgeInsets.all(25),
-                        child: const Center(
-                          child: Text(
+                        child: Center(
+                          child: _isLoading
+                              ? const CircularProgressIndicator()
+                              : const Text(
                             'S\'inscrire',
                             style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
                           ),
                         ),

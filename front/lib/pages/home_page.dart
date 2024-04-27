@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:unity_hub/pages/intro_page.dart';
 import 'package:unity_hub/pages/message_page.dart';
 import 'package:unity_hub/pages/notification_page.dart';
-import '../components/bottom_navbar.dart';
+import 'package:unity_hub/components/bottom_navbar.dart';
 import 'server_page.dart';
-import 'shop_page.dart';
-import 'security/login_page.dart';
+import 'main_page.dart';
 import 'security/auth_page.dart';
+
+//import 'package:dio/dio.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -28,30 +30,82 @@ class _HomePageState extends State<HomePage> {
   }
 
   final List<Widget> _pages = [
-    const ShopPage(),
+    const MainPage(),
     const ServerPage(),
     const MessagePage(),
     const NotificationPage(),
   ];
-
-
-  Future<void> checkToken() async {
-    const storage = FlutterSecureStorage();
-    final token = await storage.read(key: 'token');
-    if (token == null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const AuthPage()),
+/*
+  Future<Map<String, dynamic>> _getUserData(String accessToken) async {
+    try {
+      final dio = Dio();
+      final response = await dio.get(
+        'https://api.github.com/user',
+        options: Options(
+          headers: {
+            'Authorization': 'token $accessToken',
+            'Accept': 'application/json',
+          },
+        ),
       );
-    } else {
-      final bool isTokenExpired = JwtDecoder.isExpired(token);
+
+      if (response.statusCode == 200) {
+        // If user data is successfully retrieved, try to get email
+        final emailResponse = await dio.get(
+          'https://api.github.com/user/emails',
+          options: Options(
+            headers: {
+              'Authorization': 'token $accessToken',
+              'Accept': 'application/json',
+            },
+          ),
+        );
+
+        if (emailResponse.statusCode == 200) {
+          // If email data is successfully retrieved, add it to user data
+          final userData = response.data as Map<String, dynamic>;
+          final emailData = emailResponse.data as List<dynamic>;
+          if (emailData.isNotEmpty) {
+            // Assuming the first email is the primary one
+            userData['email'] = emailData.first['email'];
+          }
+          return userData;
+        } else {
+          throw Exception('Failed to retrieve email');
+        }
+      } else {
+        throw Exception('Failed to retrieve user data');
+      }
+    } catch (e) {
+      // Handle any errors that occur during the process
+      print('Error: $e');
+      rethrow; // Rethrow the error to be handled by the caller
+    }
+  }
+*/
+  Future<void> _checkToken() async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+    //final gitHubToken = await storage.read(key: 'gh_token');
+
+    if (jwtToken == null) {
+      // No tokens found, navigate to intro page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const IntroPage()),
+      );
+    } else if (jwtToken != null) {
+      // JWT token found, decode and verify if it's expired
+      final bool isTokenExpired = JwtDecoder.isExpired(jwtToken);
       if (isTokenExpired) {
-        Navigator.push(
+        // JWT token expired, navigate to intro page
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const AuthPage()),
+          MaterialPageRoute(builder: (context) => const IntroPage()),
         );
       } else {
-        final decodedToken = JwtDecoder.decode(token);
+        // JWT token valid, extract email and update state
+        final decodedToken = JwtDecoder.decode(jwtToken);
         setState(() {
           email = decodedToken['sub']; // Update email variable with decoded email
         });
@@ -62,17 +116,17 @@ class _HomePageState extends State<HomePage> {
   //logout
   void _logout() async {
     const storage = FlutterSecureStorage();
-    await storage.delete(key: 'token');
-    Navigator.pushAndRemoveUntil(
+    await storage.deleteAll();
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const AuthPage()),
-          (route) => false,
     );
   }
 
   @override
   void initState() {
     super.initState();
+    _checkToken();
   }
 
   @override
@@ -99,7 +153,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       drawer: Drawer(
-        backgroundColor: Colors.purple,
+        backgroundColor: Colors.grey[900],
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

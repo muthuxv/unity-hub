@@ -14,23 +14,25 @@ class _AuthPageState extends State<AuthPage> {
   @override
   void initState() {
     super.initState();
-    checkToken();
+    _checkToken();
   }
 
-  Future<void> checkToken() async {
-    final storage = FlutterSecureStorage();
+  Future<void> _checkToken() async {
+    const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
-    if (token == null) {
-      Navigator.pushAndRemoveUntil(
+    //final ghToken = await storage.read(key: 'gh_token');
+
+    if (token == null || token.isEmpty) {
+      print('Token is null');
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const IntroPage()),
-        (route) => false,
       );
     } else {
-      Navigator.pushAndRemoveUntil(
+      // Check if there are any active routes before pushing
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
-        (route) => false,
       );
     }
   }
