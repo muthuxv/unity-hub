@@ -10,6 +10,7 @@ class MyBottomNavBar extends StatelessWidget {
     return Container(
           padding: const EdgeInsets.symmetric(vertical: 20),
           child: GNav(
+            gap: 8,
             color: Colors.grey[400],
             activeColor: Colors.grey.shade700,
             tabActiveBorder: Border.all(color: Colors.white),
@@ -19,11 +20,11 @@ class MyBottomNavBar extends StatelessWidget {
             onTabChange: (value) => onTabChange!(value),
             tabs: const [
               GButton(
-                icon: Icons.home,
-                text: 'Accueil',
+                icon: Icons.people_outline,
+                text: 'Amis',
               ),
               GButton(
-                icon: Icons.people,
+                icon: Icons.storage,
                 text: 'Serveurs',
               ),
               GButton(

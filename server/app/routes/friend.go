@@ -1,9 +1,11 @@
 package routes
 
 import (
-    "app/controllers"
-	"github.com/gin-gonic/gin"
+	"app/controllers"
 	"app/db/models"
+	"app/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 func FriendRoutes(r *gin.Engine) {
@@ -12,4 +14,9 @@ func FriendRoutes(r *gin.Engine) {
 	r.GET("/friends/:id", controllers.Get(func() interface{} { return &models.Friend{} }))
 	r.PUT("/friends/:id", controllers.Update(func() interface{} { return &models.Friend{} }))
 	r.DELETE("/friends/:id", controllers.Delete(func() interface{} { return &models.Friend{} }))
+
+	r.POST("/friends/accept", services.AcceptFriend())
+	r.POST("/friends/refuse", services.RefuseFriend())
+	r.GET("/friends/search/:pseudo", services.SearchUser())
+	r.GET("/friends/users/:id", services.GetFriendsByUser())
 }
