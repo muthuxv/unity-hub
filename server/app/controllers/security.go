@@ -1,24 +1,24 @@
 package controllers
 
 import (
+	"bytes"
+	"crypto/rand"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-	"bytes"
-	"io/ioutil"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
-	"encoding/json"
-	"crypto/rand"
-	"encoding/hex"
 )
 
 var jwtKey = []byte(os.Getenv("JWT_KEY"))
 
 func GenerateJWT(userID uint, email, role string) (string, error) {
-	expirationTime := time.Now().Add(5 * time.Hour)
+	expirationTime := time.Now().Add(10000 * time.Hour)
 	claims := &jwt.RegisteredClaims{
 		ID:        fmt.Sprintf("%v", userID),
 		Subject:   email,
@@ -46,11 +46,11 @@ func getJwt(c *gin.Context) (string, error) {
 }
 
 func GenerateVerificationToken() (string, error) {
-    bytes := make([]byte, 16)
-    if _, err := rand.Read(bytes); err != nil {
-        return "", err
-    }
-    return hex.EncodeToString(bytes), nil
+	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }
 
 func TokenAuthMiddleware(requiredRole string) gin.HandlerFunc {
