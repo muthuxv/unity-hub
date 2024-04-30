@@ -1,8 +1,12 @@
 package controllers
 
 import (
+	"app/db"
+	"app/db/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"github.com/golang-jwt/jwt/v4"
+	"strconv"
 )
 
 func ErrorHandling() gin.HandlerFunc {
@@ -19,5 +23,45 @@ func ErrorHandling() gin.HandlerFunc {
             }
             c.Abort()
         }
+    }
+}
+
+func GenerateLogMiddleware(action string) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        c.Next()
+
+        serverIDStr := c.Param("id")
+        id, err := strconv.Atoi(serverIDStr)
+        if err != nil {
+            return 
+        }
+        serverID := uint(id)
+
+        claims, exists := c.Get("jwt_claims")
+        if !exists {
+            return 
+        }
+
+        jwtClaims, ok := claims.(jwt.MapClaims)
+        if !ok {
+            return 
+        }
+
+        userIDStr, ok := jwtClaims["jti"].(string)
+        if !ok {
+            return 
+        }
+
+        _, err = strconv.Atoi(userIDStr)
+        if err != nil {
+            return
+        }
+
+        logEntry := models.Logs{
+            Message:  "User " + userIDStr + " " + action + " server",
+            ServerID: serverID,
+        }
+
+        db.GetDB().Create(&logEntry)
     }
 }

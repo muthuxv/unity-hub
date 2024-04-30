@@ -16,8 +16,8 @@ func ServerRoutes(r *gin.Engine) {
 	r.DELETE("/servers/:id", controllers.Delete(func() interface{} { return &models.Server{} }))
 
 	r.POST("/servers/create", controllers.TokenAuthMiddleware("user"), services.NewServer())
-	r.POST("/servers/:id/join", controllers.TokenAuthMiddleware("user"), services.JoinServer())
-	r.DELETE("/servers/:id/leave", controllers.TokenAuthMiddleware("user"), services.LeaveServer())
+	r.POST("/servers/:id/join", controllers.TokenAuthMiddleware("user"), controllers.GenerateLogMiddleware("joined"), services.JoinServer())
+	r.DELETE("/servers/:id/leave", controllers.TokenAuthMiddleware("user"), controllers.GenerateLogMiddleware("left"), services.LeaveServer())
 	r.GET("/servers/users/:id", controllers.TokenAuthMiddleware("user"), services.GetServersByUser())
 	r.GET("/servers/:id/members", services.GetServerMembers())
 	r.GET("/servers/:id/logs", services.GetServerLogs())
