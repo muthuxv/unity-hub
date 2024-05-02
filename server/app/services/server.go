@@ -30,7 +30,7 @@ func NewServer() gin.HandlerFunc {
 		}
 
 		if inputServer.MediaID == 0 {
-			inputServer.MediaID = 1
+			inputServer.MediaID = 2
 		}
 
 		claims, exists := c.Get("jwt_claims")
@@ -62,6 +62,12 @@ func NewServer() gin.HandlerFunc {
 		if err := tx.Create(&inputServer).Error; err != nil {
 			tx.Rollback()
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la création du serveur")
+			return
+		}
+
+		if err := tx.Preload("Media").First(&inputServer).Error; err != nil {
+			tx.Rollback()
+			handleError(c, http.StatusInternalServerError, "Error preloading Media")
 			return
 		}
 
@@ -289,13 +295,16 @@ func GetServersByUser() gin.HandlerFunc {
 		userIDStr := c.Param("id")
 		userID, err := strconv.Atoi(userIDStr)
 		if err != nil {
-			handleError(c, http.StatusBadRequest, "ID utilisateur invalide")
+			handleError(c, http.StatusBadRequest, "Invalid user ID")
 			return
 		}
 
 		var servers []models.Server
-		if err := db.GetDB().Table("servers").Joins("JOIN on_servers ON servers.id = on_servers.server_id").Where("on_servers.user_id = ?", userID).Find(&servers).Error; err != nil {
-			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des serveurs de l'utilisateur.")
+		if err := db.GetDB().Table("servers").Joins("JOIN on_servers ON servers.id = on_servers.server_id").
+			Preload("Media").
+			Where("on_servers.user_id = ?", userID).
+			Find(&servers).Error; err != nil {
+			handleError(c, http.StatusInternalServerError, "Error retrieving user's servers")
 			return
 		}
 
@@ -325,6 +334,37 @@ func GetServerMembers() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"data": users})
+	}
+}
+
+func GetServerChannels() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		serverIDStr := c.Param("id")
+		serverID, err := strconv.Atoi(serverIDStr)
+		if err != nil {
+			handleError(c, http.StatusBadRequest, "ID de serveur invalide")
+			return
+		}
+
+		var server models.Server
+		if err := db.GetDB().First(&server, serverID).Error; err != nil {
+			handleError(c, http.StatusBadRequest, "Le serveur n'existe pas.")
+			return
+		}
+
+		var textChannels []models.Channel
+		if err := db.GetDB().Where("server_id = ? AND type = ?", serverID, "text").Find(&textChannels).Error; err != nil {
+			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des canaux de texte du serveur.")
+			return
+		}
+
+		var voiceChannels []models.Channel
+		if err := db.GetDB().Where("server_id = ? AND type = ?", serverID, "vocal").Find(&voiceChannels).Error; err != nil {
+			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des canaux vocaux du serveur.")
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"text": textChannels, "vocal": voiceChannels})
 	}
 }
 

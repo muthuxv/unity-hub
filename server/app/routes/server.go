@@ -20,5 +20,6 @@ func ServerRoutes(r *gin.Engine) {
 	r.DELETE("/servers/:id/leave", controllers.TokenAuthMiddleware("user"), services.LeaveServer())
 	r.GET("/servers/users/:id", controllers.TokenAuthMiddleware("user"), services.GetServersByUser())
 	r.GET("/servers/:id/members", services.GetServerMembers())
+	r.GET("/servers/:id/channels", services.GetServerChannels())
 	r.GET("/servers/:id/logs", services.GetServerLogs())
 }
