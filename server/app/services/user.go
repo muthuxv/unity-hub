@@ -32,12 +32,25 @@ func Register() gin.HandlerFunc {
             return
         }
 
+        var existingUser models.User
+        if err := db.GetDB().Where("email = ?", inputUser.Email).First(&existingUser).Error; err == nil {
+            c.JSON(http.StatusConflict, gin.H{"error": "User with this email already exists"})
+            return
+        }
+
         verificationToken, err := controllers.GenerateVerificationToken()
         if err != nil {
             c.Error(err)
             return
         }
         inputUser.VerificationToken = verificationToken
+
+        hashedPassword, err := bcrypt.GenerateFromPassword([]byte(inputUser.Password), bcrypt.DefaultCost)
+        if err != nil {
+            c.Error(err)
+            return
+        }
+        inputUser.Password = string(hashedPassword)
 
         result := db.GetDB().Create(&inputUser)
         if result.Error != nil {
@@ -46,8 +59,8 @@ func Register() gin.HandlerFunc {
         }
 
         verificationLink := os.Getenv("DOMAIN") + "/verify/" + verificationToken
-        body := "Pour activer votre compte, veuillez cliquer sur le lien suivant : " + verificationLink
-        controllers.SendEmail(inputUser.Email, "Activation de compte", body)
+        body := "To activate your account, please click on the following link: " + verificationLink
+        controllers.SendEmail(inputUser.Email, "Account Activation", body)
 
         c.JSON(http.StatusCreated, inputUser)
     }
