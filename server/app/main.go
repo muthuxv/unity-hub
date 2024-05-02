@@ -52,6 +52,7 @@ func main() {
 	/*workers*/
 	routes.WebSocketRoutes(r)
 	routes.AuthV2Routes(r)
+	routes.VocalRoutes(r)
 
 	//uploads
 	r.Static("/uploads", "./upload")
