@@ -15,4 +15,5 @@ func InvitationRoutes(r *gin.Engine) {
 	r.DELETE("/invitations/:id", controllers.Delete(func() interface{} { return &models.Invitation{} }))
 	r.POST("/invitations/server/:id", controllers.TokenAuthMiddleware("user"), services.SendInvitation(false))
 	r.POST("/link-invitation/server/:id", controllers.TokenAuthMiddleware("user"), services.SendInvitation(true))
+	r.GET("/invitations/user/:id", controllers.TokenAuthMiddleware("user"), services.GetInvitationsByUser())
 }
