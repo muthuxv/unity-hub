@@ -88,3 +88,26 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 		c.JSON(http.StatusCreated, invitation)
 	}
 }
+
+func GetInvitationsByUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get the user's ID from the URL parameter
+		userIDStr := c.Param("id")
+		userID, err := strconv.Atoi(userIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "ID utilisateur invalide"})
+			return
+		}
+
+		// Fetch all invitations where the user is the receiver
+		var invitations []models.Invitation
+		result := db.GetDB().Where("user_receiver_id = ?", userID).Find(&invitations)
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la récupération des invitations"})
+			return
+		}
+
+		// Return the invitations
+		c.JSON(http.StatusOK, invitations)
+	}
+}
