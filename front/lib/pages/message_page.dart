@@ -10,7 +10,7 @@ class MessagePage extends StatefulWidget {
 }
 
 class _MessagePageState extends State<MessagePage> {
-  final _channel = IOWebSocketChannel.connect(Uri.parse('ws://195.35.29.110:8080/ws'));
+  final _channel = IOWebSocketChannel.connect(Uri.parse('ws://10.0.2.2:8080/ws'));
   final TextEditingController _controller = TextEditingController();
 
   void _sendMessage() {
@@ -29,6 +29,7 @@ class _MessagePageState extends State<MessagePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(

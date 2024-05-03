@@ -1,10 +1,12 @@
 package routes
 
 import (
-    "app/services"
-    "github.com/gin-gonic/gin"
+	"app/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 func VocalRoutes(r *gin.Engine) {
-    r.GET("/channels/:id/connect", services.ConnectToChannel)
+	r.GET("/channels/:id/connect", services.ConnectToChannel)
+	r.POST("/channels/:id/answer", services.HandleAnswer)
 }

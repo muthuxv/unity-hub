@@ -49,6 +49,7 @@ class _ServerPageState extends State<ServerPage> {
         _selectedServer = _servers.isNotEmpty ? _servers[0] : {};
         _isLoading = false;
       });
+      print('Servers: $_servers');
     } else {
       setState(() {
         _isLoading = false;
@@ -130,6 +131,36 @@ class _ServerPageState extends State<ServerPage> {
               children: [
                 Row(
                   children: [
+                      Padding(
+                      padding: const EdgeInsets.only(left: 20.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          print('Add server');
+                        },
+                        child: Container(
+                          width: 90,
+                          height: 90,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              width: 4,
+                              style: BorderStyle.solid,
+                              color: Colors.pink
+                            ),
+                          ),
+                          child: GestureDetector(
+                            onTap: () {
+                              print('Add server');
+                            },
+                            child: const Icon(
+                              Icons.add,
+                              size: 50,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                     Expanded(
                       child: SizedBox(
                         height: 100,
@@ -137,44 +168,8 @@ class _ServerPageState extends State<ServerPage> {
                           scrollDirection: Axis.horizontal,
                           itemCount: _servers.length,
                           itemBuilder: (context, index) {
-                            if (index == 0) {
-                              return Padding(
-                                padding: const EdgeInsets.all(5.0),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedServer = {};
-                                    });
-                                  },
-                                  child: Container(
-                                    width: 100,
-                                    height: 100,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        width: 4,
-                                        style: BorderStyle.solid,
-                                        color:
-                                        const [Colors.pink][index % 3],
-                                        //gradient border
-                                      ),
-                                    ),
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        print('Add server');
-                                      },
-                                      child: const Icon(
-                                        Icons.add,
-                                        size: 50,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            } else {
                               String filename =
-                              _servers[index - 1]['Media']
+                              _servers[index]['Media']
                               ['FileName'];
                               String imageUrl =
                                   'http://10.0.2.2:8080/uploads/$filename';
@@ -186,7 +181,7 @@ class _ServerPageState extends State<ServerPage> {
                                     print(_servers[index]);
                                     setState(() {
                                       _selectedServer =
-                                      _servers[index - 1];
+                                      _servers[index];
                                     });
                                   },
                                   child: Container(
@@ -201,7 +196,7 @@ class _ServerPageState extends State<ServerPage> {
                                         ],
                                       ),
                                       color: _selectedServer['ID'] ==
-                                          _servers[index - 1]['ID']
+                                          _servers[index]['ID']
                                           ? Colors.white
                                           : Colors.white.withOpacity(0.5),
                                     ),
@@ -213,14 +208,13 @@ class _ServerPageState extends State<ServerPage> {
                                   ),
                                 ),
                               );
-                            }
-                          },
+                            },
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20.0),
+                const SizedBox(height: 10.0),
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
@@ -230,34 +224,43 @@ class _ServerPageState extends State<ServerPage> {
                         topRight: Radius.circular(30.0),
                       ),
                     ),
-                    child: Container(
+                    child: Padding(
                       padding: const EdgeInsets.all(20.0),
                       child: Column(
                         children: [
                           Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                _selectedServer['Name'] ??
-                                    'No server selected',
-                                style: TextStyle(
-                                  fontSize: 20.0,
-                                  fontWeight: FontWeight.bold,
-                                  //gradient text
-                                  foreground: Paint()
-                                    ..shader = const LinearGradient(
-                                      colors: <Color>[
-                                        Colors.blue,
-                                        Colors.purple,
-                                        Colors.pink,
-                                      ],
-                                    ).createShader(
-                                        const Rect.fromLTWH(
-                                            0.0, 0.0, 200.0, 70.0)),
+                              Flexible(
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 10.0),
+                                  child: Text(
+                                    _selectedServer['Name'] != null
+                                        ? (_selectedServer['Name'].length > 50
+                                        ? _selectedServer['Name'].substring(0, 30) + '...' // Trim the name if it's longer than 20 characters
+                                        : _selectedServer['Name'])
+                                        : 'No server selected',
+                                    style: TextStyle(
+                                      fontSize: 20.0,
+                                      fontWeight: FontWeight.bold,
+                                      //gradient text
+                                      foreground: Paint()
+                                        ..shader = const LinearGradient(
+                                          colors: <Color>[
+                                            Colors.blue,
+                                            Colors.purple,
+                                            Colors.pink,
+                                          ],
+                                        ).createShader(
+                                            const Rect.fromLTWH(
+                                                0.0, 0.0, 200.0, 70.0)),
+                                    ),
+                                    softWrap: true,
+                                  ),
+
                                 ),
                               ),
-                              //invite button
+                              const SizedBox(width: 10.0),
                               GestureDetector(
                                 onTap: () {
                                   print('Invite');
@@ -282,7 +285,7 @@ class _ServerPageState extends State<ServerPage> {
                                         color: Theme.of(context)
                                             .primaryColor,
                                       ),
-                                      SizedBox(width: 5),
+                                      const SizedBox(width: 5),
                                       Text(
                                         'Invite des amis',
                                         style: TextStyle(
@@ -297,7 +300,6 @@ class _ServerPageState extends State<ServerPage> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10.0),
                           //channels panel
                           ChannelsPanel(
                             serverId: _selectedServer['ID'],

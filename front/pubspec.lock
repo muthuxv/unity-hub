@@ -57,6 +57,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.6"
+  dart_webrtc:
+    dependency: transitive
+    description:
+      name: dart_webrtc
+      sha256: b3a4f109c551a10170ece8fc79b5ca1b98223f24bcebc0f971d7fe35daad7a3b
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.4"
   dio:
     dependency: "direct main"
     description:
@@ -160,6 +168,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_webrtc:
+    dependency: "direct main"
+    description:
+      name: flutter_webrtc
+      sha256: "20eac28848a2dffb26cc2b2870a5164613904511a0b7e8f4825e31a2768175d2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.10.3"
   github_sign_in_plus:
     dependency: "direct main"
     description:
@@ -296,6 +312,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
+  logging:
+    dependency: transitive
+    description:
+      name: logging
+      sha256: "623a88c9594aa774443aa3eb2d41807a48486b5613e67599fb4c41c0ad47c340"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   matcher:
     dependency: transitive
     description:
@@ -392,6 +416,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.4"
+  platform_detect:
+    dependency: transitive
+    description:
+      name: platform_detect
+      sha256: "08f4ee79c0e1c4858d37e06b22352a3ebdef5466b613749a3adb03e703d4f5b0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.11"
   plugin_platform_interface:
     dependency: transitive
     description:
@@ -408,6 +440,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.2"
+  pub_semver:
+    dependency: transitive
+    description:
+      name: pub_semver
+      sha256: "40d3ab1bbd474c4c2328c91e3a7df8c6dd629b79ece4c4bd04bee496a224fb0c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.4"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -445,6 +485,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.0"
+  synchronized:
+    dependency: transitive
+    description:
+      name: synchronized
+      sha256: "539ef412b170d65ecdafd780f924e5be3f60032a1128df156adad6c5b373d558"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.0+1"
   term_glyph:
     dependency: transitive
     description:
@@ -565,6 +613,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.5"
+  webrtc_interface:
+    dependency: transitive
+    description:
+      name: webrtc_interface
+      sha256: abec3ab7956bd5ac539cf34a42fa0c82ea26675847c0966bb85160400eea9388
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   webview_flutter:
     dependency: transitive
     description:

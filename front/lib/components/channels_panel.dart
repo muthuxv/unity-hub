@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:dio/dio.dart';
 
 import '../pages/channel_page.dart';
 
@@ -40,6 +42,50 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
     }
   }
 
+  Future<void> _connectToChannel(String channelId) async {
+    try {
+      final response = await Dio().get(
+          'http://10.0.2.2:8080/channels/$channelId/connect');
+      print('Response: $response');
+      final offer = response.data['offer'];
+      print('Offer: $offer');
+
+      final session = await createPeerConnection({
+        'iceServers': [
+          {'url': 'stun:stun.l.google.com:19302'},
+        ]
+      }, {});
+
+      session.onIceCandidate = (candidate) {
+        print('Ice candidate: $candidate');
+      };
+      session.onIceConnectionState = (state) {
+        print('Ice connection state: $state');
+      };
+
+      // Set the local description first
+      await session.setRemoteDescription(RTCSessionDescription(offer, 'offer'));
+
+      final answer = await session.createAnswer({});
+      await session.setLocalDescription(answer);
+
+      final Map<String, dynamic> data = {
+        'answer': answer.sdp,
+      };
+
+      print('Data: $data');
+
+      final response2 = await Dio().post(
+        'http://10.0.2.2:8080/channels/$channelId/answer',
+        data: data,
+      );
+
+      print('Response 2: $response2');
+    } catch (error) {
+      print('Error connecting to channel: $error');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -59,54 +105,31 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
     return _isLoading
         ? const Center(child: CircularProgressIndicator())
         : Column(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Text Channels'),
-                ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _textChannels.length,
-                  itemBuilder: (context, index) {
-                    final channel = _textChannels[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChannelPage(channelId: channel['ID']),
-                          ),
-                        );
-                      },
-                      child: ListTile(
-                        title: Text(channel['Name']),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('# Salons-textuels'),
+              for (final channel in _textChannels)
+                GestureDetector(
+                  child: ListTile(
+                    trailing: const Icon(Icons.arrow_forward_ios),
+                    title: Text(channel['Name']),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChannelPage(
+                          channelId: channel['ID'],
+                        ),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
-              ],
-            ),
-
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 8.0, bottom: 8.0), // Adjust the top and bottom padding as needed
-                  child: Text('Vocal Channels'),
+              const Text('# Salons-vocaux'),
+              for (final channel in _vocalChannels)
+                ListTile(
+                  title: Text(channel['Name']),
+                  onTap: () => _connectToChannel(channel['ID'].toString()),
                 ),
-                ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _vocalChannels.length,
-                  itemBuilder: (context, index) {
-                    final channel = _vocalChannels[index];
-                    return ListTile(
-                      title: Text(channel['Name']),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ],
-        );
+            ],
+          );
   }
 }
