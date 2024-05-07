@@ -12,39 +12,58 @@ import (
 
 func AcceptFriend() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var inputFriend models.Friend
+		var inputFriend struct {
+			ID      uint `json:"id"`      // ID of the friend request
+			UserID2 uint `json:"userId2"` // ID of the user who is supposed to accept the friend request
+		}
 		if err := c.ShouldBindJSON(&inputFriend); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON data"})
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalide JSON data"})
 			return
 		}
 
-		// Vérification de l'existence
+		// Verification of existence
 		var friend models.Friend
 		result := db.GetDB().Preload("User1").Preload("User2").First(&friend, inputFriend.ID)
 		if result.Error != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Friend request not found"})
+			c.JSON(http.StatusNotFound, gin.H{"message": "Demande d'ami non trouvée"})
 			return
 		}
 
-		// Vérification de l'état pour éviter des modifications redondantes
+		// Verify if the correct user is accepting the friend request
+		if friend.UserID2 != inputFriend.UserID2 {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "Demande d'ami non autorisée"})
+			return
+		}
+
+		// Verification of the status to avoid redundant modifications
 		if friend.Status == "accepted" {
-			c.JSON(http.StatusBadRequest, gin.H{"message": "Friend request already accepted"})
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Demande d'ami déjà acceptée"})
 			return
 		}
 
-		// Mise à jour de l'état
+		// Update the status
 		result = db.GetDB().Model(&friend).Update("status", "accepted")
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update friend request"})
 			return
 		}
 
-		// Préparer les données de l'ami pour la réponse
-		var friendData = map[string]interface{}{
-			"ID":         friend.ID,
-			"Status":     friend.Status,
-			"UserPseudo": friend.User1.Pseudo,
-			"UserMail":   friend.User1.Email,
+		// Prepare the friend data for the response
+		var friendData map[string]interface{}
+		if friend.UserID1 == inputFriend.UserID2 {
+			friendData = map[string]interface{}{
+				"ID":         friend.ID,
+				"Status":     friend.Status,
+				"UserPseudo": friend.User2.Pseudo,
+				"UserMail":   friend.User2.Email,
+			}
+		} else {
+			friendData = map[string]interface{}{
+				"ID":         friend.ID,
+				"Status":     friend.Status,
+				"UserPseudo": friend.User1.Pseudo,
+				"UserMail":   friend.User1.Email,
+			}
 		}
 
 		c.JSON(http.StatusOK, friendData)
@@ -53,34 +72,43 @@ func AcceptFriend() gin.HandlerFunc {
 
 func RefuseFriend() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var inputFriend models.Friend
+		var inputFriend struct {
+			ID      uint `json:"id"`      // ID of the friend request
+			UserID2 uint `json:"userId2"` // ID of the user who is supposed to refuse the friend request
+		}
 		if err := c.ShouldBindJSON(&inputFriend); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON data"})
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalide JSON data"})
 			return
 		}
 
-		// Vérification de l'existence de la demande d'ami
+		// Verification of the existence of the friend request
 		var friend models.Friend
-		result := db.GetDB().First(&friend, inputFriend.ID)
+		result := db.GetDB().Preload("User1").Preload("User2").First(&friend, inputFriend.ID)
 		if result.Error != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Friend request not found"})
+			c.JSON(http.StatusNotFound, gin.H{"message": "Demande d'ami non trouvée"})
 			return
 		}
 
-		// Vérification de l'état pour éviter des modifications redondantes
+		// Verify if the correct user is refusing the friend request
+		if friend.UserID2 != inputFriend.UserID2 {
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "Demande d'ami non autorisée"})
+			return
+		}
+
+		// Verification of the status to avoid redundant modifications
 		if friend.Status == "refused" {
-			c.JSON(http.StatusBadRequest, gin.H{"message": "Friend request already refused"})
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Demande d'ami déjà refusée"})
 			return
 		}
 
-		// Mise à jour de l'état en "refused"
+		// Update the status to "refused"
 		result = db.GetDB().Model(&friend).Update("status", "refused")
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update friend request"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Friend request refused"})
+		c.JSON(http.StatusOK, gin.H{"message": "Demande d'ami refusée avec succès"})
 	}
 }
 
@@ -101,7 +129,7 @@ func SearchUser() gin.HandlerFunc {
 
 		// Vérifier si aucun utilisateur n'a été trouvé
 		if len(users) == 0 {
-			c.JSON(http.StatusOK, gin.H{"message": "No users found starting with the given pseudo"})
+			c.JSON(http.StatusOK, gin.H{"message": "Pas d'utilisateurs trouvés avec ce pseudo"})
 			return
 		}
 
@@ -222,7 +250,7 @@ func CreateFriendRequest() gin.HandlerFunc {
 		}
 
 		if err := c.ShouldBindJSON(&input); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON data"})
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalide JSON data"})
 			return
 		}
 

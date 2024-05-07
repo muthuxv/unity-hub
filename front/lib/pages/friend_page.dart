@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class FriendPage extends StatefulWidget {
   const FriendPage({Key? key}) : super(key: key);
@@ -24,9 +25,11 @@ class _FriendPageState extends State<FriendPage> {
 
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
+    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+    final userId = decodedToken['jti'];
 
     final response = await Dio().get(
-      'http://10.0.2.2:8080/friends/users/1',
+      'http://10.0.2.2:8080/friends/users/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -56,8 +59,11 @@ class _FriendPageState extends State<FriendPage> {
   void _getSentRequests() async {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
+    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+    final userId = decodedToken['jti'];
+
     final response = await Dio().get(
-      'http://10.0.2.2:8080/friends/sent/1',
+      'http://10.0.2.2:8080/friends/sent/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -78,9 +84,11 @@ class _FriendPageState extends State<FriendPage> {
   void _getPendingRequests() async {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
+    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+    final userId = decodedToken['jti'];
 
     final response = await Dio().get(
-      'http://10.0.2.2:8080/friends/pending/1',
+      'http://10.0.2.2:8080/friends/pending/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -104,10 +112,15 @@ class _FriendPageState extends State<FriendPage> {
   void _acceptFriendRequest(String friendId) async {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
+    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+    final userId = decodedToken['jti'];
 
     final response = await Dio().post(
       'http://10.0.2.2:8080/friends/accept',
-      data: {'ID': int.tryParse(friendId)},
+      data: {
+        'ID': int.tryParse(friendId),
+        'UserID2': int.tryParse(userId),
+      },
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +131,6 @@ class _FriendPageState extends State<FriendPage> {
 
     if (response.statusCode == 200) {
       setState(() {
-        // Supprime la demande de la liste des demandes en attente
         _pendingRequests.removeWhere((item) => item['ID'].toString() == friendId);
 
         var newFriend = {
@@ -129,7 +141,6 @@ class _FriendPageState extends State<FriendPage> {
         };
 
         _pendingRequests.removeWhere((item) => item['ID'].toString() == friendId);
-        // Vérifier si l'ami est déjà présent dans la liste des amis
         if (!_friends.any((friend) => friend['ID'] == newFriend['ID'])) {
           _friends.add(newFriend);
         }
@@ -146,10 +157,15 @@ class _FriendPageState extends State<FriendPage> {
   void _refuseFriendRequest(String friendId) async {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
+    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+    final userId = decodedToken['jti'];
 
     final response = await Dio().post(
       'http://10.0.2.2:8080/friends/refuse',
-      data: {'ID': int.tryParse(friendId)},  // Convertir en entier si nécessaire
+      data: {
+        'ID': int.tryParse(friendId),
+        'UserID2': int.tryParse(userId),
+      },
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +176,6 @@ class _FriendPageState extends State<FriendPage> {
 
     if (response.statusCode == 200) {
       setState(() {
-        // Supprime la demande de la liste des demandes en attente
         _pendingRequests.removeWhere((item) => item['ID'].toString() == friendId);
       });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Demande refusée avec succès')));
@@ -173,6 +188,8 @@ class _FriendPageState extends State<FriendPage> {
     print("Attempting to cancel friend request with ID: $friendId");
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
+    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+    final userId = decodedToken['jti'];
 
     try {
       final response = await Dio().delete(
@@ -188,9 +205,7 @@ class _FriendPageState extends State<FriendPage> {
 
       if (response.statusCode == 204) {
         setState(() {
-          int initialCount = _sentRequests.length;
           _sentRequests.removeWhere((item) => item['FriendID'].toString() == friendId);
-          int finalCount = _sentRequests.length;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Demande d'ami annulée avec succès")),
@@ -433,12 +448,11 @@ class _FriendPageState extends State<FriendPage> {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
           },
-          validateStatus: (status) => status! < 500, // Accepts any status code below 500 as a valid response
+          validateStatus: (status) => status! < 500,
         ),
       );
 
       if (response.statusCode == 204) {
-        // Supprimer l'ami de la liste locale des amis
         setState(() {
           _friends.removeWhere((f) => f['FriendID'].toString() == friend['FriendID'].toString());
         });
@@ -460,7 +474,7 @@ class _FriendPageState extends State<FriendPage> {
   void _showAddFriendDialog() {
     showDialog(
       context: context,
-      barrierDismissible: true, // Permet à l'utilisateur de fermer le modal en tapant à l'extérieur
+      barrierDismissible: true,
       builder: (BuildContext context) {
         String pseudo = "";
         String errorMessage = "";
@@ -498,7 +512,7 @@ class _FriendPageState extends State<FriendPage> {
                       onChanged: (value) {
                         pseudo = value;
                         if (errorMessage.isNotEmpty) {
-                          setState(() => errorMessage = "");  // Clear error message when user edits the input
+                          setState(() => errorMessage = "");
                         }
                       },
                       decoration: InputDecoration(
@@ -539,6 +553,8 @@ class _FriendPageState extends State<FriendPage> {
   void _sendFriendRequest(String pseudo, Function(String) onError) async {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
+    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+    final userId = decodedToken['jti'];
 
     try {
       final response = await Dio().post(
@@ -551,7 +567,7 @@ class _FriendPageState extends State<FriendPage> {
           validateStatus: (status) => status! < 500,
         ),
         data: {
-          'userId': 1, // Assure-toi que cet ID est correct ou dynamiquement obtenu
+          'userId': int.tryParse(userId),
           'userPseudo': pseudo,
         },
       );
@@ -560,8 +576,7 @@ class _FriendPageState extends State<FriendPage> {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(response.data['message'] ?? "Friend request sent successfully!"))
         );
-        Navigator.of(context).pop(); // Close the modal on success
-        // Update sent requests list immediately
+        Navigator.of(context).pop();
         setState(() {
           _sentRequests.add({
             'UserPseudo': pseudo,
@@ -570,7 +585,7 @@ class _FriendPageState extends State<FriendPage> {
             'FriendID': response.data['friend']['ID'],
           });
         });
-        _getFriends(); // Refresh the friends list if necessary
+        _getFriends();
       } else {
         onError(response.data['message'] ?? "An error occurred");
       }
@@ -593,14 +608,14 @@ class _FriendPageState extends State<FriendPage> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Fermer le modal
+                Navigator.of(context).pop();
                 _cancelFriendRequest(request['FriendID'].toString());
               },
               child: Text('Annuler la demande d\'ami'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Fermer le modal sans action
+                Navigator.of(context).pop();
               },
               child: Text('Retour'),
             ),
@@ -612,7 +627,7 @@ class _FriendPageState extends State<FriendPage> {
 
   Widget buildSentRequestsTab() {
     return _sentRequests.isEmpty
-        ? Center(child: Text("Tu n'as pas encore fait de demande", style: TextStyle(fontSize: 16))) // Message for empty list
+        ? Center(child: Text("Tu n'as pas encore fait de demande", style: TextStyle(fontSize: 16)))
         : ListView.builder(
       itemCount: _sentRequests.length,
       itemBuilder: (context, index) {
