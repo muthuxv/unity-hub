@@ -19,4 +19,7 @@ func FriendRoutes(r *gin.Engine) {
 	r.POST("/friends/refuse", services.RefuseFriend())
 	r.GET("/friends/search/:pseudo", services.SearchUser())
 	r.GET("/friends/users/:id", services.GetFriendsByUser())
+	r.GET("/friends/pending/:id", services.GetPendingFriendsByUser())
+	r.GET("/friends/sent/:id", services.GetPendingFriendsFromUser())
+	r.POST("/friends/request", services.CreateFriendRequest())
 }

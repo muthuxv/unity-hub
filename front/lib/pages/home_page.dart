@@ -4,9 +4,7 @@ import 'package:unity_hub/pages/message_page.dart';
 import 'package:unity_hub/pages/notification_page.dart';
 import 'package:unity_hub/pages/friend_page.dart';
 import '../components/bottom_navbar.dart';
-import 'package:unity_hub/components/bottom_navbar.dart';
 import 'server_page.dart';
-import 'main_page.dart';
 import 'security/auth_page.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';

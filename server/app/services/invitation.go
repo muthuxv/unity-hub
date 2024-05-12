@@ -101,7 +101,7 @@ func GetInvitationsByUser() gin.HandlerFunc {
 
 		// Fetch all invitations where the user is the receiver
 		var invitations []models.Invitation
-		result := db.GetDB().Where("user_receiver_id = ?", userID).Find(&invitations)
+		result := db.GetDB().Preload("Server").Preload("UserSender").Where("user_receiver_id = ?", userID).Find(&invitations)
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la récupération des invitations"})
 			return

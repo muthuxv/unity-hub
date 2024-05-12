@@ -2,3 +2,4 @@
 app/vendor
 app/app
 .DS_Store
+.idea
