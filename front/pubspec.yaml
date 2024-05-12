@@ -46,6 +46,10 @@ dependencies:
   github_sign_in_plus: ^0.0.2
   google_fonts:
   flutter_webrtc: ^0.10.3
+  random_avatar: ^0.0.8
+  flutter_svg: ^2.0.9
+  image_picker: ^1.1.1
+  http_parser: ^4.0.2
 
 dev_dependencies:
   flutter_test:

@@ -61,5 +61,5 @@ func UploadFile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Fichier uploadé avec succès", "path": filePath})
+	c.JSON(http.StatusOK, gin.H{"message": "Fichier uploadé avec succès", "path": filePath, "id": media.ID})
 }

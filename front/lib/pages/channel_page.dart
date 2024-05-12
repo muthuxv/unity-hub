@@ -8,8 +8,9 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChannelPage extends StatefulWidget {
   final int channelId;
+  final String channelName;
 
-  const ChannelPage({Key? key, required this.channelId}) : super(key: key);
+  const ChannelPage({super.key, required this.channelId, required this.channelName});
 
   @override
   State<ChannelPage> createState() => _ChannelPageState();
@@ -112,7 +113,10 @@ class _ChannelPageState extends State<ChannelPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Channel'),
+        title: Text(widget.channelName),
+        elevation: 1.0,
+        backgroundColor: Theme.of(context).cardColor,
+        shadowColor: Colors.grey[50],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -146,8 +150,8 @@ class _ChannelPageState extends State<ChannelPage> {
                         const SizedBox(height: 4),
                         Text(
                           message['UserID'].toString() == currentUserID
-                              ? 'You'
-                              : 'Other user',
+                              ? 'Vous'
+                              : 'Utilisateur ${message['UserID']}',
                           style: TextStyle(
                             color: message['UserID'].toString() == currentUserID
                                 ? Colors.blue
@@ -173,7 +177,7 @@ class _ChannelPageState extends State<ChannelPage> {
                     child: TextField(
                       controller: _messageController,
                       decoration: const InputDecoration(
-                        hintText: 'Enter your message',
+                        hintText: 'Entrer un message...',
                         border: InputBorder.none,
                       ),
                     ),

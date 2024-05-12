@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
+import 'package:random_avatar/random_avatar.dart';
 
 import 'package:dio/dio.dart';
 
@@ -66,6 +67,7 @@ class _RegisterPageState extends State<RegisterPage> {
         'pseudo': _pseudoController.text,
         'email': _emailController.text,
         'password': _passwordController.text,
+        'profile': RandomAvatarString(_pseudoController.text)
       },
       options: Options(
         headers: {

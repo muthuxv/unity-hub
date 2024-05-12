@@ -86,6 +86,21 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
     }
   }
 
+  //update the channel
+  Future<void> _updateChannel(String channelId, String channelName) async {
+    try {
+      final response = await Dio().put(
+        'http://10.0.2.2:8080/channels/$channelId',
+        data: {
+          'name': channelName,
+        },
+      );
+      print('Response: $response');
+    } catch (error) {
+      print('Error updating channel: $error');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -118,9 +133,90 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                       MaterialPageRoute(
                         builder: (context) => ChannelPage(
                           channelId: channel['ID'],
+                          channelName: channel['Name'],
                         ),
                       ),
                     ),
+                    onLongPress: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          TextEditingController channelNameController = TextEditingController(text: channel['Name']);
+
+                          return AlertDialog(
+                            title: const Text('Modifier le salon'),
+                            content: SizedBox(
+                              width: double.maxFinite,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextField(
+                                    controller: channelNameController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Nom du salon',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            actions: [
+
+                              TextButton(
+                                onPressed: () async {
+                                  try {
+                                    final response = await Dio().delete(
+                                      'http://10.0.2.2:8080/channels/${channel['ID']}',
+                                    );
+
+                                    if (response.statusCode == 204) {
+                                      Navigator.pop(context);
+                                      _fetchChannels();
+                                    } else {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            title: const Text('Erreur'),
+                                            content: const Text('Une erreur s\'est produite lors de la suppression du salon.'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                },
+                                                child: const Text('OK'),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    }
+                                  } catch (error) {
+                                    print('Error deleting channel: $error');
+                                  }
+                                },
+                                child: const Icon(Icons.delete, color: Colors.red)
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Annuler'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  _updateChannel(
+                                    channel['ID'].toString(),
+                                    channelNameController.text,
+                                  );
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Enregistrer'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
               const Text('# Salons-vocaux'),
@@ -128,8 +224,88 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                 ListTile(
                   title: Text(channel['Name']),
                   onTap: () => _connectToChannel(channel['ID'].toString()),
+                  onLongPress: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        TextEditingController channelNameController = TextEditingController(text: channel['Name']);
+
+                        return AlertDialog(
+                          title: const Text('Modifier le salon'),
+                          content: SizedBox(
+                            width: double.maxFinite,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextField(
+                                  controller: channelNameController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Nom du salon',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          actions: [
+
+                            TextButton(
+                                onPressed: () async {
+                                  try {
+                                    final response = await Dio().delete(
+                                      'http://10.0.2.2:8080/channels/${channel['ID']}',
+                                    );
+
+                                    if (response.statusCode == 204) {
+                                      Navigator.pop(context);
+                                      _fetchChannels();
+                                    } else {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            title: const Text('Erreur'),
+                                            content: const Text('Une erreur s\'est produite lors de la suppression du salon.'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                },
+                                                child: const Text('OK'),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    }
+                                  } catch (error) {
+                                    print('Error deleting channel: $error');
+                                  }
+                                },
+                                child: const Icon(Icons.delete, color: Colors.red)
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Annuler'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                _updateChannel(
+                                  channel['ID'].toString(),
+                                  channelNameController.text,
+                                );
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Enregistrer'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
                 ),
             ],
-          );
+    );
   }
 }

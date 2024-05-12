@@ -6,6 +6,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 //import 'package:unity_hub/components/members_panel.dart';
 import 'package:unity_hub/components/channels_panel.dart';
+import 'package:unity_hub/pages/add_server_page.dart';
+import 'package:unity_hub/pages/server_members_list.dart';
+import 'package:unity_hub/pages/server_settings_page.dart';
+
+import 'add_channel_page.dart';
 
 
 class ServerPage extends StatefulWidget {
@@ -110,19 +115,35 @@ class _ServerPageState extends State<ServerPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    'Aucun serveur trouvé',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20.0,
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      'Pour commencer, rejoins un serveur ou crée le tien!',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20.0,
+                      ),
+                      textAlign: TextAlign.center,
+                      softWrap: true,
                     ),
                   ),
                   const SizedBox(height: 10.0),
                   ElevatedButton(
                     onPressed: () {
-                      print('Add server');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddServerPage(
+                            onServerAdded: (newServer) {
+                              setState(() {
+                                _selectedServer = newServer;
+                              });
+                            },
+                          ),
+                        ),
+                      );
                     },
-                    child: const Text('Rejoindre un serveur'),
+                    child: const Text('Ajouter un serveur'),
                   ),
                 ],
               ),
@@ -135,7 +156,18 @@ class _ServerPageState extends State<ServerPage> {
                       padding: const EdgeInsets.only(left: 20.0),
                       child: GestureDetector(
                         onTap: () {
-                          print('Add server');
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddServerPage(
+                                onServerAdded: (newServer) {
+                                  setState(() {
+                                    _selectedServer = newServer;
+                                  });
+                                },
+                              ),
+                            ),
+                          );
                         },
                         child: Container(
                           width: 90,
@@ -150,7 +182,14 @@ class _ServerPageState extends State<ServerPage> {
                           ),
                           child: GestureDetector(
                             onTap: () {
-                              print('Add server');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddServerPage(
+                                    onServerAdded: _onServerAdded,
+                                  ),
+                                ),
+                              );
                             },
                             child: const Icon(
                               Icons.add,
@@ -168,11 +207,8 @@ class _ServerPageState extends State<ServerPage> {
                           scrollDirection: Axis.horizontal,
                           itemCount: _servers.length,
                           itemBuilder: (context, index) {
-                              String filename =
-                              _servers[index]['Media']
-                              ['FileName'];
-                              String imageUrl =
-                                  'http://10.0.2.2:8080/uploads/$filename';
+                              String filename = _servers[index]['Media']['FileName'];
+                              String imageUrl = 'http://10.0.2.2:8080/uploads/$filename?rand=${DateTime.now().millisecondsSinceEpoch}';
 
                               return Padding(
                                 padding: const EdgeInsets.all(5.0),
@@ -226,85 +262,251 @@ class _ServerPageState extends State<ServerPage> {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Flexible(
-                                child: Container(
-                                  margin: const EdgeInsets.only(bottom: 10.0),
-                                  child: Text(
-                                    _selectedServer['Name'] != null
-                                        ? (_selectedServer['Name'].length > 50
-                                        ? _selectedServer['Name'].substring(0, 30) + '...' // Trim the name if it's longer than 20 characters
-                                        : _selectedServer['Name'])
-                                        : 'No server selected',
-                                    style: TextStyle(
-                                      fontSize: 20.0,
-                                      fontWeight: FontWeight.bold,
-                                      //gradient text
-                                      foreground: Paint()
-                                        ..shader = const LinearGradient(
-                                          colors: <Color>[
-                                            Colors.blue,
-                                            Colors.purple,
-                                            Colors.pink,
-                                          ],
-                                        ).createShader(
-                                            const Rect.fromLTWH(
-                                                0.0, 0.0, 200.0, 70.0)),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Container(
+                                    child: Text(
+                                      _selectedServer['Name'] != null
+                                          ? (_selectedServer['Name'].length > 50
+                                          ? _selectedServer['Name'] + '...'
+                                          : _selectedServer['Name'])
+                                          : 'No server selected',
+                                      style: TextStyle(
+                                        fontSize: 20.0,
+                                        fontWeight: FontWeight.bold,
+                                        //gradient text
+                                        foreground: Paint()
+                                          ..shader = const LinearGradient(
+                                            colors: <Color>[
+                                              Colors.blue,
+                                              Colors.purple,
+                                              Colors.pink,
+                                            ],
+                                          ).createShader(
+                                              const Rect.fromLTWH(
+                                                  0.0, 0.0, 200.0, 70.0)),
+                                      ),
+                                      softWrap: true,
                                     ),
-                                    softWrap: true,
+                        
                                   ),
-
                                 ),
-                              ),
-                              const SizedBox(width: 10.0),
-                              GestureDetector(
-                                onTap: () {
-                                  print('Invite');
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20.0,
-                                      vertical: 10.0),
-                                  decoration: BoxDecoration(
-                                    borderRadius:
-                                    BorderRadius.circular(10.0),
-                                    border: Border.all(
-                                      width: 2.0,
-                                      color:
-                                      Theme.of(context).primaryColor,
+                                IconButton(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      builder: (context) {
+                                        return SizedBox(
+                                          height: 300,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Column(
+                                              children: [
+                                                //server avatar and name
+                                                ListTile(
+                                                  leading: CircleAvatar(
+                                                    backgroundImage: NetworkImage(
+                                                      'http://10.0.2.2:8080/uploads/${_selectedServer['Media']['FileName']}?rand=${DateTime.now().millisecondsSinceEpoch}',
+                                                    ),
+                                                  ),
+                                                  title: Text(
+                                                    _selectedServer['Name'],
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      foreground: Paint()
+                                                        ..shader = const LinearGradient(
+                                                          colors: <Color>[
+                                                            Colors.blue,
+                                                            Colors.purple,
+                                                            Colors.pink,
+                                                          ],
+                                                        ).createShader(
+                                                            const Rect.fromLTWH(
+                                                                0.0, 0.0, 200.0, 70.0)),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const Divider(
+                                                  thickness: 1.0,
+                                                  indent: 100.0,
+                                                  endIndent: 100.0,
+                                                ),
+                                                ListTile(
+                                                  leading: const Icon(Icons.settings),
+                                                  title: const Text('Paramètres du serveur',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  onTap: () {
+                                                    final result = Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) => ServerSettingsPage(
+                                                          serverId: _selectedServer['ID'],
+                                                          serverName: _selectedServer['Name'],
+                                                          serverAvatar: _selectedServer['Media']['FileName'],
+                                                        ),
+                                                      ),
+                                                    );
+
+                                                    result.then((value) {
+                                                      if (value != null) {
+                                                        setState(() {
+                                                          _selectedServer['Media']['FileName'] = value['avatar'];
+                                                        });
+                                                      }
+                                                    });
+                                                  },
+                                                ),
+                                                ListTile(
+                                                  leading: const Icon(Icons.people),
+                                                  title: const Text('Liste des membres',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            ServerMembersList(
+                                                              serverId: _selectedServer['ID'],
+                                                            ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                                ListTile(
+                                                  leading: const Icon(Icons.exit_to_app,
+                                                    color: Colors.red,
+                                                  ),
+                                                  title: const Text('Quitter le serveur',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.red,
+                                                    ),
+                                                  ),
+                                                  onTap: () {
+                                                    print('Leave server');
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                  icon: ShaderMask(
+                                    shaderCallback: (Rect bounds) {
+                                      return const LinearGradient(
+                                        colors: <Color>[
+                                          Colors.blue,
+                                          Colors.purple,
+                                          Colors.pink,
+                                        ],
+                                      ).createShader(bounds);
+                                    },
+                                    blendMode: BlendMode.srcIn,
+                                    child: const Icon(
+                                        Icons.arrow_forward_ios_outlined,
+                                        size: 25.0,
                                     ),
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.add,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10.0),
+                            //add channel button with icon
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => AddChannelPage(
+                                          serverId: _selectedServer['ID'],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 25.0),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.add_circle,
+                                          color: Theme.of(context)
+                                              .primaryColor,
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          'Ajouter un channel',
+                                          style: TextStyle(
+                                            color: Theme.of(context)
+                                                .primaryColor,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    print('Invite');
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 5.0,
+                                        vertical: 3.0),
+                                    decoration: BoxDecoration(
+                                      borderRadius:
+                                      BorderRadius.circular(10.0),
+                                      border: Border.all(
+                                        width: 2.0,
                                         color: Theme.of(context)
                                             .primaryColor,
                                       ),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        'Invite des amis',
-                                        style: TextStyle(
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.supervised_user_circle_outlined,
                                           color: Theme.of(context)
                                               .primaryColor,
-                                          fontWeight: FontWeight.bold,
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          'Invite des amis',
+                                          style: TextStyle(
+                                            color: Theme.of(context)
+                                                .primaryColor,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          //channels panel
-                          ChannelsPanel(
-                            serverId: _selectedServer['ID'],
-                          ),
-                        ],
+                              ],
+                            ),
+                            const SizedBox(height: 10.0),
+                            //channels panel
+                            ChannelsPanel(
+                              serverId: _selectedServer['ID'],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -315,5 +517,11 @@ class _ServerPageState extends State<ServerPage> {
         ),
       ),
     );
+  }
+  void _onServerAdded(Map newServer) {
+    setState(() {
+      _servers.add(newServer);
+      _selectedServer = newServer;
+    });
   }
 }
