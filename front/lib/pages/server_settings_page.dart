@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:unity_hub/pages/role_page.dart';
 import 'package:unity_hub/pages/server_logs_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
@@ -171,14 +172,14 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                         child: Stack(
                           children: [
                             CircleAvatar(
-                              radius: 75,
-                              backgroundColor: Colors.grey.shade200,
-                              child: CircleAvatar(
-                                radius: 70,
-                                backgroundImage: NetworkImage(
-                                  'http://10.0.2.2:8080/uploads/${widget.serverAvatar}?rand=${DateTime.now().millisecondsSinceEpoch}',
-                                ),
-                              ),
+                              radius: 70,
+                              backgroundImage: Image.network(
+                                'http://10.0.2.2:8080/uploads/${widget.serverAvatar}?rand=${DateTime.now().millisecondsSinceEpoch}',
+                                errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                                  // You can return any widget here. For example, you can return an Image widget with a default image:
+                                  return Image.asset('assets/images/air-force.png');
+                                },
+                              ).image,
                             ),
                             Positioned(
                               bottom: 1,
@@ -246,6 +247,14 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RolePage(serverId: widget.serverId),
+                            ),
+                          );
+                        },
                       ),
                       ListTile(
                         onTap: () {
