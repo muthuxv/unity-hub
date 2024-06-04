@@ -5,14 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8815fac1-87fe-4c79-9dde-6b160849ebeb" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../front/lib/pages/role_form_page.dart" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../front/lib/pages/role_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../front/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/../front/android/app/build.gradle" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../front/lib/pages/invitations/send_invitation_page.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../front/lib/pages/roles/role_update_form_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../front/lib/pages/role_form_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/../front/lib/pages/roles/role_form_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../front/lib/pages/role_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/../front/lib/pages/roles/role_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../front/lib/pages/server_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/../front/lib/pages/server_page.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../front/lib/pages/server_settings_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/../front/lib/pages/server_settings_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../front/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../front/pubspec.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/server.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/server.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/services/friend.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/services/friend.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/services/invitation.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/services/invitation.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,6 +29,11 @@
   </component>
   <component name="GOROOT" url="file://$PROJECT_DIR$/../../../../../../Program Files/Go" />
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$/.." value="feature/roles-front" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="ProblemsViewState">
@@ -53,6 +59,7 @@
     "git-widget-placeholder": "develop",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
+    "ignore.virus.scanning.warn.message": "true",
     "last_opened_file_path": "C:/Users/ayman/OneDrive/Documents/unity-hub/server",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",

@@ -1,12 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AddServerPage extends StatefulWidget {
   final Function(Map)? onServerAdded; // Modify to accept callback with Map
-  const AddServerPage({super.key, this.onServerAdded});
+  const AddServerPage({Key? key, this.onServerAdded}) : super(key: key);
 
   @override
   State<AddServerPage> createState() => _AddServerPageState();
@@ -22,16 +21,15 @@ class _AddServerPageState extends State<AddServerPage> {
       _isLoading = true;
     });
 
-    // Get the token from the secure storage
     final storage = const FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
-
-    // Add server logic
-    final response = await Dio().post('http://10.0.2.2:8080/servers/create', data: {
-      'name': _serverNameController.text,
-      'visibility': _visibility,
-    },
+    final response = await Dio().post(
+      'http://10.0.2.2:8080/servers/create',
+      data: {
+        'name': _serverNameController.text,
+        'visibility': _visibility,
+      },
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -42,8 +40,6 @@ class _AddServerPageState extends State<AddServerPage> {
         },
       ),
     );
-
-    print('Response: $response');
 
     if (response.statusCode == 201) {
       Navigator.pop(context);
@@ -72,6 +68,100 @@ class _AddServerPageState extends State<AddServerPage> {
     setState(() {
       _isLoading = false;
     });
+  }
+
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _linkController = TextEditingController();
+
+  void _showInvitationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Rentrez votre lien invitation'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextFormField(
+                controller: _linkController,
+                decoration: const InputDecoration(
+                  labelText: 'Lien invitation',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez entrer un lien';
+                  }
+                  return null;
+                },
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Annuler'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      _joinServer(_linkController.text);
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Rejoindre'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _joinServer(String link) async {
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    try {
+      final response = await Dio().post(
+        link,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          validateStatus: (status) {
+            return status! < 500;
+          },
+        ),
+      );
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vous avez rejoint le serveur avec succès'),
+          ),
+        );
+      } else {
+        final errorMessage = response.data['error'] ?? 'Une erreur est survenue';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Une erreur est survenue lors de la connexion au serveur'),
+        ),
+      );
+    }
   }
 
   @override
@@ -200,19 +290,19 @@ class _AddServerPageState extends State<AddServerPage> {
                 _isLoading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
-                        onPressed: _addServer,
-                        child: const Text('Créer le serveur'),
-                        style: ButtonStyle(
-                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                            const EdgeInsets.all(16),
-                          ),
-                        ),
+                  onPressed: _addServer,
+                  child: const Text('Créer le serveur'),
+                  style: ButtonStyle(
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                    ),
+                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                      const EdgeInsets.all(16),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 const Divider(
                   color: Colors.white,
@@ -230,7 +320,9 @@ class _AddServerPageState extends State<AddServerPage> {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    _showInvitationDialog(context);
+                  },
                   child: const Text('Rejoindre le serveur'),
                   style: ButtonStyle(
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(

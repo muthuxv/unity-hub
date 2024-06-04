@@ -21,7 +21,7 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 		}
 
 		// Fetch the role of the logged-in user
-		result := db.GetDB().Preload("Role").Where("user_id = ?", userID).First(&roleUser)
+		result := db.GetDB().Preload("User").Preload("Role").Where("user_id = ?", userID).First(&roleUser)
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la récupération du rôle de l'utilisateur"})
 			return
@@ -30,7 +30,7 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 		// Check if the user is an admin
 		if roleUser.Role.Label != "admin" {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Vous devez être administrateur pour créer une invitation",
-				"role": roleUser.Role.Label,
+				"role": roleUser,
 			})
 			return
 		}
@@ -65,6 +65,18 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 			return
 		}
 
+		// Check if the UserReceiver has already received an invitation for this server
+		result = db.GetDB().Table("invitations").Where("user_receiver_id = ? AND server_id = ?", receiver.UserReceiverID, serverID).Count(&count)
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la vérification des invitations existantes"})
+			return
+		}
+
+		if count > 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "L'utilisateur a déjà reçu une invitation pour ce serveur"})
+			return
+		}
+
 		// Create a new invitation with an expiry of 3 days
 		invitation := models.Invitation{
 			UserSenderID:   uint(userID),
@@ -81,7 +93,7 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 		result = db.GetDB().Create(&invitation)
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la création de l'invitation",
-				"receiver:": receiver.UserReceiverID})
+				"receiver": receiver.UserReceiverID})
 			return
 		}
 
