@@ -11,6 +11,7 @@ import 'package:unity_hub/pages/server_members_list.dart';
 import 'package:unity_hub/pages/server_settings_page.dart';
 
 import 'add_channel_page.dart';
+import 'invitations/send_invitation_page.dart';
 
 
 class ServerPage extends StatefulWidget {
@@ -292,7 +293,7 @@ class _ServerPageState extends State<ServerPage> {
                                       ),
                                       softWrap: true,
                                     ),
-                        
+
                                   ),
                                 ),
                                 IconButton(
@@ -463,7 +464,14 @@ class _ServerPageState extends State<ServerPage> {
                                 ),
                                 GestureDetector(
                                   onTap: () {
-                                    print('Invite');
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => SendInvitationPage(
+                                          serverId: _selectedServer['ID'],
+                                        ),
+                                      ),
+                                    );
                                   },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(

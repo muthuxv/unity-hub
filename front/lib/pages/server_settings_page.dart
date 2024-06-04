@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:unity_hub/pages/role_page.dart';
+import 'package:unity_hub/pages/roles/role_page.dart';
 import 'package:unity_hub/pages/server_logs_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
@@ -17,6 +18,39 @@ class ServerSettingsPage extends StatefulWidget {
 }
 
 class _ServerSettingsPageState extends State<ServerSettingsPage> {
+
+  void _showInvitationDialog(BuildContext context, int serverId) {
+    final url = 'http://10.0.2.2:8080/servers/$serverId/join';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Lien d\'invitation'),
+          content: Text(url),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: url));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Lien copié dans le presse-papiers'),
+                  ),
+                );
+              },
+              child: const Text('Copier le lien'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Fermer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -276,6 +310,9 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                         ),
                       ),
                       ListTile(
+                        onTap: () {
+                          _showInvitationDialog(context, widget.serverId);
+                        },
                         trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
                         leading: Icon(Icons.email_outlined, color: Colors.white),
                         title: Text(
