@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:unity_hub/pages/intro_page.dart';
 import 'package:unity_hub/pages/message_page.dart';
 import 'package:unity_hub/pages/notification_page.dart';
-import 'package:unity_hub/pages/friend_page.dart';
+import 'package:unity_hub/pages/profile_page.dart';
 import '../components/bottom_navbar.dart';
 import 'server_page.dart';
 import 'security/auth_page.dart';
@@ -28,10 +28,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   final List<Widget> _pages = [
-    const FriendPage(),
     const ServerPage(),
     const MessagePage(),
     const NotificationPage(),
+    const ProfilePage(),
   ];
 
   Future<void> _checkToken() async {
