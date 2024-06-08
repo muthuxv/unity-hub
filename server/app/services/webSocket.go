@@ -42,6 +42,8 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+var channelConnections = make(map[uint][]*websocket.Conn)
+
 func ChannelWsHandler(w http.ResponseWriter, r *http.Request, channelId string) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -58,6 +60,9 @@ func ChannelWsHandler(w http.ResponseWriter, r *http.Request, channelId string) 
 
 	log.Printf("WebSocket connected for channel ID: %d\n", channelIDUint)
 
+	channelID := uint(channelIDUint)
+	channelConnections[channelID] = append(channelConnections[channelID], conn)
+
 	for {
 		_, msgBytes, err := conn.ReadMessage()
 		if err != nil {
@@ -72,26 +77,54 @@ func ChannelWsHandler(w http.ResponseWriter, r *http.Request, channelId string) 
 			continue
 		}
 
-		userID, _ := strconv.ParseUint(receivedMessage["userID"].(string), 10, 64)
+		userID, _ := strconv.ParseUint(receivedMessage["UserID"].(string), 10, 64)
 		messageContent := receivedMessage["Content"].(string)
 
-		log.Printf("Received message on channel %d: %s\n", channelIDUint, messageContent)
+		log.Printf("Received message on channel %d: %s\n", channelID, messageContent)
 
-		saveMessageToChannel(uint(channelIDUint), messageContent, uint(userID))
+		saveMessageToChannel(channelID, receivedMessage, uint(userID))
 
-		err = conn.WriteMessage(websocket.TextMessage, msgBytes)
+		var user models.User
+		db.GetDB().Where("id = ?", userID).First(&user)
+		receivedMessage["User"] = map[string]interface{}{
+			"ID":      user.ID,
+			"Pseudo":  user.Pseudo,
+			"Profile": user.Profile,
+		}
+
+		msgBytes, err = json.Marshal(receivedMessage)
 		if err != nil {
-			log.Println("Write message error:", err)
+			log.Println("Error encoding JSON:", err)
+			continue
+		}
+
+		for _, c := range channelConnections[channelID] {
+			err = c.WriteMessage(websocket.TextMessage, msgBytes)
+			if err != nil {
+				log.Println("Write message error:", err)
+				break
+			}
+		}
+
+		log.Printf("Sent message on channel %d: %s\n", channelID, messageContent)
+	}
+
+	connections := channelConnections[channelID]
+	for i, c := range connections {
+		if c == conn {
+			channelConnections[channelID] = append(connections[:i], connections[i+1:]...)
 			break
 		}
 	}
 }
 
-func saveMessageToChannel(channelID uint, messageContent string, userID uint) {
+func saveMessageToChannel(channelID uint, message map[string]interface{}, userID uint) {
 	newMessage := models.Message{
-		Content:   messageContent,
+		Content:   message["Content"].(string),
+		Type:      message["Type"].(string),
 		ChannelID: channelID,
 		UserID:    userID,
+		SentAt:    message["SentAt"].(string),
 	}
 
 	db.GetDB().Create(&newMessage)

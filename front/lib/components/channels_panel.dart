@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:dio/dio.dart';
+import 'package:unity_hub/pages/voice_room.dart';
 
 import '../pages/channel_page.dart';
 
@@ -39,50 +40,6 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
       setState(() {
         _isLoading = false;
       });
-    }
-  }
-
-  Future<void> _connectToChannel(String channelId) async {
-    try {
-      final response = await Dio().get(
-          'http://10.0.2.2:8080/channels/$channelId/connect');
-      print('Response: $response');
-      final offer = response.data['offer'];
-      print('Offer: $offer');
-
-      final session = await createPeerConnection({
-        'iceServers': [
-          {'url': 'stun:stun.l.google.com:19302'},
-        ]
-      }, {});
-
-      session.onIceCandidate = (candidate) {
-        print('Ice candidate: $candidate');
-      };
-      session.onIceConnectionState = (state) {
-        print('Ice connection state: $state');
-      };
-
-      // Set the local description first
-      await session.setRemoteDescription(RTCSessionDescription(offer, 'offer'));
-
-      final answer = await session.createAnswer({});
-      await session.setLocalDescription(answer);
-
-      final Map<String, dynamic> data = {
-        'answer': answer.sdp,
-      };
-
-      print('Data: $data');
-
-      final response2 = await Dio().post(
-        'http://10.0.2.2:8080/channels/$channelId/answer',
-        data: data,
-      );
-
-      print('Response 2: $response2');
-    } catch (error) {
-      print('Error connecting to channel: $error');
     }
   }
 
@@ -223,7 +180,15 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
               for (final channel in _vocalChannels)
                 ListTile(
                   title: Text(channel['Name']),
-                  onTap: () => _connectToChannel(channel['ID'].toString()),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => VoiceRoom(
+                        channelId: channel['ID'],
+                        channelName: channel['Name'],
+                      ),
+                    ),
+                  ),
                   onLongPress: () {
                     showDialog(
                       context: context,
