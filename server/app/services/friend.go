@@ -52,14 +52,14 @@ func AcceptFriend() gin.HandlerFunc {
 		var friendData map[string]interface{}
 		if friend.UserID1 == inputFriend.UserID2 {
 			friendData = map[string]interface{}{
-				"ID":         friend.ID,
+				"FriendID":   friend.ID,
 				"Status":     friend.Status,
 				"UserPseudo": friend.User2.Pseudo,
 				"UserMail":   friend.User2.Email,
 			}
 		} else {
 			friendData = map[string]interface{}{
-				"ID":         friend.ID,
+				"FriendID":   friend.ID,
 				"Status":     friend.Status,
 				"UserPseudo": friend.User1.Pseudo,
 				"UserMail":   friend.User1.Email,
@@ -154,22 +154,28 @@ func GetFriendsByUser() gin.HandlerFunc {
 			return
 		}
 
-		friendsResponse := make([]map[string]interface{}, len(friends))
-		for i, friend := range friends {
-			var friendPseudo string
+		friendsResponse := make([]map[string]interface{}, 0)
+		for _, friend := range friends {
+			var friendPseudo, friendEmail string
+			var friendID uint
+
 			if friend.UserID1 == uint(userID) {
 				friendPseudo = friend.User2.Pseudo
+				friendEmail = friend.User2.Email
+				friendID = friend.UserID2
 			} else {
 				friendPseudo = friend.User1.Pseudo
+				friendEmail = friend.User1.Email
+				friendID = friend.UserID1
 			}
 
 			friendData := map[string]interface{}{
-				"FriendID":   friend.ID,
+				"FriendID":   friendID,
 				"Status":     friend.Status,
 				"UserPseudo": friendPseudo,
-				"UserMail":   friend.User1.Email,
+				"UserMail":   friendEmail,
 			}
-			friendsResponse[i] = friendData
+			friendsResponse = append(friendsResponse, friendData)
 		}
 
 		c.JSON(http.StatusOK, friendsResponse)
@@ -197,10 +203,10 @@ func GetPendingFriendsByUser() gin.HandlerFunc {
 		for i, friend := range friends {
 
 			friendData := map[string]interface{}{
-				"ID":         friend.ID,
-				"FriendID":   friend.User1.ID,
-				"Status":     friend.Status,
-				"UserPseudo": friend.User1.Pseudo,
+				"FriendID":      friend.ID,
+				"FriendUser1ID": friend.User1.ID,
+				"Status":        friend.Status,
+				"UserPseudo":    friend.User1.Pseudo,
 			}
 			friendsResponse[i] = friendData
 		}

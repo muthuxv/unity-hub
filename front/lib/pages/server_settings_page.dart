@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:unity_hub/pages/roles/role_page.dart';
 import 'package:unity_hub/pages/server_logs_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
@@ -16,6 +18,39 @@ class ServerSettingsPage extends StatefulWidget {
 }
 
 class _ServerSettingsPageState extends State<ServerSettingsPage> {
+
+  void _showInvitationDialog(BuildContext context, int serverId) {
+    final url = 'http://10.0.2.2:8080/servers/$serverId/join';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Lien d\'invitation'),
+          content: Text(url),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: url));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Lien copié dans le presse-papiers'),
+                  ),
+                );
+              },
+              child: const Text('Copier le lien'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Fermer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -171,14 +206,14 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                         child: Stack(
                           children: [
                             CircleAvatar(
-                              radius: 75,
-                              backgroundColor: Colors.grey.shade200,
-                              child: CircleAvatar(
-                                radius: 70,
-                                backgroundImage: NetworkImage(
-                                  'http://10.0.2.2:8080/uploads/${widget.serverAvatar}?rand=${DateTime.now().millisecondsSinceEpoch}',
-                                ),
-                              ),
+                              radius: 70,
+                              backgroundImage: Image.network(
+                                'http://10.0.2.2:8080/uploads/${widget.serverAvatar}?rand=${DateTime.now().millisecondsSinceEpoch}',
+                                errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                                  // You can return any widget here. For example, you can return an Image widget with a default image:
+                                  return Image.asset('assets/images/air-force.png');
+                                },
+                              ).image,
                             ),
                             Positioned(
                               bottom: 1,
@@ -246,6 +281,14 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RolePage(serverId: widget.serverId),
+                            ),
+                          );
+                        },
                       ),
                       ListTile(
                         onTap: () {
@@ -267,6 +310,9 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                         ),
                       ),
                       ListTile(
+                        onTap: () {
+                          _showInvitationDialog(context, widget.serverId);
+                        },
                         trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
                         leading: Icon(Icons.email_outlined, color: Colors.white),
                         title: Text(

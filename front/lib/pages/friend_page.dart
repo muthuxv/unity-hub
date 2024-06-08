@@ -13,6 +13,7 @@ class FriendPage extends StatefulWidget {
 class _FriendPageState extends State<FriendPage> {
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = false;
+  bool _showLoading = false;
   List _friends = [];
   List _filteredFriends = [];
   List _pendingRequests = [];
@@ -110,6 +111,10 @@ class _FriendPageState extends State<FriendPage> {
   }
 
   void _acceptFriendRequest(String friendId) async {
+    setState(() {
+      _showLoading = true;
+    });
+
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
@@ -134,14 +139,14 @@ class _FriendPageState extends State<FriendPage> {
         _pendingRequests.removeWhere((item) => item['ID'].toString() == friendId);
 
         var newFriend = {
-          'ID': response.data['ID'],
+          'FriendID': response.data['FriendID'],
           'Status': response.data['Status'],
           'UserPseudo': response.data['UserPseudo'],
           'Email': response.data['UserMail']
         };
 
-        _pendingRequests.removeWhere((item) => item['ID'].toString() == friendId);
-        if (!_friends.any((friend) => friend['ID'] == newFriend['ID'])) {
+        _pendingRequests.removeWhere((item) => item['FriendID'].toString() == friendId);
+        if (!_friends.any((friend) => friend['FriendID'] == newFriend['FriendID'])) {
           _friends.add(newFriend);
         }
 
@@ -152,6 +157,11 @@ class _FriendPageState extends State<FriendPage> {
     } else {
       _showErrorDialog('Failed to accept friend request: ${response.data['message']}');
     }
+
+    setState(() {
+      _pendingRequests.removeWhere((item) => item['FriendID'].toString() == friendId);
+      _showLoading = false;
+    });
   }
 
   void _refuseFriendRequest(String friendId) async {
@@ -298,6 +308,7 @@ class _FriendPageState extends State<FriendPage> {
   }
 
   void _showFriendRequestDialog(Map request) {
+    print(request);
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -306,14 +317,14 @@ class _FriendPageState extends State<FriendPage> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                _acceptFriendRequest(request['ID'].toString());
+                _acceptFriendRequest(request['FriendID'].toString());
                 Navigator.of(context).pop();
               },
               child: Text('Accepter'),
             ),
             TextButton(
               onPressed: () {
-                _refuseFriendRequest(request['ID'].toString());
+                _refuseFriendRequest(request['FriendID'].toString());
                 Navigator.of(context).pop();
               },
               child: Text('Refuser'),
@@ -411,6 +422,7 @@ class _FriendPageState extends State<FriendPage> {
   }
 
   void _showDeleteConfirmationDialog(Map friend) {
+    print(friend);
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -646,6 +658,12 @@ class _FriendPageState extends State<FriendPage> {
   }
 
   Widget buildFriendPageContent() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     return Column(
       children: <Widget>[
         Padding(
@@ -664,29 +682,35 @@ class _FriendPageState extends State<FriendPage> {
             ),
           ),
         ),
-        // Other widgets remain the same as previously defined...
-        Container(
-          height: 120,
-          child: _pendingRequests.isEmpty
-              ? Center(
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                "Pas de demande d'ami",
-                style: TextStyle(fontSize: 16, color: Colors.black54),
-              ),
+        if (_showLoading)
+          Expanded(
+            child: Center(
+              child: CircularProgressIndicator(),
             ),
           )
-              : ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: _pendingRequests.length,
-            itemBuilder: (context, index) => _buildPendingRequestCard(_pendingRequests[index]),
+        else
+          Container(
+            height: 120,
+            child: _pendingRequests.isEmpty
+                ? Center(
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  "Pas de demande d'ami",
+                  style: TextStyle(fontSize: 16, color: Colors.black54),
+                ),
+              ),
+            )
+                : ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _pendingRequests.length,
+              itemBuilder: (context, index) => _buildPendingRequestCard(_pendingRequests[index]),
+            ),
           ),
-        ),
         Expanded(
           child: _friends.isEmpty
               ? Center(
@@ -713,7 +737,10 @@ class _FriendPageState extends State<FriendPage> {
                     backgroundColor: Colors.blueGrey,
                     child: Text(_filteredFriends[index]['UserPseudo'][0].toUpperCase()),
                   ),
-                  title: Text(_filteredFriends[index]['UserPseudo'], style: TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text(
+                    _filteredFriends[index]['UserPseudo'],
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   subtitle: Text(_filteredFriends[index]['Status']),
                   onTap: () => _showBottomModal(_filteredFriends[index]),
                 ),
@@ -731,7 +758,8 @@ class _FriendPageState extends State<FriendPage> {
       length: 2, // Total number of tabs
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Amis'),
+          title: const Text('Amis', style: TextStyle(color: Colors.white)),
+          backgroundColor: Colors.deepPurple[300],
           elevation: 0,
           actions: <Widget>[
             Container(
@@ -744,7 +772,7 @@ class _FriendPageState extends State<FriendPage> {
                 ),
                 onPressed: _showAddFriendDialog,
                 style: TextButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
+                  backgroundColor: Colors.deepPurple,
                   padding: EdgeInsets.symmetric(horizontal: 10),
                 ),
               ),
@@ -752,8 +780,8 @@ class _FriendPageState extends State<FriendPage> {
           ],
           bottom: TabBar(
             tabs: [
-              Tab(icon: Icon(Icons.group)),
-              Tab(icon: Icon(Icons.send)),
+              Tab(icon: Icon(Icons.group, color: Colors.white)),
+              Tab(icon: Icon(Icons.send, color: Colors.white)),
             ],
           ),
         ),

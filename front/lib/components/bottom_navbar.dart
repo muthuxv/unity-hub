@@ -20,10 +20,6 @@ class MyBottomNavBar extends StatelessWidget {
             onTabChange: (value) => onTabChange!(value),
             tabs: const [
               GButton(
-                icon: Icons.people_outline,
-                text: 'Amis',
-              ),
-              GButton(
                 icon: Icons.storage,
                 text: 'Serveurs',
               ),
@@ -34,7 +30,11 @@ class MyBottomNavBar extends StatelessWidget {
               GButton(
                 icon: Icons.notifications,
                 text: 'Notifications',
-              )
+              ),
+              GButton(
+                icon: Icons.person,
+                text: 'Profil',
+              ),
             ],
             selectedIndex: 0,
           ),

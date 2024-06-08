@@ -111,3 +111,34 @@ func VerifyAccount() gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{"message": "Account verified successfully"})
 	}
 }
+
+func ChangePassword() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input struct {
+			CurrentPassword string `json:"currentPassword" binding:"required"`
+			NewPassword     string `json:"newPassword" binding:"required,min=6"`
+		}
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.Error(err)
+			return
+		}
+
+		userID := c.Param("id")
+		var user models.User
+		result := db.GetDB().First(&user, userID)
+		if result.Error != nil {
+			c.Error(result.Error)
+			return
+		}
+
+		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.CurrentPassword)); err != nil {
+			c.Error(fmt.Errorf("current password is incorrect"))
+			return
+		}
+
+		user.Password = input.NewPassword
+		db.GetDB().Save(&user)
+
+		c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
+	}
+}
