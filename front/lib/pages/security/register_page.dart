@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 import 'package:random_avatar/random_avatar.dart';
-
 import 'package:dio/dio.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -20,8 +19,8 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isLoading = false;
 
   void _register() async {
-    if ( _pseudoController.text.isEmpty ||
-    _emailController.text.isEmpty ||
+    if (_pseudoController.text.isEmpty ||
+        _emailController.text.isEmpty ||
         _passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty) {
       showDialog(
@@ -29,6 +28,23 @@ class _RegisterPageState extends State<RegisterPage> {
         builder: (context) => AlertDialog(
           title: const Text('Erreur'),
           content: const Text('Veuillez remplir tous les champs.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    if (!_isValidEmail(_emailController.text)) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Erreur'),
+          content: const Text('Veuillez entrer une adresse email valide.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -61,37 +77,51 @@ class _RegisterPageState extends State<RegisterPage> {
       _isLoading = true;
     });
 
-    final response = await Dio().post(
-      'http://10.0.2.2:8080/register',
-      data: {
-        'pseudo': _pseudoController.text,
-        'email': _emailController.text,
-        'password': _passwordController.text,
-        'profile': RandomAvatarString(_pseudoController.text)
-      },
-      options: Options(
-        headers: {
-          'Content-Type': 'application/json',
+    try {
+      final response = await Dio().post(
+        'http://10.0.2.2:8080/register',
+        data: {
+          'pseudo': _pseudoController.text,
+          'email': _emailController.text,
+          'password': _passwordController.text,
+          'profile': RandomAvatarString(_pseudoController.text)
         },
-        validateStatus: (status) {
-          return status! < 500;
-        },
-      ),
-    );
-
-    print('Response: ${response.statusCode}');
-
-    if (response.statusCode == 201) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          validateStatus: (status) {
+            return status! < 500;
+          },
+        ),
       );
-    } else {
+
+      if (response.statusCode == 201) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      } else {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Erreur'),
+            content: Text(response.data['error']),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Erreur'),
-          content: Text(response.data['error']),
+          content: const Text('Une erreur est survenue. Veuillez réessayer plus tard.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -100,11 +130,16 @@ class _RegisterPageState extends State<RegisterPage> {
           ],
         ),
       );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
+  }
 
-    setState(() {
-      _isLoading = false;
-    });
+  bool _isValidEmail(String email) {
+    final regex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    return regex.hasMatch(email);
   }
 
   @override
@@ -202,6 +237,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderSide: BorderSide(color: Colors.white),
                       ),
                     ),
+                    keyboardType: TextInputType.emailAddress,
                   ),
 
                   const SizedBox(height: 16),
@@ -219,6 +255,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderSide: BorderSide(color: Colors.white),
                       ),
                     ),
+                    obscureText: true,
                   ),
 
                   const SizedBox(height: 16),
@@ -236,6 +273,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderSide: BorderSide(color: Colors.white),
                       ),
                     ),
+                    obscureText: true,
                   ),
 
                   const SizedBox(height: 16),

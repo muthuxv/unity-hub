@@ -38,7 +38,7 @@ class _AddChannelPageState extends State<AddChannelPage> {
     );
 
     if (response.statusCode == 201) {
-      Navigator.pop(context);
+      Navigator.pop(context, response);
     } else {
       showDialog(
         context: context,

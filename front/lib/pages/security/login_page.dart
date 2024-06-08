@@ -19,21 +19,19 @@ class _LoginPageState extends State<LoginPage> {
   bool _isObscure = true;
   bool _isLoading = false;
 
+  bool _isValidEmail(String email) {
+    final regex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    return regex.hasMatch(email);
+  }
+
   void _login(BuildContext context) async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Erreur'),
-          content: const Text('Veuillez remplir tous les champs.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
+      _showErrorDialog(context, 'Erreur', 'Veuillez remplir tous les champs.');
+      return;
+    }
+
+    if (!_isValidEmail(_emailController.text)) {
+      _showErrorDialog(context, 'Erreur', 'Veuillez entrer une adresse email valide.');
       return;
     }
 
@@ -41,49 +39,64 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = true;
     });
 
-    final response = await Dio().post(
-      'http://10.0.2.2:8080/login',
-      data: {
-        'email': _emailController.text,
-        'password': _passwordController.text,
-      },
-      options: Options(
-        headers: {
-          'Content-Type': 'application/json',
+    try {
+      final response = await Dio().post(
+        'http://10.0.2.2:8080/login',
+        data: {
+          'email': _emailController.text,
+          'password': _passwordController.text,
         },
-        validateStatus: (status) {
-          return status! < 500;
-        },
-      ),
-    );
-
-    if (response.statusCode == 200) {
-      final storage = FlutterSecureStorage();
-      await storage.write(key: 'token', value: response.data['token']);
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
-        (route) => false,
-      );
-    } else {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Erreur'),
-          content: Text(response.data['error']),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
         ),
       );
+
+      if (response.statusCode == 200) {
+        final storage = FlutterSecureStorage();
+        await storage.write(key: 'token', value: response.data['token']);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+              (route) => false,
+        );
+      } else {
+        _showErrorDialog(context, 'Erreur', 'Erreur lors de la connexion. Veuillez réessayer.');
+      }
+    } on DioError catch (e) {
+      if (e.response != null) {
+        if (e.response!.statusCode == 404) {
+          _showErrorDialog(context, 'Erreur', 'Utilisateur non trouvé.');
+        } else if (e.response!.statusCode == 401) {
+          _showErrorDialog(context, 'Erreur', 'Mot de passe incorrect.');
+        } else {
+          _showErrorDialog(context, 'Erreur', 'Erreur lors de la connexion. Veuillez réessayer.');
+        }
+      } else {
+        _showErrorDialog(context, 'Erreur', 'Erreur réseau. Veuillez vérifier votre connexion.');
+      }
     }
 
     setState(() {
       _isLoading = false;
     });
+  }
+
+  void _showErrorDialog(BuildContext context, String title, String content) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -99,9 +112,9 @@ class _LoginPageState extends State<LoginPage> {
       body: Container(
         decoration: const BoxDecoration(
             image: DecorationImage(
-          image: AssetImage('lib/images/wall1.png'),
-          fit: BoxFit.cover,
-        )),
+              image: AssetImage('lib/images/wall1.png'),
+              fit: BoxFit.cover,
+            )),
         child: Center(
           child: Container(
             decoration: BoxDecoration(
@@ -183,18 +196,18 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         suffixIcon: IconButton(
                           icon: _isObscure
-                          ? const Icon(
-                          Icons.visibility_off,
-                          color: Colors.white,
+                              ? const Icon(
+                            Icons.visibility_off,
+                            color: Colors.white,
                           )
                               : const Icon(
-                          Icons.visibility,
-                          color: Colors.white,
+                            Icons.visibility,
+                            color: Colors.white,
                           ),
                           onPressed: () {
-                          setState(() {
-                          _isObscure = !_isObscure;
-                          });
+                            setState(() {
+                              _isObscure = !_isObscure;
+                            });
                           },
                         ),
                       ),
@@ -215,21 +228,20 @@ class _LoginPageState extends State<LoginPage> {
                           padding: const EdgeInsets.all(25),
                           child: _isLoading
                               ? const Center(
-                                  child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.black
-                                    ),
-                                  ),
-                                )
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.black),
+                            ),
+                          )
                               : const Center(
-                                  child: Text(
-                                    'Se connecter',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
+                            child: Text(
+                              'Se connecter',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),

@@ -13,7 +13,6 @@ import 'package:unity_hub/pages/server_settings_page.dart';
 import 'add_channel_page.dart';
 import 'invitations/send_invitation_page.dart';
 
-
 class ServerPage extends StatefulWidget {
   const ServerPage({Key? key});
 
@@ -55,7 +54,6 @@ class _ServerPageState extends State<ServerPage> {
         _selectedServer = _servers.isNotEmpty ? _servers[0] : {};
         _isLoading = false;
       });
-      print('Servers: $_servers');
     } else {
       setState(() {
         _isLoading = false;
@@ -136,9 +134,7 @@ class _ServerPageState extends State<ServerPage> {
                         MaterialPageRoute(
                           builder: (context) => AddServerPage(
                             onServerAdded: (newServer) {
-                              setState(() {
-                                _selectedServer = newServer;
-                              });
+                              _onServerAdded(newServer);
                             },
                           ),
                         ),
@@ -153,7 +149,7 @@ class _ServerPageState extends State<ServerPage> {
               children: [
                 Row(
                   children: [
-                      Padding(
+                    Padding(
                       padding: const EdgeInsets.only(left: 20.0),
                       child: GestureDetector(
                         onTap: () {
@@ -162,9 +158,7 @@ class _ServerPageState extends State<ServerPage> {
                             MaterialPageRoute(
                               builder: (context) => AddServerPage(
                                 onServerAdded: (newServer) {
-                                  setState(() {
-                                    _selectedServer = newServer;
-                                  });
+                                  _onServerAdded(newServer);
                                 },
                               ),
                             ),
@@ -176,9 +170,9 @@ class _ServerPageState extends State<ServerPage> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              width: 4,
-                              style: BorderStyle.solid,
-                              color: Colors.pink
+                                width: 4,
+                                style: BorderStyle.solid,
+                                color: Colors.pink
                             ),
                           ),
                           child: GestureDetector(
@@ -208,44 +202,44 @@ class _ServerPageState extends State<ServerPage> {
                           scrollDirection: Axis.horizontal,
                           itemCount: _servers.length,
                           itemBuilder: (context, index) {
-                              String filename = _servers[index]['Media']['FileName'];
-                              String imageUrl = 'http://10.0.2.2:8080/uploads/$filename?rand=${DateTime.now().millisecondsSinceEpoch}';
+                            String filename = _servers[index]['Media']['FileName'];
+                            String imageUrl = 'http://10.0.2.2:8080/uploads/$filename?rand=${DateTime.now().millisecondsSinceEpoch}';
 
-                              return Padding(
-                                padding: const EdgeInsets.all(5.0),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    print(_servers[index]);
-                                    setState(() {
-                                      _selectedServer =
-                                      _servers[index];
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(5.0),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: const LinearGradient(
-                                        colors: [
-                                          Colors.blue,
-                                          Colors.purple,
-                                          Colors.pink,
-                                        ],
-                                      ),
-                                      color: _selectedServer['ID'] ==
-                                          _servers[index]['ID']
-                                          ? Colors.white
-                                          : Colors.white.withOpacity(0.5),
+                            return Padding(
+                              padding: const EdgeInsets.all(5.0),
+                              child: GestureDetector(
+                                onTap: () {
+                                  print(_servers[index]);
+                                  setState(() {
+                                    _selectedServer =
+                                    _servers[index];
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(5.0),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Colors.blue,
+                                        Colors.purple,
+                                        Colors.pink,
+                                      ],
                                     ),
-                                    child: CircleAvatar(
-                                      backgroundImage: NetworkImage(
-                                          imageUrl),
-                                      radius: 50,
-                                    ),
+                                    color: _selectedServer['ID'] ==
+                                        _servers[index]['ID']
+                                        ? Colors.white
+                                        : Colors.white.withOpacity(0.5),
+                                  ),
+                                  child: CircleAvatar(
+                                    backgroundImage: NetworkImage(
+                                        imageUrl),
+                                    radius: 50,
                                   ),
                                 ),
-                              );
-                            },
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -416,8 +410,8 @@ class _ServerPageState extends State<ServerPage> {
                                     },
                                     blendMode: BlendMode.srcIn,
                                     child: const Icon(
-                                        Icons.arrow_forward_ios_outlined,
-                                        size: 25.0,
+                                      Icons.arrow_forward_ios_outlined,
+                                      size: 25.0,
                                     ),
                                   ),
                                 ),
@@ -437,7 +431,11 @@ class _ServerPageState extends State<ServerPage> {
                                           serverId: _selectedServer['ID'],
                                         ),
                                       ),
-                                    );
+                                    ).then((value) {
+                                      if (value != null) {
+                                        ChannelsPanel.globalKey.currentState?.onChannelAdded(value);
+                                      }
+                                    });
                                   },
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
@@ -511,6 +509,7 @@ class _ServerPageState extends State<ServerPage> {
                             const SizedBox(height: 10.0),
                             //channels panel
                             ChannelsPanel(
+                              key: ChannelsPanel.globalKey,
                               serverId: _selectedServer['ID'],
                             ),
                           ],
@@ -526,6 +525,7 @@ class _ServerPageState extends State<ServerPage> {
       ),
     );
   }
+
   void _onServerAdded(Map newServer) {
     setState(() {
       _servers.add(newServer);
