@@ -10,9 +10,70 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+type UpdateServerInput struct {
+	Name       string `json:"name"`
+	Visibility string `json:"visibility"`
+	MediaID    uint   `json:"media_id"`
+	TagIDs     []uint `json:"tag_ids"`
+}
+
+type TagsInput struct {
+	TagIDs []uint `json:"tag_ids"`
+}
+
+func GetAllServers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var servers []models.Server
+		if err := db.GetDB().Preload("Media").Preload("Tags").Find(&servers).Error; err != nil {
+			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des serveurs")
+			return
+		}
+
+		c.JSON(http.StatusOK, servers)
+	}
+}
+
+func GetServerByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		serverIDStr := c.Param("id")
+		serverID, err := strconv.Atoi(serverIDStr)
+		if err != nil {
+			handleError(c, http.StatusBadRequest, "ID de serveur invalide")
+			return
+		}
+
+		var server models.Server
+		if err := db.GetDB().Preload("Media").Preload("Tags").First(&server, serverID).Error; err != nil {
+			handleError(c, http.StatusNotFound, "Serveur non trouvé")
+			return
+		}
+
+		c.JSON(http.StatusOK, server)
+	}
+}
+
+func SearchServerByName() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		name := c.Query("name")
+		if name == "" {
+			handleError(c, http.StatusBadRequest, "Le nom du serveur est requis")
+			return
+		}
+
+		var servers []models.Server
+		if err := db.GetDB().Where("name ILIKE ?", "%"+name+"%").Preload("Media").Preload("Tags").Find(&servers).Error; err != nil {
+			handleError(c, http.StatusInternalServerError, "Erreur lors de la recherche du serveur")
+			return
+		}
+
+		c.JSON(http.StatusOK, servers)
+	}
+}
+
 func NewServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var inputServer models.Server
+		var tagsInput TagsInput // Struct to hold tag IDs from JSON
 
 		if err := c.ShouldBindJSON(&inputServer); err != nil {
 			handleError(c, http.StatusBadRequest, "Erreur lors de la liaison des données JSON")
@@ -63,6 +124,20 @@ func NewServer() gin.HandlerFunc {
 			tx.Rollback()
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la création du serveur")
 			return
+		}
+
+		for _, tagID := range tagsInput.TagIDs {
+			var tag models.Tag
+			if err := tx.First(&tag, tagID).Error; err != nil {
+				tx.Rollback()
+				handleError(c, http.StatusInternalServerError, "Erreur lors de la recherche du tag")
+				return
+			}
+			if err := tx.Model(&inputServer).Association("Tags").Append(&tag); err != nil {
+				tx.Rollback()
+				handleError(c, http.StatusInternalServerError, "Erreur lors de l'association du tag avec le serveur")
+				return
+			}
 		}
 
 		if err := tx.Preload("Media").First(&inputServer).Error; err != nil {
@@ -302,6 +377,7 @@ func GetServersByUser() gin.HandlerFunc {
 		var servers []models.Server
 		if err := db.GetDB().Table("servers").Joins("JOIN on_servers ON servers.id = on_servers.server_id").
 			Preload("Media").
+			Preload("Tags").
 			Where("on_servers.user_id = ?", userID).
 			Find(&servers).Error; err != nil {
 			handleError(c, http.StatusInternalServerError, "Error retrieving user's servers")
@@ -390,6 +466,73 @@ func GetServerLogs() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"data": logs})
+	}
+}
+
+func UpdateServerByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		serverIDStr := c.Param("id")
+		serverID, err := strconv.Atoi(serverIDStr)
+		if err != nil {
+			handleError(c, http.StatusBadRequest, "ID de serveur invalide")
+			return
+		}
+
+		var input UpdateServerInput
+		if err := c.ShouldBindJSON(&input); err != nil {
+			handleError(c, http.StatusBadRequest, "Erreur lors de la liaison des données JSON")
+			return
+		}
+
+		var server models.Server
+		if err := db.GetDB().Preload("Tags").First(&server, serverID).Error; err != nil {
+			handleError(c, http.StatusNotFound, "Serveur non trouvé")
+			return
+		}
+
+		// Mise à jour des champs du serveur
+		if input.Name != "" {
+			server.Name = input.Name
+		}
+		if input.Visibility != "" {
+			server.Visibility = input.Visibility
+		}
+		if input.MediaID != 0 {
+			server.MediaID = input.MediaID
+		}
+
+		tx := db.GetDB().Begin()
+
+		// Mise à jour des tags
+		if len(input.TagIDs) > 0 {
+			var tags []models.Tag
+			if err := tx.Where("id IN ?", input.TagIDs).Find(&tags).Error; err != nil {
+				tx.Rollback()
+				handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des tags")
+				return
+			}
+			if err := tx.Model(&server).Association("Tags").Replace(tags); err != nil {
+				tx.Rollback()
+				handleError(c, http.StatusInternalServerError, "Erreur lors de la mise à jour des tags du serveur")
+				return
+			}
+		}
+
+		if err := tx.Save(&server).Error; err != nil {
+			tx.Rollback()
+			handleError(c, http.StatusInternalServerError, "Erreur lors de la mise à jour du serveur")
+			return
+		}
+
+		tx.Commit()
+
+		// Récupération du serveur mis à jour avec ses tags
+		if err := db.GetDB().Preload("Tags").First(&server, serverID).Error; err != nil {
+			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des tags après mise à jour")
+			return
+		}
+
+		c.JSON(http.StatusOK, server)
 	}
 }
 

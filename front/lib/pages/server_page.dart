@@ -273,7 +273,6 @@ class _ServerPageState extends State<ServerPage> {
                                       style: TextStyle(
                                         fontSize: 20.0,
                                         fontWeight: FontWeight.bold,
-                                        //gradient text
                                         foreground: Paint()
                                           ..shader = const LinearGradient(
                                             colors: <Color>[
@@ -301,7 +300,6 @@ class _ServerPageState extends State<ServerPage> {
                                             padding: const EdgeInsets.all(8.0),
                                             child: Column(
                                               children: [
-                                                //server avatar and name
                                                 ListTile(
                                                   leading: CircleAvatar(
                                                     backgroundImage: NetworkImage(
@@ -345,6 +343,7 @@ class _ServerPageState extends State<ServerPage> {
                                                           serverId: _selectedServer['ID'],
                                                           serverName: _selectedServer['Name'],
                                                           serverAvatar: _selectedServer['Media']['FileName'],
+                                                          serverVisibility: _selectedServer['Visibility'],
                                                         ),
                                                       ),
                                                     );
@@ -418,7 +417,6 @@ class _ServerPageState extends State<ServerPage> {
                               ],
                             ),
                             const SizedBox(height: 10.0),
-                            //add channel button with icon
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -507,7 +505,6 @@ class _ServerPageState extends State<ServerPage> {
                               ],
                             ),
                             const SizedBox(height: 10.0),
-                            //channels panel
                             ChannelsPanel(
                               key: ChannelsPanel.globalKey,
                               serverId: _selectedServer['ID'],

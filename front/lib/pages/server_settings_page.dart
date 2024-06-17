@@ -6,12 +6,14 @@ import 'package:unity_hub/pages/roles/role_page.dart';
 import 'package:unity_hub/pages/server_logs_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
+import 'server_update_tags_page.dart';
 
 class ServerSettingsPage extends StatefulWidget {
   final int serverId;
   final String serverName;
   String serverAvatar;
-  ServerSettingsPage({super.key, required this.serverId, required this.serverName, required this.serverAvatar});
+  final String serverVisibility;
+  ServerSettingsPage({super.key, required this.serverId, required this.serverName, required this.serverAvatar, required this.serverVisibility});
 
   @override
   State<ServerSettingsPage> createState() => _ServerSettingsPageState();
@@ -66,7 +68,6 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
             onPressed: () {
               Navigator.pop(
                   context,
-                  // Send back the server name and avatar
                   {
                     'avatar': widget.serverAvatar,
                   },
@@ -210,7 +211,6 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                               backgroundImage: Image.network(
                                 'http://10.0.2.2:8080/uploads/${widget.serverAvatar}?rand=${DateTime.now().millisecondsSinceEpoch}',
                                 errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
-                                  // You can return any widget here. For example, you can return an Image widget with a default image:
                                   return Image.asset('assets/images/air-force.png');
                                 },
                               ).image,
@@ -334,12 +334,31 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                           ),
                         ),
                       ),
+                      if (widget.serverVisibility == 'public')
+                      ListTile(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ServerUpdateTagsPage(serverId: widget.serverId),
+                            ),
+                          );
+                        },
+                        trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
+                        leading: Icon(Icons.label, color: Colors.white),
+                        title: Text(
+                          'Tags',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  // open dialog to confirm server deletion
                   onTap: () {
                     showDialog(
                       context: context,

@@ -3,6 +3,7 @@ import 'package:unity_hub/pages/intro_page.dart';
 import 'package:unity_hub/pages/message_page.dart';
 import 'package:unity_hub/pages/notification_page.dart';
 import 'package:unity_hub/pages/profile_page.dart';
+import 'package:unity_hub/pages/communityhub_page.dart';
 import '../components/bottom_navbar.dart';
 import 'server_page.dart';
 import 'security/auth_page.dart';
@@ -39,31 +40,26 @@ class _HomePageState extends State<HomePage> {
     final jwtToken = await storage.read(key: 'token');
 
     if (jwtToken == null) {
-      // No tokens found, navigate to intro page
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const IntroPage()),
       );
     } else if (jwtToken != null) {
-      // JWT token found, decode and verify if it's expired
       final bool isTokenExpired = JwtDecoder.isExpired(jwtToken);
       if (isTokenExpired) {
-        // JWT token expired, navigate to intro page
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const IntroPage()),
         );
       } else {
-        // JWT token valid, extract email and update state
         final decodedToken = JwtDecoder.decode(jwtToken);
         setState(() {
-          email = decodedToken['sub']; // Update email variable with decoded email
+          email = decodedToken['sub'];
         });
       }
     }
   }
 
-  //logout
   void _logout() async {
     const storage = FlutterSecureStorage();
     await storage.deleteAll();
@@ -120,23 +116,13 @@ class _HomePageState extends State<HomePage> {
                   leading: const Icon(
                       Icons.home),
                   title: const Text(
-                      'Home',
+                      'CommunityHub',
                       ),
                   onTap: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.only(left: 25.0),
-                child: ListTile(
-                  leading: const Icon(
-                      Icons.info),
-                  title: const Text(
-                      'About'),
-                  onTap: () {
-                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => CommunityHubPage()),
+                    );
                   },
                 ),
               ),
