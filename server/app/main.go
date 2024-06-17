@@ -45,6 +45,7 @@ func main() {
 	routes.RolePermissionsRoutes(r)
 	routes.RoleUserRoutes(r)
 	routes.ServerRoutes(r)
+	routes.TagRoutes(r)
 	routes.ThemeRoutes(r)
 	routes.ThemeServerRoutes(r)
 	routes.NotificationRoutes(r)

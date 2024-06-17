@@ -11,4 +11,5 @@ type Server struct {
 	Visibility string `gorm:"validate:required"`
 	MediaID    uint   `gorm:"validate:required"`
 	Media      Media  `gorm:"foreignKey:MediaID;references:ID;"`
+	Tags       []Tag  `gorm:"many2many:server_tags;"`
 }

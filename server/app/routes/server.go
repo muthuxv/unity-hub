@@ -9,12 +9,13 @@ import (
 )
 
 func ServerRoutes(r *gin.Engine) {
-	r.GET("/servers", controllers.GetAll(func() interface{} { return &[]models.Server{} }))
 	r.POST("/servers", controllers.Create(func() interface{} { return &models.Server{} }))
-	r.GET("/servers/:id", controllers.Get(func() interface{} { return &models.Server{} }))
-	r.PUT("/servers/:id", controllers.Update(func() interface{} { return &models.Server{} }))
 	r.DELETE("/servers/:id", controllers.Delete(func() interface{} { return &models.Server{} }))
 
+	r.GET("/servers", services.GetAllServers())
+	r.GET("/servers/search", services.SearchServerByName())
+	r.GET("/servers/:id", services.GetServerByID())
+	r.PUT("/servers/:id", services.UpdateServerByID())
 	r.POST("/servers/create", controllers.TokenAuthMiddleware("user"), services.NewServer())
 	r.POST("/servers/:id/join", controllers.TokenAuthMiddleware("user"), controllers.GenerateLogMiddleware("joined"), services.JoinServer())
 	r.DELETE("/servers/:id/leave", controllers.TokenAuthMiddleware("user"), controllers.GenerateLogMiddleware("left"), services.LeaveServer())
