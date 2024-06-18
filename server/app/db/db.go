@@ -38,8 +38,8 @@ func MakeMigrations() {
 	}
 	err := db.AutoMigrate(
 		&models.User{},
-		&models.Notification{},
-		&models.ActiveNotification{},
+		&models.Rule{},
+		&models.ActiveRule{},
 		&models.Media{},
 		&models.Channel{},
 		&models.Event{},
@@ -59,6 +59,9 @@ func MakeMigrations() {
 		&models.RoleUser{},
 		&models.Theme{},
 		&models.ThemeServer{},
+		&models.Ban{},
+		&models.Group{},
+		&models.GroupMembers{},
 	)
 
 	if err != nil {

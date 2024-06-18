@@ -13,6 +13,7 @@ type User struct {
 	Password          string `gorm:"validate:required,min=5,containsany=0123456789"`
 	VerificationToken string `gorm:"size:255"`
 	IsVerified        bool   `gorm:"default:false"`
+	// IP                string
 	Provider          string
 	ProviderID        string
 	Profile           string `gorm:"default:default.jpg"`

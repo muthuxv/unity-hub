@@ -48,8 +48,11 @@ func main() {
 	routes.TagRoutes(r)
 	routes.ThemeRoutes(r)
 	routes.ThemeServerRoutes(r)
-	routes.NotificationRoutes(r)
-	routes.ActiveNotificationRoutes(r)
+	routes.RuleRoutes(r)
+	routes.ActiveRuleRoutes(r)
+	routes.GroupRoutes(r)
+	routes.GroupMemberRoutes(r)
+	routes.BanRoutes(r)
 	/*workers*/
 	routes.WebSocketRoutes(r)
 	routes.AuthV2Routes(r)
