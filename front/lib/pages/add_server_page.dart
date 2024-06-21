@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:multi_select_flutter/multi_select_flutter.dart';
+
 import 'package:unity_hub/utils/random_server_avatar.dart';
 import 'package:unity_hub/utils/media_uploader.dart';
 
@@ -16,6 +18,66 @@ class _AddServerPageState extends State<AddServerPage> {
   bool _isLoading = false;
   final TextEditingController _serverNameController = TextEditingController();
   String _visibility = 'private';
+  bool _showTagsField = false;
+  List<dynamic> _tags = [];
+  List<dynamic> _selectedTags = [];
+
+  void _toggleTagsField(bool value) {
+    setState(() {
+      _showTagsField = value;
+      if (!_showTagsField) {
+        _selectedTags = [];
+      }
+    });
+  }
+
+  Future<void> _fetchTags() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    final response = await Dio().get(
+      'http://10.0.2.2:8080/tags',
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        validateStatus: (status) {
+          return status! < 500;
+        },
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        _tags = response.data;
+      });
+    } else {
+      _showErrorDialog(response.data['message']);
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Erreur'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTags();
+  }
 
   Future<void> _addServer() async {
     setState(() {
@@ -30,13 +92,20 @@ class _AddServerPageState extends State<AddServerPage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    final tagIds = _selectedTags.map((tag) => tag['ID']).toList();
+
+    final tagObjects = tagIds.map((tagId) => {'id': tagId}).toList();
+
+    final data = {
+      'name': _serverNameController.text,
+      'visibility': _visibility,
+      'tags': tagObjects,
+      'MediaID': mediaUploader['id'],
+    };
+
     final response = await Dio().post(
       'http://10.0.2.2:8080/servers/create',
-      data: {
-        'name': _serverNameController.text,
-        'visibility': _visibility,
-        'MediaID': mediaUploader['id'],
-      },
+      data: data,
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -52,6 +121,21 @@ class _AddServerPageState extends State<AddServerPage> {
       Navigator.pop(context);
       final newServer = response.data['data'];
       widget.onServerAdded?.call(newServer);
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Serveur crée'),
+          content: const Text('Le serveur a été crée avec succès.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
     } else {
       showDialog(
         context: context,
@@ -221,7 +305,6 @@ class _AddServerPageState extends State<AddServerPage> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                //radio buttons for visibility
                 Column(
                   children: [
                     Container(
@@ -239,6 +322,7 @@ class _AddServerPageState extends State<AddServerPage> {
                             onChanged: (value) {
                               setState(() {
                                 _visibility = 'public';
+                                _toggleTagsField(true);
                               });
                             },
                           ),
@@ -265,6 +349,7 @@ class _AddServerPageState extends State<AddServerPage> {
                             onChanged: (value) {
                               setState(() {
                                 _visibility = 'private';
+                                _toggleTagsField(false);
                               });
                             },
                           ),
@@ -292,6 +377,63 @@ class _AddServerPageState extends State<AddServerPage> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
+                _showTagsField
+                    ? Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: InkWell(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Sélectionnez vos tags'),
+                            content: Container(
+                              width: double.maxFinite,
+                              child: MultiSelectDialogField(
+                                items: _tags
+                                    .map((tag) => MultiSelectItem(tag, tag['Name']))
+                                    .toList(),
+                                initialValue: _selectedTags,
+                                onConfirm: (selected) {
+                                  setState(() {
+                                    _selectedTags = selected;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Text('Annuler'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          'Tags',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Icon(Icons.arrow_drop_down),
+                      ],
+                    ),
+                  ),
+                ) : SizedBox(),
                 const SizedBox(height: 16),
                 _isLoading
                     ? const CircularProgressIndicator()
