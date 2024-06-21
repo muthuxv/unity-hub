@@ -30,7 +30,8 @@ func NewServer() gin.HandlerFunc {
 		}
 
 		if inputServer.MediaID == 0 {
-			inputServer.MediaID = 2
+			handleError(c, http.StatusBadRequest, "L'ID du média est requis")
+			return
 		}
 
 		claims, exists := c.Get("jwt_claims")

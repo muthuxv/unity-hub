@@ -8,12 +8,15 @@ import 'package:intl/intl.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:giphy_picker/giphy_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:unity_hub/utils/messaging_service.dart';
 
 class ChannelPage extends StatefulWidget {
   final int channelId;
   final String channelName;
+  final int serverId;
 
-  const ChannelPage({super.key, required this.channelId, required this.channelName});
+  const ChannelPage({super.key, required this.channelId, required this.channelName, required this.serverId});
 
   @override
   State<ChannelPage> createState() => _ChannelPageState();
@@ -26,6 +29,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _messageController = TextEditingController();
   final Map<String, List<dynamic>> _messagesByDate = {};
+  final MessagingService messagingService = MessagingService();
 
   @override
   void initState() {
@@ -110,10 +114,40 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       Uri.parse('ws://10.0.2.2:8080/channels/${widget.channelId}/send'),
     );
 
-    _channel.stream.listen((message) {
+    _channel.stream.listen((message) async {
       final dynamic data = jsonDecode(message);
       final DateTime createdAt = DateTime.parse(data['SentAt']);
       final String formattedDate = DateFormat('yyyy-MM-dd').format(createdAt);
+
+
+      try {
+        await FirebaseMessaging.instance.unsubscribeFromTopic('channel-${widget.channelId}');
+
+        final accessToken = await messagingService.generateAccessToken();
+        final dio = Dio();
+        await dio.post(
+          'https://fcm.googleapis.com/v1/projects/unity-hub-446a0/messages:send',
+          data: {
+            'message': {
+              'topic': 'channel-${widget.channelId}',
+              'notification': {
+                'title': data['User']['Pseudo'],
+                'body': data['Content'],
+              },
+            },
+          },
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $accessToken',
+              'Content-Type': 'application/json',
+            },
+          ),
+        );
+
+        await FirebaseMessaging.instance.subscribeToTopic('channel-${widget.channelId}');
+      } catch (e) {
+        debugPrint('Error sending notification: $e');
+      }
 
       setState(() {
         _messagesByDate.putIfAbsent(formattedDate, () => []);
@@ -122,7 +156,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     });
   }
 
-  void _sendMessage(String message) {
+  Future<void> _sendMessage(String message) async {
     if (message.trim().isNotEmpty) {
       _channel.sink.add(jsonEncode({
         'UserID': currentUserID,

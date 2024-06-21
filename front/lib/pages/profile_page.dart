@@ -6,9 +6,10 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'friend_page.dart';
 import 'update_profile_page.dart';
 import 'profile_settings_page.dart';
+import 'package:flutter_svg/svg.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -18,6 +19,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isLoading = true;
   String _pseudo = 'Pseudo Utilisateur';
   String _email = 'pseudo@exemple.com';
+  String _avatar = '';
 
   @override
   void initState() {
@@ -47,6 +49,7 @@ class _ProfilePageState extends State<ProfilePage> {
         setState(() {
           _pseudo = response.data['Pseudo'];
           _email = response.data['Email'];
+          _avatar = response.data['Profile'] ?? '';
           _isLoading = false;
         });
       } else {
@@ -106,14 +109,21 @@ class _ProfilePageState extends State<ProfilePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircleAvatar(
-            radius: 60,
+            radius: 55,
             backgroundColor: Colors.deepPurple[50],
-            child: CircleAvatar(
-              radius: 55,
-              backgroundImage: AssetImage('assets/avatar.jpg'), // Assurez-vous que cette image est disponible
+            child: _avatar.contains('<svg')
+                ? SvgPicture.string(
+              _avatar,
+              height: 120,
+              width: 120,
+            )
+                : CircleAvatar(
+              radius: 50,
+              backgroundImage: NetworkImage(_avatar),
             ),
+
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(_pseudo, style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
           Text(_email, style: GoogleFonts.nunito(fontSize: 16, color: Colors.white70)),
         ],

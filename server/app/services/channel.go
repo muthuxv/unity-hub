@@ -21,3 +21,17 @@ func GetChannelMessages() gin.HandlerFunc {
 		c.JSON(http.StatusOK, messages)
 	}
 }
+
+func GetUserChannels() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var channels []models.Channel
+		userID := c.Param("id")
+
+		if err := db.GetDB().Where("user_id = ?", userID).Find(&channels).Error; err != nil {
+			c.Error(err)
+			return
+		}
+
+		c.JSON(http.StatusOK, channels)
+	}
+}

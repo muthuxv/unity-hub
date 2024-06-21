@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -145,5 +146,34 @@ func ChangePassword() gin.HandlerFunc {
 		db.GetDB().Save(&user)
 
 		c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
+	}
+}
+
+func RegisterFcmToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input struct {
+			FcmToken string `json:"fcmToken" binding:"required"`
+		}
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.Error(err)
+			return
+		}
+
+		//from jwt middleware
+		claims, _ := c.Get("jwt_claims")
+		jwtClaims := claims.(jwt.MapClaims)
+		userID := fmt.Sprintf("%v", jwtClaims["jti"])
+
+		var user models.User
+		result := db.GetDB().First(&user, userID)
+		if result.Error != nil {
+			c.Error(result.Error)
+			return
+		}
+
+		user.FcmToken = input.FcmToken
+		db.GetDB().Save(&user)
+
+		c.JSON(http.StatusOK, gin.H{"message": "FCM token updated successfully"})
 	}
 }

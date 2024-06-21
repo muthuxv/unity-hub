@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "244178234425",
+    "project_id": "unity-hub-446a0",
+    "storage_bucket": "unity-hub-446a0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:244178234425:android:c2ee190b0efa44063531e8",
+        "android_client_info": {
+          "package_name": "com.example.unity_hub"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "244178234425-a83cqg6ghn0vgmetuqhtcm8to7tf5mm1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.unity_hub",
+            "certificate_hash": "9dd43842f662641a6ef71891f75bd45b2f7f2b71"
+          }
+        },
+        {
+          "client_id": "244178234425-k6eap2sn5rq4kg6img00557o9737gsro.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMAMbUbGQbiJTjDI8hoyuO951_zHh9bdc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "244178234425-k6eap2sn5rq4kg6img00557o9737gsro.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "244178234425-86cnhu3j0iqae8ei9sa6477srrnkm95d.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.testProject"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

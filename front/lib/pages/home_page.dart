@@ -6,6 +6,7 @@ import 'package:unity_hub/pages/profile_page.dart';
 import '../components/bottom_navbar.dart';
 import 'server_page.dart';
 import 'security/auth_page.dart';
+import 'package:unity_hub/utils/messaging_service.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -18,6 +19,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final MessagingService messagingService = MessagingService();
   int _selectedIndex = 0;
   String email = '';
 
@@ -77,6 +79,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _checkToken();
+    messagingService.init(context);
   }
 
   @override

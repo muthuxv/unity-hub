@@ -96,9 +96,9 @@ class _ServerMembersListState extends State<ServerMembersList> {
                 height: 40,
                 width: 40,
               )
-                  : Text(
-                member['Profile'] ?? 'No Profile',
-                style: const TextStyle(fontSize: 20),
+                  : CircleAvatar(
+                radius: 50,
+                backgroundImage: NetworkImage(member['Profile']),
               ),
             ),
           );

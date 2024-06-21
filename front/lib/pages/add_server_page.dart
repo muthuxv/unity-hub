@@ -1,11 +1,12 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:unity_hub/utils/random_server_avatar.dart';
+import 'package:unity_hub/utils/media_uploader.dart';
 
 class AddServerPage extends StatefulWidget {
-  final Function(Map)? onServerAdded; // Modify to accept callback with Map
-  const AddServerPage({Key? key, this.onServerAdded}) : super(key: key);
+  final Function(Map)? onServerAdded;
+  const AddServerPage({super.key, this.onServerAdded});
 
   @override
   State<AddServerPage> createState() => _AddServerPageState();
@@ -21,7 +22,12 @@ class _AddServerPageState extends State<AddServerPage> {
       _isLoading = true;
     });
 
-    final storage = const FlutterSecureStorage();
+    //Génére un avatar pour le serveur
+    final avatarGenerator = ServerAvatarGenerator(filename: 'lib/images/unity_white.png');
+
+    final mediaUploader = await MediaUploader(filePath: (await avatarGenerator.generate())).upload();
+
+    const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
     final response = await Dio().post(
@@ -29,6 +35,7 @@ class _AddServerPageState extends State<AddServerPage> {
       data: {
         'name': _serverNameController.text,
         'visibility': _visibility,
+        'MediaID': mediaUploader['id'],
       },
       options: Options(
         headers: {
@@ -70,7 +77,6 @@ class _AddServerPageState extends State<AddServerPage> {
     });
   }
 
-  final _formKey = GlobalKey<FormState>();
   final TextEditingController _linkController = TextEditingController();
 
   void _showInvitationDialog(BuildContext context) {

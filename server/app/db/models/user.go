@@ -16,6 +16,7 @@ type User struct {
 	Provider          string
 	ProviderID        string
 	Profile           string `gorm:"default:default.jpg"`
+	FcmToken          string `gorm:"size:255"`
 }
 
 func (u *User) BeforeSave(tx *gorm.DB) (err error) {
