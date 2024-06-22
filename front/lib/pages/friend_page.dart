@@ -1,16 +1,19 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:unity_hub/utils/messaging_service.dart';
 
 class FriendPage extends StatefulWidget {
-  const FriendPage({Key? key}) : super(key: key);
+  const FriendPage({super.key});
 
   @override
   State<FriendPage> createState() => _FriendPageState();
 }
 
 class _FriendPageState extends State<FriendPage> {
+  final MessagingService messagingService = MessagingService();
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = false;
   bool _showLoading = false;
@@ -218,7 +221,7 @@ class _FriendPageState extends State<FriendPage> {
           _sentRequests.removeWhere((item) => item['FriendID'].toString() == friendId);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Demande d'ami annulée avec succès")),
+          const SnackBar(content: Text("Demande d'ami annulée avec succès")),
         );
       } else {
         _showErrorDialog(response.data['message'] ?? "Erreur lors de l'annulation de la demande d'ami");
@@ -354,7 +357,7 @@ class _FriendPageState extends State<FriendPage> {
   void _showBottomModal(Map friend) {
     showModalBottomSheet(
       context: context,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
@@ -363,7 +366,7 @@ class _FriendPageState extends State<FriendPage> {
       builder: (BuildContext context) {
         return Container(
           height: MediaQuery.of(context).size.height / 2,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
@@ -377,7 +380,7 @@ class _FriendPageState extends State<FriendPage> {
                 padding: const EdgeInsets.all(20.0),
                 child: Text(
                   friend['UserPseudo'], // Assurez-vous que la clé est correcte
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
               ),
               Padding(
@@ -427,20 +430,20 @@ class _FriendPageState extends State<FriendPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Êtes-vous sûr de supprimer cet ami ?'),
+          title: const Text('Êtes-vous sûr de supprimer cet ami ?'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Fermer la boîte de dialogue de confirmation
                 _deleteFriend(friend); // Supprimer l'ami
               },
-              child: Text('Oui'),
+              child: const Text('Oui'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Fermer la boîte de dialogue de confirmation
               },
-              child: Text('Non'),
+              child: const Text('Non'),
             ),
           ],
         );
@@ -469,7 +472,7 @@ class _FriendPageState extends State<FriendPage> {
           _friends.removeWhere((f) => f['FriendID'].toString() == friend['FriendID'].toString());
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Ami supprimé avec succès")),
+          const SnackBar(content: Text("Ami supprimé avec succès")),
         );
       } else {
         _showErrorDialog(response.data['message'] ?? "Erreur lors de la suppression de l'ami");
@@ -498,12 +501,12 @@ class _FriendPageState extends State<FriendPage> {
               ),
               elevation: 5,
               child: Padding(
-                padding: EdgeInsets.all(30),
+                padding: const EdgeInsets.all(30),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    Text(
+                    const Text(
                       "Ajouter par pseudo d'utilisateur",
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -511,7 +514,7 @@ class _FriendPageState extends State<FriendPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     Text(
                       "Qui sera ton nouvel ami ?",
                       style: TextStyle(
@@ -519,7 +522,7 @@ class _FriendPageState extends State<FriendPage> {
                         color: Colors.grey[600],
                       ),
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     TextField(
                       onChanged: (value) {
                         pseudo = value;
@@ -535,22 +538,22 @@ class _FriendPageState extends State<FriendPage> {
                           borderRadius: BorderRadius.circular(15.0),
                           borderSide: BorderSide.none,
                         ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
                       ),
                     ),
                     if (errorMessage.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 10),
-                        child: Text(errorMessage, style: TextStyle(color: Colors.red, fontSize: 14)),
+                        child: Text(errorMessage, style: const TextStyle(color: Colors.red, fontSize: 14)),
                       ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () => _sendFriendRequest(pseudo, (msg) => setState(() => errorMessage = msg)),
-                      child: Text("Envoyer une demande d'ami", style: TextStyle(fontSize: 18)),
                       style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 15),
+                        padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
                       ),
+                      child: const Text("Envoyer une demande d'ami", style: TextStyle(fontSize: 18)),
                     ),
                   ],
                 ),
@@ -585,6 +588,45 @@ class _FriendPageState extends State<FriendPage> {
       );
 
       if (response.statusCode == 200) {
+        try {
+          const storage = FlutterSecureStorage();
+          final token = await storage.read(key: 'token');
+          final response = await Dio().get(
+            'http://10.0.2.2:8080/users/pseudo/$pseudo',
+            options: Options(
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $token',
+              },
+            ),
+          );
+          final user = response.data;
+          final fcmToken = user['fcm_token'];
+          final accessToken = await messagingService.generateAccessToken();
+
+          await Dio().post(
+            'https://fcm.googleapis.com/v1/projects/unity-hub-446a0/messages:send',
+            options: Options(
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $accessToken',
+              },
+            ),
+            data: {
+              'message': {
+                'token': fcmToken,
+                'notification': {
+                  'title': 'Demande d\'ami',
+                  'body': 'Vous avez reçu une demande d\'ami de ${decodedToken['jti']}',
+                },
+              },
+            },
+          );
+          print('Friend request notification sent successfully');
+        } catch (e) {
+          print('Failed to get user by pseudo: $e');
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(response.data['message'] ?? "Friend request sent successfully!"))
         );
@@ -615,7 +657,7 @@ class _FriendPageState extends State<FriendPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Annuler la demande d\'ami'),
+          title: const Text('Annuler la demande d\'ami'),
           content: Text('Voulez-vous annuler la demande d\'ami à ${request['UserPseudo']} ?'),
           actions: <Widget>[
             TextButton(
@@ -623,7 +665,7 @@ class _FriendPageState extends State<FriendPage> {
                 Navigator.of(context).pop();
                 _cancelFriendRequest(request['FriendID'].toString());
               },
-              child: Text('Annuler la demande d\'ami'),
+              child: const Text('Annuler la demande d\'ami'),
             ),
             TextButton(
               onPressed: () {
@@ -639,17 +681,17 @@ class _FriendPageState extends State<FriendPage> {
 
   Widget buildSentRequestsTab() {
     return _sentRequests.isEmpty
-        ? Center(child: Text("Tu n'as pas encore fait de demande", style: TextStyle(fontSize: 16)))
+        ? const Center(child: Text("Tu n'as pas encore fait de demande", style: TextStyle(fontSize: 16)))
         : ListView.builder(
       itemCount: _sentRequests.length,
       itemBuilder: (context, index) {
         var request = _sentRequests[index];
         return ListTile(
-          leading: Icon(Icons.person),
+          leading: const Icon(Icons.person),
           title: Text(request['UserPseudo']),
-          subtitle: Text("Demande envoyée"),
+          subtitle: const Text("Demande envoyée"),
           trailing: IconButton(
-            icon: Icon(Icons.arrow_forward),
+            icon: const Icon(Icons.arrow_forward),
             onPressed: () => _showCancelFriendRequestDialog(request),
           ),
         );

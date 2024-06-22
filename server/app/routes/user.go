@@ -18,5 +18,6 @@ func UserRoutes(r *gin.Engine) {
 	r.GET("/verify/:token", services.VerifyAccount())
 	r.POST("/login", services.Login())
 	r.PUT("/users/:id/change-password", controllers.TokenAuthMiddleware("user"), controllers.IsOwner(), services.ChangePassword())
-	r.POST("/fcm-token", controllers.TokenAuthMiddleware("user"), services.RegisterFcmToken())
+	r.PUT("/fcm-token", controllers.TokenAuthMiddleware("user"), services.RegisterFcmToken())
+	r.GET("/users/pseudo/:pseudo", controllers.TokenAuthMiddleware("user"), services.GetUserByPseudo())
 }

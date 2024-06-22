@@ -90,6 +90,17 @@ func NewServer() gin.HandlerFunc {
 			return
 		}
 
+		if inputServer.Visibility == "public" {
+			if err := c.ShouldBindJSON(&tagsInput); err != nil {
+				handleError(c, http.StatusBadRequest, "Erreur lors de la liaison des données JSON")
+				return
+			}
+			if len(tagsInput.TagIDs) == 0 {
+				handleError(c, http.StatusBadRequest, "Un tag est requis pour les serveurs publics")
+				return
+			}
+		}
+
 		if inputServer.MediaID == 0 {
 			handleError(c, http.StatusBadRequest, "L'ID du média est requis")
 			return
@@ -327,7 +338,6 @@ func LeaveServer() gin.HandlerFunc {
 			return
 		}
 
-		// Begin a transaction
 		tx := db.GetDB().Begin()
 		defer func() {
 			if r := recover(); r != nil {
@@ -350,7 +360,6 @@ func LeaveServer() gin.HandlerFunc {
 			return
 		}
 
-		// Check if the user has a role on the server, if so, delete it
 		var roleUser models.RoleUser
 		if err := tx.Where("role_id IN (SELECT id FROM roles WHERE server_id = ?) AND user_id = ?", serverID, userID).First(&roleUser).Error; err == nil {
 			if err := tx.Delete(&roleUser).Error; err != nil {

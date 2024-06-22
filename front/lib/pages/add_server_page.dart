@@ -266,224 +266,211 @@ class _AddServerPageState extends State<AddServerPage> {
           backgroundColor: Colors.transparent,
           iconTheme: const IconThemeData(color: Colors.white),
         ),
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xff4776e6), Color(0xff8e54e9)],
-              stops: [0, 1],
-              begin: Alignment.centerRight,
-              end: Alignment.centerLeft,
-            ),
-          ),
+        body: SingleChildScrollView(
           child: Container(
-            padding: const EdgeInsets.all(24),
-            margin: const EdgeInsets.only(top: 100),
-            child: Column(
-              children: [
-                const Text(
-                  'Créer ton propre serveur!',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xff4776e6), Color(0xff8e54e9)],
+                stops: [0, 1],
+                begin: Alignment.centerRight,
+                end: Alignment.centerLeft,
+              ),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              margin: const EdgeInsets.only(top: 100),
+              child: Column(
+                children: [
+                  const Text(
+                    'Créer ton propre serveur!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Image.asset(
-                  'lib/images/unitylog.png',
-                  width: 100,
-                  color: Colors.white,
-                ),
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    'Donne un nom à ton serveur et choisis sa visibilité.',
+                  const SizedBox(height: 16),
+                  Image.asset(
+                    'lib/images/unitylog.png',
+                    width: 100,
+                    color: Colors.white,
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      'Donne un nom à ton serveur et choisis sa visibilité.',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            Radio(
+                              fillColor: MaterialStateProperty.all(Colors.white),
+                              value: 'public',
+                              groupValue: _visibility,
+                              onChanged: (value) {
+                                setState(() {
+                                  _visibility = 'public';
+                                  _toggleTagsField(true);
+                                });
+                              },
+                            ),
+                            const Text(
+                              'Créer un serveur public pour tout le monde.',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            Radio(
+                              fillColor: MaterialStateProperty.all(Colors.white),
+                              value: 'private',
+                              groupValue: _visibility,
+                              onChanged: (value) {
+                                setState(() {
+                                  _visibility = 'private';
+                                  _toggleTagsField(false);
+                                });
+                              },
+                            ),
+                            const Text(
+                              'Créer un serveur privé pour toi et tes amis.',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _serverNameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Nom du serveur',
+                      labelStyle: TextStyle(color: Colors.white),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _showTagsField
+                      ? Container(
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: Text('Sélectionnez vos tags'),
+                              content: Container(
+                                width: double.maxFinite,
+                                child: MultiSelectDialogField(
+                                  items: _tags
+                                      .map((tag) => MultiSelectItem(tag, tag['Name']))
+                                      .toList(),
+                                  initialValue: _selectedTags,
+                                  onConfirm: (selected) {
+                                    setState(() {
+                                      _selectedTags = selected;
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              ),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: Text('Annuler'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Text(
+                            'Tags',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Icon(Icons.arrow_drop_down),
+                        ],
+                      ),
+                    ),
+                  ) : const SizedBox(),
+                  const SizedBox(height: 16),
+                  _isLoading
+                      ? const CircularProgressIndicator()
+                      : ElevatedButton(
+                    onPressed: _addServer,
+                    style: ButtonStyle(
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                        const EdgeInsets.all(16),
+                      ),
+                    ),
+                    child: const Text('Créer le serveur'),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Tu as déjà un code d\'invitation?',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.white),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          Radio(
-                            fillColor: MaterialStateProperty.all(Colors.white),
-                            value: 'public',
-                            groupValue: _visibility,
-                            onChanged: (value) {
-                              setState(() {
-                                _visibility = 'public';
-                                _toggleTagsField(true);
-                              });
-                            },
-                          ),
-                          const Text(
-                            'Créer un serveur public pour tout le monde.',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.white),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          Radio(
-                            fillColor: MaterialStateProperty.all(Colors.white),
-                            value: 'private',
-                            groupValue: _visibility,
-                            onChanged: (value) {
-                              setState(() {
-                                _visibility = 'private';
-                                _toggleTagsField(false);
-                              });
-                            },
-                          ),
-                          const Text(
-                            'Créer un serveur privé pour toi et tes amis.',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _serverNameController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'Nom du serveur',
-                    labelStyle: TextStyle(color: Colors.white),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
-                    ),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
+                      fontWeight: FontWeight.w200,
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                _showTagsField
-                    ? Container(
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: InkWell(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: Text('Sélectionnez vos tags'),
-                            content: Container(
-                              width: double.maxFinite,
-                              child: MultiSelectDialogField(
-                                items: _tags
-                                    .map((tag) => MultiSelectItem(tag, tag['Name']))
-                                    .toList(),
-                                initialValue: _selectedTags,
-                                onConfirm: (selected) {
-                                  setState(() {
-                                    _selectedTags = selected;
-                                  });
-                                  Navigator.pop(context);
-                                },
-                              ),
-                            ),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: Text('Annuler'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      _showInvitationDialog(context);
                     },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Text(
-                          'Tags',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Icon(Icons.arrow_drop_down),
-                      ],
-                    ),
+
+                    child: const Text('Rejoindre un serveur'),
                   ),
-                ) : SizedBox(),
-                const SizedBox(height: 16),
-                _isLoading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                  onPressed: _addServer,
-                  child: const Text('Créer le serveur'),
-                  style: ButtonStyle(
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                      const EdgeInsets.all(16),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Divider(
-                  color: Colors.white,
-                  indent: 100,
-                  endIndent: 100,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Tu as déjà un code d\'invitation?',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    _showInvitationDialog(context);
-                  },
-                  child: const Text('Rejoindre le serveur'),
-                  style: ButtonStyle(
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                      const EdgeInsets.all(16),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

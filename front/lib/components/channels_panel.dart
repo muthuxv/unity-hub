@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:unity_hub/pages/voice_room.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-
 import '../pages/channel_page.dart';
 
 class ChannelsPanel extends StatefulWidget {
@@ -34,10 +32,6 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
           _textChannels = response.data['text'];
           _vocalChannels = response.data['vocal'];
         });
-
-        for (final channel in _textChannels) {
-          FirebaseMessaging.instance.subscribeToTopic('channel-${channel['ID']}');
-        }
       }
     } catch (error) {
       print('Error fetching channels: $error');

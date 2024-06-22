@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter/services.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -63,7 +64,7 @@ class MessagingService {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'token');
 
-      final response = await Dio().post(
+      final response = await Dio().put(
         'http://10.0.2.2:8080/fcm-token',
         data: {
           'fcmToken': fcmToken,
@@ -79,6 +80,31 @@ class MessagingService {
       debugPrint('FCM token stored in the server: ${response.statusCode}');
     } catch (e) {
       debugPrint('Failed to store FCM token in the server: $e');
+    }
+
+    try {
+      const storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'token');
+      final userId = JwtDecoder.decode(token!)['jti'];
+      final response = await Dio().get(
+        'http://10.0.2.2:8080/users/$userId/channels',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final channels = response.data as List<dynamic>;
+        for (final channel in channels) {
+          final channelId = channel['ID'];
+          await _fcm.subscribeToTopic('channel-$channelId');
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to subscribe to channels: $e');
     }
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -105,7 +131,7 @@ class MessagingService {
           styleInformation: BigTextStyleInformation(''),
         );
 
-        final platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
+        const platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
         flutterLocalNotificationsPlugin.show(
           0,
           notification.title,
