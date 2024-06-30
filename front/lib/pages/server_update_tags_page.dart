@@ -55,6 +55,7 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
       );
       if (response.statusCode == 200) {
         print('Server tags updated successfully');
+        print(response.data);
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -77,6 +78,24 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
     } catch (e) {
       print('Error updating server tags: $e');
     }
+  }
+
+  void showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Erreur'),
+        content: Text(message),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -149,6 +168,10 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
                           _serverTags.removeWhere((t) => t['ID'] == tag['ID']);
                         } else {
                           _serverTags.add(tag);
+                        }
+                        if (_serverTags.isEmpty) {
+                          showErrorDialog('Il faut sélectionner au moins un tag.');
+                          _serverTags.add(tag);  // Re-add the tag to maintain at least one selected tag
                         }
                       });
                     },

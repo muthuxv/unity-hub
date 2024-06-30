@@ -24,8 +24,8 @@ class MyBottomNavBar extends StatelessWidget {
                 text: 'Serveurs',
               ),
               GButton(
-                icon: Icons.message_sharp,
-                text: 'Messages',
+                icon: Icons.explore,
+                text: 'Community',
               ),
               GButton(
                 icon: Icons.notifications,
