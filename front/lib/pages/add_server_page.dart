@@ -53,22 +53,15 @@ class _AddServerPageState extends State<AddServerPage> {
         _tags = response.data;
       });
     } else {
-      _showErrorDialog(response.data['message']);
+      _showErrorSnackBar(response.data['message']);
     }
   }
 
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Erreur'),
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
         content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
+        backgroundColor: Colors.red,
       ),
     );
   }
@@ -80,22 +73,31 @@ class _AddServerPageState extends State<AddServerPage> {
   }
 
   Future<void> _addServer() async {
+    if (_serverNameController.text.isEmpty) {
+      _showErrorSnackBar('Le nom du serveur est requis.');
+      return;
+    }
+
+    if (_visibility == 'public' && _selectedTags.isEmpty) {
+      _showErrorSnackBar('Les tags sont requis pour un serveur public.');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
-    //Génére un avatar pour le serveur
+    // Génére un avatar pour le serveur
     final avatarGenerator = ServerAvatarGenerator(filename: 'lib/images/unity_white.png');
-
     final mediaUploader = await MediaUploader(filePath: (await avatarGenerator.generate())).upload();
 
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
     final tagIds = _selectedTags.map((tag) => tag['ID']).toList();
-
     final tagObjects = tagIds.map((tagId) => {'id': tagId}).toList();
 
+    print(tagObjects);
     final data = {
       'name': _serverNameController.text,
       'visibility': _visibility,
@@ -137,23 +139,7 @@ class _AddServerPageState extends State<AddServerPage> {
         ),
       );
     } else {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Erreur'),
-            content: const Text('Une erreur s\'est produite lors de la création du serveur.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
+      _showErrorSnackBar('Une erreur s\'est produite lors de la création du serveur.');
     }
 
     setState(() {
@@ -210,7 +196,6 @@ class _AddServerPageState extends State<AddServerPage> {
   }
 
   void _joinServer(String link) async {
-
     setState(() {
       _isLoading = true;
     });
@@ -252,6 +237,10 @@ class _AddServerPageState extends State<AddServerPage> {
         ),
       );
     }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -433,6 +422,14 @@ class _AddServerPageState extends State<AddServerPage> {
                           Icon(Icons.arrow_drop_down),
                         ],
                       ),
+                    ),
+                  )
+                      : _visibility == 'public'
+                      ? const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      'Les tags sont requis pour un serveur public.',
+                      style: TextStyle(color: Colors.red),
                     ),
                   ) : const SizedBox(),
                   const SizedBox(height: 16),

@@ -394,8 +394,8 @@ class _FriendPageState extends State<FriendPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       ListTile(
-                        leading: Icon(Icons.account_circle),
-                        title: Text('Profil'),
+                        leading: Icon(Icons.group_add),
+                        title: Text('Inviter sur les serveurs'),
                         onTap: () {
                           Navigator.pop(context);
                           // Naviguer au profil de l'ami

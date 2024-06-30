@@ -61,6 +61,7 @@ func main() {
 	routes.RoleUserRoutes(r)
 	routes.ServerRoutes(r)
 	routes.TagRoutes(r)
+	routes.FeatureRoutes(r)
 	routes.ThemeRoutes(r)
 	routes.ThemeServerRoutes(r)
 	routes.NotificationRoutes(r)
