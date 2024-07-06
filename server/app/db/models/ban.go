@@ -1,8 +1,9 @@
 package models
 
 import (
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Ban struct {
@@ -12,7 +13,7 @@ type Ban struct {
 	UserID     uint      `gorm:"not null"`
 	User       User      `gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	ServerID   uint      `gorm:"not null"`
-	Server     Server    `gorm:"foreignKey:ServerID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"
+	Server     Server    `gorm:"foreignKey:ServerID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	BannedByID uint      `gorm:"not null"`
 	BannedBy   User      `gorm:"foreignKey:BannedByID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }

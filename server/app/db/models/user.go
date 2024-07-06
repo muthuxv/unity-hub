@@ -1,13 +1,14 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	"github.com/google/uuid"
 )
 
 type User struct {
-	ID uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	ID uuid.UUID `gorm:"type:uuid;primaryKey"`
+	gorm.Model
 	Pseudo            string `gorm:"unique;validate:required"`
 	Email             string `gorm:"unique;validate:required,email"`
 	Role              string `gorm:"default:user"`
@@ -20,8 +21,8 @@ type User struct {
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
-    u.ID = uuid.New()
-    return
+	u.ID = uuid.New()
+	return nil
 }
 
 func (u *User) BeforeSave(tx *gorm.DB) (err error) {

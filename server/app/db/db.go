@@ -61,7 +61,7 @@ func MakeMigrations() {
 		&models.ThemeServer{},
 		&models.Ban{},
 		&models.Group{},
-		&models.GroupMembers{},
+		&models.GroupMember{},
 	)
 
 	if err != nil {

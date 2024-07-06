@@ -6,18 +6,20 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 )
 
 var jwtKey = []byte(os.Getenv("JWT_KEY"))
 
-func GenerateJWT(userID uint, email, role string) (string, error) {
+func GenerateJWT(userID uuid.UUID, email, role string) (string, error) {
 	expirationTime := time.Now().Add(10000 * time.Hour)
 	claims := &jwt.RegisteredClaims{
 		ID:        fmt.Sprintf("%v", userID),

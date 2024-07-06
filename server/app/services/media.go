@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 )
 
 func UploadFile(c *gin.Context) {
@@ -46,7 +47,7 @@ func UploadFile(c *gin.Context) {
 		return
 	}
 
-	var userIDUint uint
+	var userIDUint uuid.UUID
 	fmt.Sscanf(userID, "%d", &userIDUint)
 
 	media := models.Media{

@@ -8,13 +8,14 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func AcceptFriend() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var inputFriend struct {
-			ID      uint `json:"id"`      // ID of the friend request
-			UserID2 uint `json:"userId2"` // ID of the user who is supposed to accept the friend request
+			ID      uuid.UUID `json:"id"`      // ID of the friend request
+			UserID2 uuid.UUID `json:"userId2"` // ID of the user who is supposed to accept the friend request
 		}
 		if err := c.ShouldBindJSON(&inputFriend); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalide JSON data"})
@@ -73,8 +74,8 @@ func AcceptFriend() gin.HandlerFunc {
 func RefuseFriend() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var inputFriend struct {
-			ID      uint `json:"id"`      // ID of the friend request
-			UserID2 uint `json:"userId2"` // ID of the user who is supposed to refuse the friend request
+			ID      uint      `json:"id"`      // ID of the friend request
+			UserID2 uuid.UUID `json:"userId2"` // ID of the user who is supposed to refuse the friend request
 		}
 		if err := c.ShouldBindJSON(&inputFriend); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalide JSON data"})
@@ -157,9 +158,9 @@ func GetFriendsByUser() gin.HandlerFunc {
 		friendsResponse := make([]map[string]interface{}, 0)
 		for _, friend := range friends {
 			var friendPseudo, friendEmail string
-			var friendID uint
+			var friendID uuid.UUID
 
-			if friend.UserID1 == uint(userID) {
+			if friend.UserID1 == uuid.MustParse(userIDStr) {
 				friendPseudo = friend.User2.Pseudo
 				friendEmail = friend.User2.Email
 				friendID = friend.UserID2
@@ -251,8 +252,8 @@ func GetPendingFriendsFromUser() gin.HandlerFunc {
 func CreateFriendRequest() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input struct {
-			UserID     uint   `json:"userId"`     // ID of the user sending the request
-			UserPseudo string `json:"userPseudo"` // Pseudo of the user to be added as a friend
+			UserID     uuid.UUID `json:"userId"`     // ID of the user sending the friend request
+			UserPseudo string    `json:"userPseudo"` // Pseudo of the user to be added as a friend
 		}
 
 		if err := c.ShouldBindJSON(&input); err != nil {
@@ -298,7 +299,7 @@ func CreateFriendRequest() gin.HandlerFunc {
 		friend := models.Friend{
 			UserID1: input.UserID,
 			UserID2: user.ID,
-			Status:  "pending", // Initial status of the friend request
+			Status:  "pending",
 		}
 
 		result = db.GetDB().Create(&friend)
