@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:unity_hub/utils/random_server_avatar.dart';
 import 'package:unity_hub/utils/media_uploader.dart';
@@ -74,12 +76,12 @@ class _AddServerPageState extends State<AddServerPage> {
 
   Future<void> _addServer() async {
     if (_serverNameController.text.isEmpty) {
-      _showErrorSnackBar('Le nom du serveur est requis.');
+      _showErrorSnackBar(AppLocalizations.of(context)!.server_name_required_error);
       return;
     }
 
     if (_visibility == 'public' && _selectedTags.isEmpty) {
-      _showErrorSnackBar('Les tags sont requis pour un serveur public.');
+      _showErrorSnackBar(AppLocalizations.of(context)!.public_server_tags_required_error);
       return;
     }
 
@@ -87,7 +89,6 @@ class _AddServerPageState extends State<AddServerPage> {
       _isLoading = true;
     });
 
-    // Génére un avatar pour le serveur
     final avatarGenerator = ServerAvatarGenerator(filename: 'lib/images/unity_white.png');
     final mediaUploader = await MediaUploader(filePath: (await avatarGenerator.generate())).upload();
 
@@ -97,7 +98,6 @@ class _AddServerPageState extends State<AddServerPage> {
     final tagIds = _selectedTags.map((tag) => tag['ID']).toList();
     final tagObjects = tagIds.map((tagId) => {'id': tagId}).toList();
 
-    print(tagObjects);
     final data = {
       'name': _serverNameController.text,
       'visibility': _visibility,
@@ -126,20 +126,20 @@ class _AddServerPageState extends State<AddServerPage> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Serveur crée'),
-          content: const Text('Le serveur a été crée avec succès.'),
+          title: Text(AppLocalizations.of(context)!.server_created_title),
+          content: Text(AppLocalizations.of(context)!.server_created_message),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('OK'),
+              child: Text(AppLocalizations.of(context)!.cancel_button),
             ),
           ],
         ),
       );
     } else {
-      _showErrorSnackBar('Une erreur s\'est produite lors de la création du serveur.');
+      _showErrorSnackBar(AppLocalizations.of(context)!.server_creation_error);
     }
 
     setState(() {
@@ -154,18 +154,18 @@ class _AddServerPageState extends State<AddServerPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Rentrez votre lien invitation'),
+          title: Text(AppLocalizations.of(context)!.enter_invitation_link_title),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               TextFormField(
                 controller: _linkController,
-                decoration: const InputDecoration(
-                  labelText: 'Lien invitation',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.invitation_link_label,
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer un lien';
+                    return AppLocalizations.of(context)!.invitation_link_label;
                   }
                   return null;
                 },
@@ -177,14 +177,14 @@ class _AddServerPageState extends State<AddServerPage> {
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
-                    child: const Text('Annuler'),
+                    child: Text(AppLocalizations.of(context)!.cancel_button),
                   ),
                   TextButton(
                     onPressed: () {
                       _joinServer(_linkController.text);
                       Navigator.of(context).pop();
                     },
-                    child: const Text('Rejoindre'),
+                    child: Text(AppLocalizations.of(context)!.join_button),
                   ),
                 ],
               ),
@@ -218,12 +218,12 @@ class _AddServerPageState extends State<AddServerPage> {
       );
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Vous avez rejoint le serveur avec succès'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.joined_server_success_message),
           ),
         );
       } else {
-        final errorMessage = response.data['error'] ?? 'Une erreur est survenue';
+        final errorMessage = response.data['error'] ?? AppLocalizations.of(context)!.join_server_error_message;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -232,8 +232,8 @@ class _AddServerPageState extends State<AddServerPage> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Une erreur est survenue lors de la connexion au serveur'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.join_server_error_message),
         ),
       );
     }
@@ -270,9 +270,9 @@ class _AddServerPageState extends State<AddServerPage> {
               margin: const EdgeInsets.only(top: 100),
               child: Column(
                 children: [
-                  const Text(
-                    'Créer ton propre serveur!',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.create_server,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -284,11 +284,11 @@ class _AddServerPageState extends State<AddServerPage> {
                     width: 100,
                     color: Colors.white,
                   ),
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
                     child: Text(
-                      'Donne un nom à ton serveur et choisis sa visibilité.',
-                      style: TextStyle(
+                      AppLocalizations.of(context)!.give_name_and_visibility,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                       ),
@@ -316,9 +316,9 @@ class _AddServerPageState extends State<AddServerPage> {
                                 });
                               },
                             ),
-                            const Text(
-                              'Créer un serveur public pour tout le monde.',
-                              style: TextStyle(color: Colors.white),
+                            Text(
+                              AppLocalizations.of(context)!.create_public_server,
+                              style: const TextStyle(color: Colors.white),
                             ),
                           ],
                         ),
@@ -343,9 +343,9 @@ class _AddServerPageState extends State<AddServerPage> {
                                 });
                               },
                             ),
-                            const Text(
-                              'Créer un serveur privé pour toi et tes amis.',
-                              style: TextStyle(color: Colors.white),
+                            Text(
+                              AppLocalizations.of(context)!.create_private_server,
+                              style: const TextStyle(color: Colors.white),
                             ),
                           ],
                         ),
@@ -356,13 +356,13 @@ class _AddServerPageState extends State<AddServerPage> {
                   TextField(
                     controller: _serverNameController,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      labelText: 'Nom du serveur',
-                      labelStyle: TextStyle(color: Colors.white),
-                      focusedBorder: UnderlineInputBorder(
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.server_name_label,
+                      labelStyle: const TextStyle(color: Colors.white),
+                      focusedBorder: const UnderlineInputBorder(
                         borderSide: BorderSide(color: Colors.white),
                       ),
-                      enabledBorder: UnderlineInputBorder(
+                      enabledBorder: const UnderlineInputBorder(
                         borderSide: BorderSide(color: Colors.white),
                       ),
                     ),
@@ -370,7 +370,7 @@ class _AddServerPageState extends State<AddServerPage> {
                   const SizedBox(height: 16),
                   _showTagsField
                       ? Container(
-                    padding: EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(10),
@@ -381,8 +381,8 @@ class _AddServerPageState extends State<AddServerPage> {
                           context: context,
                           builder: (context) {
                             return AlertDialog(
-                              title: Text('Sélectionnez vos tags'),
-                              content: Container(
+                              title: Text(AppLocalizations.of(context)!.tags_label),
+                              content: SizedBox(
                                 width: double.maxFinite,
                                 child: MultiSelectDialogField(
                                   items: _tags
@@ -402,34 +402,34 @@ class _AddServerPageState extends State<AddServerPage> {
                                   onPressed: () {
                                     Navigator.pop(context);
                                   },
-                                  child: Text('Annuler'),
+                                  child: Text(AppLocalizations.of(context)!.cancel_button),
                                 ),
                               ],
                             );
                           },
                         );
                       },
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
                           Text(
-                            'Tags',
-                            style: TextStyle(
+                            AppLocalizations.of(context)!.tags_label,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
                             ),
                           ),
-                          Icon(Icons.arrow_drop_down),
+                          const Icon(Icons.arrow_drop_down),
                         ],
                       ),
                     ),
                   )
                       : _visibility == 'public'
-                      ? const Padding(
-                    padding: EdgeInsets.all(8.0),
+                      ? Padding(
+                    padding: const EdgeInsets.all(8.0),
                     child: Text(
-                      'Les tags sont requis pour un serveur public.',
-                      style: TextStyle(color: Colors.red),
+                      AppLocalizations.of(context)!.tags_required_public,
+                      style: const TextStyle(color: Colors.red),
                     ),
                   ) : const SizedBox(),
                   const SizedBox(height: 16),
@@ -447,12 +447,12 @@ class _AddServerPageState extends State<AddServerPage> {
                         const EdgeInsets.all(16),
                       ),
                     ),
-                    child: const Text('Créer le serveur'),
+                    child: Text(AppLocalizations.of(context)!.create_server_button),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Tu as déjà un code d\'invitation?',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.already_have_invitation_code,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w200,
@@ -464,7 +464,7 @@ class _AddServerPageState extends State<AddServerPage> {
                       _showInvitationDialog(context);
                     },
 
-                    child: const Text('Rejoindre un serveur'),
+                    child: Text(AppLocalizations.of(context)!.join_server_button),
                   ),
                 ],
               ),

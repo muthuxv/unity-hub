@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 //import 'package:unity_hub/components/members_panel.dart';
@@ -140,7 +141,7 @@ class _ServerPageState extends State<ServerPage> {
                         ),
                       );
                     },
-                    child: const Text('Ajouter un serveur'),
+                    child: Text(AppLocalizations.of(context)!.add_server),
                   ),
                 ],
               ),
@@ -330,8 +331,8 @@ class _ServerPageState extends State<ServerPage> {
                                                 ),
                                                 ListTile(
                                                   leading: const Icon(Icons.settings),
-                                                  title: const Text('Paramètres du serveur',
-                                                    style: TextStyle(
+                                                  title: Text(AppLocalizations.of(context)!.settings_server,
+                                                    style: const TextStyle(
                                                       fontWeight: FontWeight.bold,
                                                     ),
                                                   ),
@@ -359,8 +360,8 @@ class _ServerPageState extends State<ServerPage> {
                                                 ),
                                                 ListTile(
                                                   leading: const Icon(Icons.people),
-                                                  title: const Text('Liste des membres',
-                                                    style: TextStyle(
+                                                  title: Text(AppLocalizations.of(context)!.members_list,
+                                                    style: const TextStyle(
                                                       fontWeight: FontWeight.bold,
                                                     ),
                                                   ),
@@ -380,8 +381,8 @@ class _ServerPageState extends State<ServerPage> {
                                                   leading: const Icon(Icons.exit_to_app,
                                                     color: Colors.red,
                                                   ),
-                                                  title: const Text('Quitter le serveur',
-                                                    style: TextStyle(
+                                                  title: Text(AppLocalizations.of(context)!.leave_server,
+                                                    style: const TextStyle(
                                                       fontWeight: FontWeight.bold,
                                                       color: Colors.red,
                                                     ),
@@ -447,7 +448,7 @@ class _ServerPageState extends State<ServerPage> {
                                         ),
                                         const SizedBox(width: 5),
                                         Text(
-                                          'Ajouter un channel',
+                                          AppLocalizations.of(context)!.add_channel,
                                           style: TextStyle(
                                             color: Theme.of(context)
                                                 .primaryColor,
@@ -491,7 +492,7 @@ class _ServerPageState extends State<ServerPage> {
                                         ),
                                         const SizedBox(width: 5),
                                         Text(
-                                          'Invite des amis',
+                                          AppLocalizations.of(context)!.invite_friends,
                                           style: TextStyle(
                                             color: Theme.of(context)
                                                 .primaryColor,

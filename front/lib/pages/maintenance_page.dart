@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MaintenancePage extends StatelessWidget {
   const MaintenancePage({Key? key});
@@ -6,25 +7,28 @@ class MaintenancePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200], // Background color for the entire page
+      backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        backgroundColor: Colors.deepPurple[300], // Customizing app bar color
-        title: const Text('Maintenance', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.deepPurple[300],
+        title: Text(
+          AppLocalizations.of(context)!.maintenanceTitle,
+          style: const TextStyle(color: Colors.white),
+        ),
       ),
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Icon(
-              Icons.build, // Using a construction icon
+            const Icon(
+              Icons.build,
               size: 100,
-              color: Colors.blue, // Icon color
+              color: Colors.blue,
             ),
-            SizedBox(height: 20), // Adding some space between elements
+            const SizedBox(height: 20),
             Text(
-              'Cette fonctionnalité est actuellement en maintenance.',
+              AppLocalizations.of(context)!.maintenanceMessage,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),

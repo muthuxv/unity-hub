@@ -13,6 +13,7 @@ import 'package:unity_hub/pages/maintenance_page.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -137,13 +138,11 @@ class _HomePageState extends State<HomePage> {
                   child: ListTile(
                     leading: const Icon(
                         Icons.home),
-                    title: const Text(
-                      'CommunityHub',
-                    ),
+                    title: const Text("CommunityHub"),
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => CommunityHubPage()),
+                        MaterialPageRoute(builder: (context) => const CommunityHubPage()),
                       );
                     },
                   ),
@@ -156,8 +155,7 @@ class _HomePageState extends State<HomePage> {
               child: ListTile(
                 leading: const Icon(
                     Icons.logout),
-                title: const Text(
-                    'Se déconnecter'),
+                title: Text(AppLocalizations.of(context)!.logout),
                 onTap: () {
                   _logout();
                 },
@@ -171,11 +169,11 @@ class _HomePageState extends State<HomePage> {
           future: fetchFeatureStatuses(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircularProgressIndicator(); // or a loading indicator
+              return const CircularProgressIndicator();
             } else if (snapshot.hasError) {
               return Text('Error: ${snapshot.error}');
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Text('No data available'); // Handle no data case
+              return const Text('No data available');
             } else {
               // Process feature statuses and decide which page to show
               bool serversEnabled = snapshot.data![0]['Status'] == 'true';
@@ -199,7 +197,7 @@ class _HomePageState extends State<HomePage> {
                   pageToDisplay = profileEnabled ? const ProfilePage() : const MaintenancePage();
                   break;
                 default:
-                  pageToDisplay = const ServerPage(); // Default to ServerPage
+                  pageToDisplay = const ServerPage();
               }
 
               return pageToDisplay;
@@ -210,4 +208,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
