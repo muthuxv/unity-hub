@@ -8,17 +8,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 )
 
 type UpdateServerInput struct {
-	Name       string `json:"name"`
-	Visibility string `json:"visibility"`
-	MediaID    uint   `json:"media_id"`
-	TagIDs     []uint `json:"tag_ids"`
+	Name       string      `json:"name"`
+	Visibility string      `json:"visibility"`
+	MediaID    uuid.UUID   `json:"media_id"`
+	TagIDs     []uuid.UUID `json:"tag_ids"`
 }
 
 type TagsInput struct {
-	TagIDs []uint `json:"tag_ids"`
+	TagIDs []uuid.UUID `json:"tag_ids"`
 }
 
 func GetAllServers() gin.HandlerFunc {
@@ -90,8 +91,9 @@ func NewServer() gin.HandlerFunc {
 			return
 		}
 
-		if inputServer.MediaID == 0 {
-			inputServer.MediaID = 2
+		if inputServer.MediaID == uuid.Nil {
+			handleError(c, http.StatusBadRequest, "Le média du serveur est requis")
+			return
 		}
 
 		claims, exists := c.Get("jwt_claims")
@@ -112,7 +114,7 @@ func NewServer() gin.HandlerFunc {
 			return
 		}
 
-		userID, err := strconv.Atoi(userIDStr)
+		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la conversion de l'ID utilisateur")
 			return
@@ -148,7 +150,7 @@ func NewServer() gin.HandlerFunc {
 
 		inputOnServer := models.OnServer{
 			ServerID: inputServer.ID,
-			UserID:   uint(userID),
+			UserID:   userID,
 		}
 
 		if err := tx.Create(&inputOnServer).Error; err != nil {
@@ -170,7 +172,7 @@ func NewServer() gin.HandlerFunc {
 
 		inputRoleUser := models.RoleUser{
 			RoleID: inputRole.ID,
-			UserID: uint(userID),
+			UserID: userID,
 		}
 
 		if err := tx.Create(&inputRoleUser).Error; err != nil {
@@ -201,7 +203,7 @@ func NewServer() gin.HandlerFunc {
 func JoinServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
-		serverID, err := strconv.Atoi(serverIDStr)
+		serverID, err := uuid.Parse(serverIDStr)
 		if err != nil {
 			handleError(c, http.StatusBadRequest, "ID de serveur invalide")
 			return
@@ -225,7 +227,7 @@ func JoinServer() gin.HandlerFunc {
 			return
 		}
 
-		userID, err := strconv.Atoi(userIDStr)
+		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la conversion de l'ID utilisateur")
 			return
@@ -261,8 +263,8 @@ func JoinServer() gin.HandlerFunc {
 		}
 
 		onServer := models.OnServer{
-			ServerID: uint(serverID),
-			UserID:   uint(userID),
+			ServerID: serverID,
+			UserID:   userID,
 		}
 		if err := tx.Create(&onServer).Error; err != nil {
 			tx.Rollback()
@@ -279,7 +281,7 @@ func JoinServer() gin.HandlerFunc {
 
 		roleUser := models.RoleUser{
 			RoleID: role.ID,
-			UserID: uint(userID),
+			UserID: userID,
 		}
 		if err := tx.Create(&roleUser).Error; err != nil {
 			tx.Rollback()
@@ -497,7 +499,7 @@ func UpdateServerByID() gin.HandlerFunc {
 		if input.Visibility != "" {
 			server.Visibility = input.Visibility
 		}
-		if input.MediaID != 0 {
+		if input.MediaID != uuid.Nil {
 			server.MediaID = input.MediaID
 		}
 

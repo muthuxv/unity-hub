@@ -74,7 +74,7 @@ func AcceptFriend() gin.HandlerFunc {
 func RefuseFriend() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var inputFriend struct {
-			ID      uint      `json:"id"`      // ID of the friend request
+			ID      uuid.UUID `json:"id"`      // ID of the friend request
 			UserID2 uuid.UUID `json:"userId2"` // ID of the user who is supposed to refuse the friend request
 		}
 		if err := c.ShouldBindJSON(&inputFriend); err != nil {
