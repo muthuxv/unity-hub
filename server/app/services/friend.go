@@ -4,7 +4,6 @@ import (
 	"app/db"
 	"app/db/models"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -141,7 +140,7 @@ func SearchUser() gin.HandlerFunc {
 func GetFriendsByUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDStr := c.Param("id")
-		userID, err := strconv.Atoi(userIDStr)
+		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
 			handleError(c, http.StatusBadRequest, "ID utilisateur invalide")
 			return
@@ -186,7 +185,7 @@ func GetFriendsByUser() gin.HandlerFunc {
 func GetPendingFriendsByUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDStr := c.Param("id")
-		userID, err := strconv.Atoi(userIDStr)
+		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
 			handleError(c, http.StatusBadRequest, "ID utilisateur invalide")
 			return
@@ -219,7 +218,7 @@ func GetPendingFriendsByUser() gin.HandlerFunc {
 func GetPendingFriendsFromUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDStr := c.Param("id")
-		userID, err := strconv.Atoi(userIDStr)
+		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
 			handleError(c, http.StatusBadRequest, "ID utilisateur invalide")
 			return

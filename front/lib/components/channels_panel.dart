@@ -4,9 +4,10 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:unity_hub/pages/voice_room.dart';
 
 import '../pages/channel_page.dart';
+import 'package:uuid/uuid.dart';
 
 class ChannelsPanel extends StatefulWidget {
-  final int serverId;
+  final String serverId;
   static final GlobalKey<_ChannelsPanelState> globalKey = GlobalKey<_ChannelsPanelState>();
 
   const ChannelsPanel({super.key, required this.serverId});

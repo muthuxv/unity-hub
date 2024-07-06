@@ -4,7 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
 class AddChannelPage extends StatefulWidget {
-  final int serverId;
+  final String serverId;
   const AddChannelPage({super.key, required this.serverId});
 
   @override

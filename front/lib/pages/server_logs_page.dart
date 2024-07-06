@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class ServerLogsPage extends StatefulWidget {
-  final int serverId;
+  final String serverId;
   const ServerLogsPage({super.key, required this.serverId});
 
   @override

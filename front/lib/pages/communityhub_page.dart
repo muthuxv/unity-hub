@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class Server {
-  final int id;
+  final String id;
   final String name;
   final String visibility;
   final Media media;
@@ -33,7 +33,7 @@ class Server {
 }
 
 class Tag {
-  final int id;
+  final String id;
   final String name;
 
   Tag({
@@ -50,7 +50,7 @@ class Tag {
 }
 
 class Media {
-  final int id;
+  final String id;
   final String fileName;
   final String mimeType;
 
@@ -70,6 +70,8 @@ class Media {
 }
 
 class CommunityHubPage extends StatefulWidget {
+  const CommunityHubPage({super.key});
+
   @override
   _CommunityHubPageState createState() => _CommunityHubPageState();
 }

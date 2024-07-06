@@ -9,7 +9,7 @@ import 'package:http_parser/http_parser.dart';
 import 'server_update_tags_page.dart';
 
 class ServerSettingsPage extends StatefulWidget {
-  final int serverId;
+  final String serverId;
   final String serverName;
   String serverAvatar;
   final String serverVisibility;
@@ -21,7 +21,7 @@ class ServerSettingsPage extends StatefulWidget {
 
 class _ServerSettingsPageState extends State<ServerSettingsPage> {
 
-  void _showInvitationDialog(BuildContext context, int serverId) {
+  void _showInvitationDialog(BuildContext context, String serverId) {
     final url = 'http://10.0.2.2:8080/servers/$serverId/join';
     showDialog(
       context: context,

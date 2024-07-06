@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class ServerUpdateTagsPage extends StatefulWidget {
-  final int serverId;
+  final String serverId;
 
   ServerUpdateTagsPage({Key? key, required this.serverId}) : super(key: key);
 

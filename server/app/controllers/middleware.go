@@ -4,7 +4,6 @@ import (
 	"app/db"
 	"app/db/models"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
@@ -55,7 +54,7 @@ func GenerateLogMiddleware(action string) gin.HandlerFunc {
 			return
 		}
 
-		_, err = strconv.Atoi(userIDStr)
+		_, err = uuid.Parse(userIDStr)
 		if err != nil {
 			return
 		}

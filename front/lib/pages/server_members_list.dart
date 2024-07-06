@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class ServerMembersList extends StatefulWidget {
-  final int serverId;
+  final String serverId;
 
   const ServerMembersList({Key? key, required this.serverId}) : super(key: key);
 

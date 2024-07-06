@@ -6,7 +6,7 @@ import 'package:unity_hub/pages/roles/role_form_page.dart';
 import 'package:unity_hub/pages/roles/role_update_form_page.dart';
 
 class RolePage extends StatefulWidget {
-  final int serverId;
+  final String serverId;
 
   const RolePage({super.key, required this.serverId});
 

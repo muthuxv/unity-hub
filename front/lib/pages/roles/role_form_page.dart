@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class RolePageForm extends StatefulWidget {
-  final int serverId;
+  final String serverId;
 
   const RolePageForm({super.key, required this.serverId});
 

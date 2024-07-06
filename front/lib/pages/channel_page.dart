@@ -10,7 +10,7 @@ import 'package:giphy_picker/giphy_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ChannelPage extends StatefulWidget {
-  final int channelId;
+  final String channelId;
   final String channelName;
 
   const ChannelPage({super.key, required this.channelId, required this.channelName});

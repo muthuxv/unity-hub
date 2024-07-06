@@ -6,7 +6,6 @@ import (
 	"app/helpers"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -113,7 +112,7 @@ func GetInvitationsByUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get the user's ID from the URL parameter
 		userIDStr := c.Param("id")
-		userID, err := strconv.Atoi(userIDStr)
+		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "ID utilisateur invalide"})
 			return

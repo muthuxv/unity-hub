@@ -47,13 +47,16 @@ func UploadFile(c *gin.Context) {
 		return
 	}
 
-	var userIDUint uuid.UUID
-	fmt.Sscanf(userID, "%d", &userIDUint)
+	userIDUUID, err := uuid.Parse(userID)
+	if err != nil {
+		c.Error(fmt.Errorf("Erreur lors de la conversion de l'ID utilisateur"))
+		return
+	}
 
 	media := models.Media{
 		FileName: fileHeader.Filename,
 		MimeType: fileHeader.Header.Get("Content-Type"),
-		UserID:   userIDUint,
+		UserID:   userIDUUID,
 	}
 
 	result := db.GetDB().Create(&media)

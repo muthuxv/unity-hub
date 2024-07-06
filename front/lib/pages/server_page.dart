@@ -62,7 +62,7 @@ class _ServerPageState extends State<ServerPage> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Error'),
-          content: Text(response.data['message']),
+          content: Text(response.data['error']),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),

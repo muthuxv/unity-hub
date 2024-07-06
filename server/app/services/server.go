@@ -3,8 +3,8 @@ package services
 import (
 	"app/db"
 	"app/db/models"
+	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
@@ -37,7 +37,7 @@ func GetAllServers() gin.HandlerFunc {
 func GetServerByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
-		serverID, err := strconv.Atoi(serverIDStr)
+		serverID, err := uuid.Parse(serverIDStr)
 		if err != nil {
 			handleError(c, http.StatusBadRequest, "ID de serveur invalide")
 			return
@@ -92,8 +92,13 @@ func NewServer() gin.HandlerFunc {
 		}
 
 		if inputServer.MediaID == uuid.Nil {
-			handleError(c, http.StatusBadRequest, "Le média du serveur est requis")
-			return
+			// Default media
+			var media models.Media
+			if err := db.GetDB().Where("file_name = ?", "default.png").First(&media).Error; err != nil {
+				handleError(c, http.StatusInternalServerError, "Erreur lors de la recherche du média par défaut")
+				return
+			}
+			inputServer.MediaID = media.ID
 		}
 
 		claims, exists := c.Get("jwt_claims")
@@ -119,6 +124,8 @@ func NewServer() gin.HandlerFunc {
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la conversion de l'ID utilisateur")
 			return
 		}
+
+		inputServer.UserID = userID
 
 		tx := db.GetDB().Begin()
 
@@ -298,7 +305,7 @@ func JoinServer() gin.HandlerFunc {
 func LeaveServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
-		serverID, err := strconv.Atoi(serverIDStr)
+		serverID, err := uuid.Parse(serverIDStr)
 		if err != nil {
 			handleError(c, http.StatusBadRequest, "ID de serveur invalide")
 			return
@@ -322,7 +329,7 @@ func LeaveServer() gin.HandlerFunc {
 			return
 		}
 
-		userID, err := strconv.Atoi(userIDStr)
+		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la conversion de l'ID utilisateur")
 			return
@@ -370,9 +377,10 @@ func LeaveServer() gin.HandlerFunc {
 func GetServersByUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDStr := c.Param("id")
-		userID, err := strconv.Atoi(userIDStr)
+		log.Println(userIDStr)
+		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
-			handleError(c, http.StatusBadRequest, "Invalid user ID")
+			handleError(c, http.StatusBadRequest, "ID utilisateur invalide")
 			return
 		}
 
@@ -393,7 +401,7 @@ func GetServersByUser() gin.HandlerFunc {
 func GetServerMembers() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
-		serverID, err := strconv.Atoi(serverIDStr)
+		serverID, err := uuid.Parse(serverIDStr)
 		if err != nil {
 			handleError(c, http.StatusBadRequest, "ID de serveur invalide")
 			return
@@ -418,7 +426,7 @@ func GetServerMembers() gin.HandlerFunc {
 func GetServerChannels() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
-		serverID, err := strconv.Atoi(serverIDStr)
+		serverID, err := uuid.Parse(serverIDStr)
 		if err != nil {
 			handleError(c, http.StatusBadRequest, "ID de serveur invalide")
 			return
@@ -449,7 +457,7 @@ func GetServerChannels() gin.HandlerFunc {
 func GetServerLogs() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
-		serverID, err := strconv.Atoi(serverIDStr)
+		serverID, err := uuid.Parse(serverIDStr)
 		if err != nil {
 			handleError(c, http.StatusBadRequest, "ID de serveur invalide")
 			return
@@ -474,7 +482,7 @@ func GetServerLogs() gin.HandlerFunc {
 func UpdateServerByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
-		serverID, err := strconv.Atoi(serverIDStr)
+		serverID, err := uuid.Parse(serverIDStr)
 		if err != nil {
 			handleError(c, http.StatusBadRequest, "ID de serveur invalide")
 			return

@@ -134,7 +134,7 @@ class _AddServerPageState extends State<AddServerPage> {
         builder: (context) {
           return AlertDialog(
             title: const Text('Erreur'),
-            content: const Text('Une erreur s\'est produite lors de la création du serveur.'),
+            content: Text(response.data['error']),
             actions: [
               TextButton(
                 onPressed: () {
