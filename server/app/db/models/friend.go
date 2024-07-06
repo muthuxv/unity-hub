@@ -6,11 +6,16 @@ import (
 )
 
 type Friend struct {
+	ID uuid.UUID `gorm:"type:uuid;primaryKey"`
 	gorm.Model
-	ID      uint      `gorm:"primaryKey"`
 	Status  string    `gorm:"validate:required"`
 	UserID1 uuid.UUID `gorm:"validate:required"`
 	User1   User      `gorm:"foreignKey:UserID1;references:ID;"`
 	UserID2 uuid.UUID `gorm:"validate:required"`
 	User2   User      `gorm:"foreignKey:UserID2;references:ID;"`
+}
+
+func (f *Friend) BeforeCreate(tx *gorm.DB) (err error) {
+	f.ID = uuid.New()
+	return nil
 }
