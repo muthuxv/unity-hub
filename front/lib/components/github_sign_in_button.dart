@@ -109,11 +109,10 @@ class _GithubSignInButtonState extends State<GithubSignInButton> {
           isLoading = false;
         });
 
-        Navigator.push(
+        Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => const AuthPage()
-          ),
+          MaterialPageRoute(builder: (context) => const AuthPage()),
+          (route) => false,
         );
 
       }

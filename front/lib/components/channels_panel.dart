@@ -1,14 +1,17 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:unity_hub/pages/voice_room.dart';
 import '../pages/channel_page.dart';
 
+import '../utils/websocket_service.dart';
+
 class ChannelsPanel extends StatefulWidget {
   final int serverId;
+  final WebSocketService webSocketService;
   static final GlobalKey<_ChannelsPanelState> globalKey = GlobalKey<_ChannelsPanelState>();
 
-  const ChannelsPanel({super.key, required this.serverId});
+  const ChannelsPanel({super.key, required this.serverId, required this.webSocketService});
 
   @override
   State<ChannelsPanel> createState() => _ChannelsPanelState();
@@ -32,6 +35,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
           _textChannels = response.data['text'];
           _vocalChannels = response.data['vocal'];
         });
+        print('Channels fetched: $_textChannels, $_vocalChannels');
       }
     } catch (error) {
       print('Error fetching channels: $error');
@@ -59,6 +63,14 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
   void initState() {
     super.initState();
     _fetchChannels();
+
+    widget.webSocketService.stream.listen((message) {
+      print('Received message ChannelsPanel line 68: $message');
+      final decodedMessage = jsonDecode(message);
+      if (decodedMessage['type'] == 'new_channel') {
+        onChannelAdded(Response(data: decodedMessage['channel'], requestOptions: RequestOptions(path: '')));
+      }
+    });
   }
 
   @override
@@ -271,6 +283,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
   }
 
   void onChannelAdded(Response<dynamic> response) {
+    print('Received message ChannelsPanel line 292: $response');
     setState(() {
       if (response.data['Type'] == 'text') {
         _textChannels.add(response.data);

@@ -25,7 +25,7 @@ class ChannelPage extends StatefulWidget {
 class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
   bool _isLoading = false;
   late String currentUserID;
-  late WebSocketChannel _channel;
+  late WebSocketChannel _channel_message;
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _messageController = TextEditingController();
   final Map<String, List<dynamic>> _messagesByDate = {};
@@ -40,7 +40,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    _channel.sink.close();
+    _channel_message.sink.close();
     _scrollController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -74,18 +74,48 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
 
     try {
       final response = await Dio().get('http://10.0.2.2:8080/channels/${widget.channelId}/messages');
-      final List<dynamic> messages = response.data;
 
-      setState(() {
-        for (dynamic message in messages) {
-          final DateTime createdAt = DateTime.parse(message['SentAt']);
-          final String formattedDate = DateFormat('yyyy-MM-dd').format(createdAt);
+      if (response.statusCode == 200) {
+        final dynamic responseData = response.data;
 
-          _messagesByDate.putIfAbsent(formattedDate, () => []);
-          _messagesByDate[formattedDate]!.add(message);
+        if (responseData == null) {
+          setState(() {
+            _messagesByDate.clear();
+          });
+        } else if (responseData is List<dynamic>) {
+          // Process valid list of messages
+          final List<dynamic> messages = responseData;
+
+          if (messages.isEmpty) {
+            setState(() {
+              _messagesByDate.clear(); // Clear existing messages
+            });
+          } else {
+            Map<String, List<dynamic>> tempMessagesByDate = {};
+
+            for (dynamic message in messages) {
+              final DateTime createdAt = DateTime.parse(message['SentAt']);
+              final String formattedDate = DateFormat('yyyy-MM-dd').format(createdAt);
+
+              tempMessagesByDate.putIfAbsent(formattedDate, () => []);
+              tempMessagesByDate[formattedDate]!.add(message);
+            }
+
+            setState(() {
+              _messagesByDate.clear(); // Clear existing messages
+              _messagesByDate.addAll(tempMessagesByDate); // Update with new messages
+            });
+          }
+        } else {
+          // Handle unexpected data type in response
+          _showErrorSnack('Réponse inattendue du serveur.');
         }
-      });
+      } else {
+        // Handle unexpected status codes
+        _showErrorSnack('Erreur: ${response.statusCode}');
+      }
     } catch (error) {
+      print('Error fetching messages: $error'); // Log error details
       _showErrorSnack('Une erreur s\'est produite lors de la récupération des messages.');
     } finally {
       setState(() {
@@ -110,11 +140,11 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
   }
 
   void _connectToWebSocket() {
-    _channel = WebSocketChannel.connect(
+    _channel_message = WebSocketChannel.connect(
       Uri.parse('ws://10.0.2.2:8080/channels/${widget.channelId}/send'),
     );
 
-    _channel.stream.listen((message) async {
+    _channel_message.stream.listen((message) async {
       final dynamic data = jsonDecode(message);
       final DateTime createdAt = DateTime.parse(data['SentAt']);
       final String formattedDate = DateFormat('yyyy-MM-dd').format(createdAt);
@@ -158,7 +188,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
 
   Future<void> _sendMessage(String message) async {
     if (message.trim().isNotEmpty) {
-      _channel.sink.add(jsonEncode({
+      _channel_message.sink.add(jsonEncode({
         'UserID': currentUserID,
         'Content': message,
         'Type': 'Text',
@@ -166,14 +196,10 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       }));
       _messageController.clear();
 
-      // Delay the scrolling slightly to ensure the new message is added to the list
-      Future.delayed(const Duration(milliseconds: 100), () {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      });
+      // Wait for the message to be added to the list
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      _scrollToBottom();
     }
   }
 
@@ -330,7 +356,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                     );
 
                     if (gif != null) {
-                      _channel.sink.add(jsonEncode({
+                      _channel_message.sink.add(jsonEncode({
                         'UserID': currentUserID,
                         'Content': gif.images.original?.url,
                         'Type': 'Image',

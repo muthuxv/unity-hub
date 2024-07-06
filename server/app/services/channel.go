@@ -3,7 +3,6 @@ package services
 import (
 	"app/db"
 	"app/db/models"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +18,22 @@ func GetChannelMessages() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, messages)
+		var messagesResponse []map[string]interface{}
+		for _, message := range messages {
+			messagesResponse = append(messagesResponse, map[string]interface{}{
+				"ID":      message.ID,
+				"Content": message.Content,
+				"Type":    message.Type,
+				"SentAt":  message.SentAt,
+				"UserID":  message.UserID,
+				"User": map[string]interface{}{
+					"Pseudo":  message.User.Pseudo,
+					"Profile": message.User.Profile,
+				},
+			})
+		}
+
+		c.JSON(http.StatusOK, messagesResponse)
 	}
 }
 
@@ -47,8 +61,6 @@ func GetUserChannels() gin.HandlerFunc {
 
 			channels = append(channels, serverChannels...)
 		}
-
-		log.Printf("User %s has %d channels\n", userID, len(channels))
 
 		c.JSON(http.StatusOK, channels)
 	}

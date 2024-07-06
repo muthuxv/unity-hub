@@ -1,11 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:unity_hub/utils/websocket_service.dart';
 
 class AddChannelPage extends StatefulWidget {
   final int serverId;
-  const AddChannelPage({super.key, required this.serverId});
+  final WebSocketService webSocketService;
+
+  const AddChannelPage({super.key, required this.serverId, required this.webSocketService});
 
   @override
   State<AddChannelPage> createState() => _AddChannelPageState();
@@ -16,16 +21,16 @@ class _AddChannelPageState extends State<AddChannelPage> {
   var _channelType = 'text';
 
   Future<void> _addChannel() async {
-    // Get the token from the secure storage
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
-    final response = await Dio().post('http://10.0.2.2:8080/channels', data: {
-      'name': _channelNameController.text,
-      'type': _channelType,
-      'serverId': widget.serverId,
-      'permission': 'all',
-    },
+    final response = await Dio().post(
+      'http://10.0.2.2:8080/ws/servers/${widget.serverId}/channels',
+      data: {
+        'Name': _channelNameController.text,
+        'Type': _channelType,
+        'Permission': 'all',
+      },
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -38,6 +43,7 @@ class _AddChannelPageState extends State<AddChannelPage> {
     );
 
     if (response.statusCode == 201) {
+      print('Channel created: $response');
       Navigator.pop(context, response);
     } else {
       showDialog(
@@ -59,6 +65,7 @@ class _AddChannelPageState extends State<AddChannelPage> {
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -70,12 +77,12 @@ class _AddChannelPageState extends State<AddChannelPage> {
           centerTitle: true,
           backgroundColor: Colors.transparent,
           title: const Text(
-              'Ajouter un channel',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-              )
+            'Ajouter un channel',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           iconTheme: const IconThemeData(color: Colors.white),
         ),
@@ -116,9 +123,9 @@ class _AddChannelPageState extends State<AddChannelPage> {
                 const Text(
                   'Type de channel',
                   style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.start,
                 ),
@@ -149,15 +156,15 @@ class _AddChannelPageState extends State<AddChannelPage> {
                               Text(
                                 '#Textuel',
                                 style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
                                 'Envoyez des messages, des emojis et pleins d\'autres.',
                                 style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
+                                  color: Colors.white,
+                                  fontSize: 10,
                                 ),
                               ),
                             ],

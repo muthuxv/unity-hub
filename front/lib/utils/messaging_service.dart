@@ -8,7 +8,10 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter/services.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:unity_hub/pages/security/auth_page.dart';
 import 'dart:convert';
+
+import '../pages/home_page.dart';
 
 class MessagingService {
   static String? fcmToken;
@@ -112,8 +115,7 @@ class MessagingService {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('onMessage: ${message.notification!.title.toString()}');
       final notification = message.notification;
-      final android = message.notification!.android;
-
+      final android = message.notification?.android;
       if (notification != null && android != null) {
         final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
         const initializationSettings = InitializationSettings(
@@ -126,11 +128,8 @@ class MessagingService {
           'channel_name',
           importance: Importance.max,
           priority: Priority.high,
-          playSound: true,
-          enableVibration: true,
-          styleInformation: BigTextStyleInformation(''),
+          ticker: 'ticker',
         );
-
         const platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
         flutterLocalNotificationsPlugin.show(
           0,

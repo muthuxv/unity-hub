@@ -87,7 +87,6 @@ func Login() gin.HandlerFunc {
 			return
 		}
 
-		// Check if user exists, if not return 404
 		if err := db.GetDB().Where("email = ?", payload.Email).First(&user).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return

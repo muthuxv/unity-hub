@@ -30,12 +30,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  final List<Widget> _pages = [
-    const ServerPage(),
-    const MessagePage(),
-    const NotificationPage(),
-    const ProfilePage(),
-  ];
+  late final List<Widget> _pages;
 
   Future<void> _checkToken() async {
     const storage = FlutterSecureStorage();
@@ -76,11 +71,17 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _checkToken();
     messagingService.init(context);
+
+    _pages = [
+      const ServerPage(),
+      const MessagePage(),
+      const NotificationPage(),
+      const ProfilePage(),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       bottomNavigationBar: MyBottomNavBar(
@@ -107,38 +108,32 @@ class _HomePageState extends State<HomePage> {
           children: [
             Column(
               children: [
-                DrawerHeader(child: Image.asset(
-                  'lib/images/unitylog.png',
-                  width: 100,
+                DrawerHeader(
+                  child: Image.asset(
+                    'lib/images/unitylog.png',
+                    width: 100,
+                  ),
                 ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.only(left: 25.0, top: 25.0),
-                child: ListTile(
-                  leading: const Icon(
-                      Icons.home),
-                  title: const Text(
-                      'CommunityHub',
-                      ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => CommunityHubPage()),
-                    );
-                  },
+                Padding(
+                  padding: const EdgeInsets.only(left: 25.0, top: 25.0),
+                  child: ListTile(
+                    leading: const Icon(Icons.home),
+                    title: const Text('CommunityHub'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => CommunityHubPage()),
+                      );
+                    },
+                  ),
                 ),
-              ),
               ],
             ),
-
             Padding(
               padding: const EdgeInsets.only(left: 25.0, bottom: 25.0),
               child: ListTile(
-                leading: const Icon(
-                    Icons.logout),
-                title: const Text(
-                    'Se déconnecter'),
+                leading: const Icon(Icons.logout),
+                title: const Text('Se déconnecter'),
                 onTap: () {
                   _logout();
                 },

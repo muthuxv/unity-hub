@@ -95,9 +95,9 @@ class _NotificationPageState extends State<NotificationPage> {
         title: const Text('Notifications'),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : _invitations.isEmpty
-          ? Center(child: Text('No invitations'))
+          ? const Center(child: Text('No invitations'))
           : ListView.separated(
         separatorBuilder: (context, index) => Divider(color: Colors.grey),
         itemCount: _invitations.length,

@@ -419,7 +419,16 @@ func GetServerMembers() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"data": users})
+		var usersResponse []map[string]interface{}
+		for _, user := range users {
+			usersResponse = append(usersResponse, map[string]interface{}{
+				"ID":      user.ID,
+				"Pseudo":  user.Pseudo,
+				"Profile": user.Profile,
+			})
+		}
+
+		c.JSON(http.StatusOK, gin.H{"data": usersResponse})
 	}
 }
 
