@@ -3,20 +3,25 @@ package models
 import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"github.com/google/uuid"
 )
 
 type User struct {
-	gorm.Model
+	ID uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
 	Pseudo            string `gorm:"unique;validate:required"`
 	Email             string `gorm:"unique;validate:required,email"`
 	Role              string `gorm:"default:user"`
 	Password          string `gorm:"validate:required,min=5,containsany=0123456789"`
 	VerificationToken string `gorm:"size:255"`
 	IsVerified        bool   `gorm:"default:false"`
-	// IP                string
 	Provider          string
 	ProviderID        string
 	Profile           string `gorm:"default:default.jpg"`
+}
+
+func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
+    u.ID = uuid.New()
+    return
 }
 
 func (u *User) BeforeSave(tx *gorm.DB) (err error) {
