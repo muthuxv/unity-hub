@@ -52,14 +52,16 @@ func AcceptFriend() gin.HandlerFunc {
 		var friendData map[string]interface{}
 		if friend.UserID1 == inputFriend.UserID2 {
 			friendData = map[string]interface{}{
-				"FriendID":   friend.ID,
+				"ID":         friend.ID,
+				"FriendID":   friend.UserID2,
 				"Status":     friend.Status,
 				"UserPseudo": friend.User2.Pseudo,
 				"UserMail":   friend.User2.Email,
 			}
 		} else {
 			friendData = map[string]interface{}{
-				"FriendID":   friend.ID,
+				"ID":         friend.ID,
+				"FriendID":   friend.UserID1,
 				"Status":     friend.Status,
 				"UserPseudo": friend.User1.Pseudo,
 				"UserMail":   friend.User1.Email,
@@ -73,8 +75,8 @@ func AcceptFriend() gin.HandlerFunc {
 func RefuseFriend() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var inputFriend struct {
-			ID      uint `json:"id"`      // ID of the friend request
-			UserID2 uint `json:"userId2"` // ID of the user who is supposed to refuse the friend request
+			ID      uint `json:"id"`
+			UserID2 uint `json:"userId2"`
 		}
 		if err := c.ShouldBindJSON(&inputFriend); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalide JSON data"})
@@ -170,6 +172,7 @@ func GetFriendsByUser() gin.HandlerFunc {
 			}
 
 			friendData := map[string]interface{}{
+				"ID":         friend.ID,
 				"FriendID":   friendID,
 				"Status":     friend.Status,
 				"UserPseudo": friendPseudo,
@@ -203,7 +206,8 @@ func GetPendingFriendsByUser() gin.HandlerFunc {
 		for i, friend := range friends {
 
 			friendData := map[string]interface{}{
-				"FriendID":      friend.ID,
+				"ID":            friend.ID,
+				"FriendID":      userID,
 				"FriendUser1ID": friend.User1.ID,
 				"Status":        friend.Status,
 				"UserPseudo":    friend.User1.Pseudo,

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RoleUpdatePageForm extends StatefulWidget {
   final int roleId;
@@ -23,7 +24,7 @@ class _RoleUpdatePageFormState extends State<RoleUpdatePageForm> {
     _nameController.text = widget.roleLabel;
   }
 
-  void _createRole() async {
+  void _updateRole() async { // Nom de la méthode mis à jour
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -49,22 +50,22 @@ class _RoleUpdatePageFormState extends State<RoleUpdatePageForm> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Role modified successfully'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.roleModifiedSuccessfully),
           ),
         );
         _nameController.clear();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to modify role'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.failedModifyRole),
           ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('An error occurred while modifying the role'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.errorModifyingRole),
         ),
       );
     } finally {
@@ -78,7 +79,7 @@ class _RoleUpdatePageFormState extends State<RoleUpdatePageForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Modifier le rôle'),
+        title: Text(AppLocalizations.of(context)!.modifyRole),
         backgroundColor: Colors.deepPurple,
       ),
       body: Padding(
@@ -89,10 +90,10 @@ class _RoleUpdatePageFormState extends State<RoleUpdatePageForm> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nom du rôle'),
+                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.roleName),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer un nom';
+                    return AppLocalizations.of(context)!.enterName;
                   }
                   return null;
                 },
@@ -106,10 +107,10 @@ class _RoleUpdatePageFormState extends State<RoleUpdatePageForm> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 32.0, vertical: 16.0),
                 ),
-                onPressed: _createRole,
-                child: const Text(
-                  'Modifier',
-                  style: TextStyle(color: Colors.white),
+                onPressed: _updateRole,
+                child: Text(
+                  AppLocalizations.of(context)!.modify,
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
             ],

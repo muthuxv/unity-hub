@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RolePageForm extends StatefulWidget {
   final int serverId;
@@ -42,22 +43,22 @@ class _RolePageFormState extends State<RolePageForm> {
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Role created successfully'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.roleCreatedSuccessfully),
           ),
         );
         _nameController.clear();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to create role'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.failedCreateRole),
           ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('An error occurred while creating the role'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.errorCreatingRole),
         ),
       );
     } finally {
@@ -71,7 +72,7 @@ class _RolePageFormState extends State<RolePageForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Créer un rôle'),
+        title: Text(AppLocalizations.of(context)!.createRole),
         backgroundColor: Colors.deepPurple,
       ),
       body: Padding(
@@ -82,10 +83,10 @@ class _RolePageFormState extends State<RolePageForm> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nom du rôle'),
+                decoration: InputDecoration(labelText: AppLocalizations.of(context)!.roleName),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer un nom';
+                    return AppLocalizations.of(context)!.enterName;
                   }
                   return null;
                 },
@@ -100,9 +101,9 @@ class _RolePageFormState extends State<RolePageForm> {
                       horizontal: 32.0, vertical: 16.0),
                 ),
                 onPressed: _createRole,
-                child: const Text(
-                  'Créer',
-                  style: TextStyle(color: Colors.white),
+                child: Text(
+                  AppLocalizations.of(context)!.create,
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
             ],

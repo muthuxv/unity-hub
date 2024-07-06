@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:unity_hub/pages/voice_room.dart';
 import '../pages/channel_page.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ChannelsPanel extends StatefulWidget {
   final int serverId;
@@ -76,7 +77,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
         : Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('# Salons-textuels'),
+        Text(AppLocalizations.of(context)!.text_channels_section),
         for (final channel in _textChannels)
           GestureDetector(
             child: ListTile(
@@ -96,10 +97,11 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                 showDialog(
                   context: context,
                   builder: (context) {
-                    TextEditingController channelNameController = TextEditingController(text: channel['Name']);
+                    TextEditingController channelNameController =
+                    TextEditingController(text: channel['Name']);
 
                     return AlertDialog(
-                      title: const Text('Modifier le salon'),
+                      title: Text(AppLocalizations.of(context)!.edit_channel_title),
                       content: SizedBox(
                         width: double.maxFinite,
                         child: Column(
@@ -107,8 +109,8 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                           children: [
                             TextField(
                               controller: channelNameController,
-                              decoration: const InputDecoration(
-                                labelText: 'Nom du salon',
+                              decoration: InputDecoration(
+                                labelText: AppLocalizations.of(context)!.edit_channel_name_label,
                               ),
                             ),
                           ],
@@ -130,8 +132,8 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                                   context: context,
                                   builder: (context) {
                                     return AlertDialog(
-                                      title: const Text('Erreur'),
-                                      content: const Text('Une erreur s\'est produite lors de la suppression du salon.'),
+                                      title: Text(AppLocalizations.of(context)!.delete_channel_error_title),
+                                      content: Text(AppLocalizations.of(context)!.delete_channel_error_message),
                                       actions: [
                                         TextButton(
                                           onPressed: () {
@@ -173,7 +175,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
               },
             ),
           ),
-        const Text('# Salons-vocaux'),
+        Text(AppLocalizations.of(context)!.voice_channels_section),
         for (final channel in _vocalChannels)
           ListTile(
             title: Text(channel['Name']),
@@ -190,10 +192,11 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
               showDialog(
                 context: context,
                 builder: (context) {
-                  TextEditingController channelNameController = TextEditingController(text: channel['Name']);
+                  TextEditingController channelNameController =
+                  TextEditingController(text: channel['Name']);
 
                   return AlertDialog(
-                    title: const Text('Modifier le salon'),
+                    title: Text(AppLocalizations.of(context)!.edit_channel_title),
                     content: SizedBox(
                       width: double.maxFinite,
                       child: Column(
@@ -201,8 +204,8 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                         children: [
                           TextField(
                             controller: channelNameController,
-                            decoration: const InputDecoration(
-                              labelText: 'Nom du salon',
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!.edit_channel_name_label,
                             ),
                           ),
                         ],
@@ -224,8 +227,8 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                                 context: context,
                                 builder: (context) {
                                   return AlertDialog(
-                                    title: const Text('Erreur'),
-                                    content: const Text('Une erreur s\'est produite lors de la suppression du salon.'),
+                                    title: Text(AppLocalizations.of(context)!.delete_channel_error_title),
+                                    content: Text(AppLocalizations.of(context)!.delete_channel_error_message),
                                     actions: [
                                       TextButton(
                                         onPressed: () {

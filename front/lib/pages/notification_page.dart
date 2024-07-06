@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class NotificationPage extends StatefulWidget {
-  const NotificationPage({Key? key}) : super(key: key);
+  const NotificationPage({super.key});
 
   @override
   State<NotificationPage> createState() => _NotificationPageState();
@@ -15,6 +16,7 @@ class _NotificationPageState extends State<NotificationPage> {
   String? token;
   bool _isLoading = false;
   List _invitations = [];
+
   void _getInvitations() async {
     setState(() {
       _isLoading = true;
@@ -57,16 +59,17 @@ class _NotificationPageState extends State<NotificationPage> {
       _showErrorDialog(e.toString());
     }
   }
+
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Erreur'),
+        title: Text(AppLocalizations.of(context)!.errorTitle),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Une erreur est survenue :('),
+            child: Text(AppLocalizations.of(context)!.closeButton),
           ),
         ],
       ),
@@ -77,7 +80,7 @@ class _NotificationPageState extends State<NotificationPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        content: Text(message)
+        content: Text(message),
       ),
     );
   }
@@ -92,24 +95,24 @@ class _NotificationPageState extends State<NotificationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(AppLocalizations.of(context)!.notificationsTitle),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : _invitations.isEmpty
-          ? Center(child: Text('No invitations'))
+          ? Center(child: Text(AppLocalizations.of(context)!.noInvitations))
           : ListView.separated(
-        separatorBuilder: (context, index) => Divider(color: Colors.grey),
+        separatorBuilder: (context, index) => const Divider(color: Colors.grey),
         itemCount: _invitations.length,
         itemBuilder: (context, index) {
           var invitation = _invitations[index];
           return ListTile(
-            title: Text('${invitation['UserSender']['Pseudo']} vous invite à rejoindre le serveur ${invitation['Server']['Name']}.'),
+            title: Text('${invitation['UserSender']['Pseudo']} ${AppLocalizations.of(context)!.invitationMessage} ${invitation['Server']['Name']}.'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 IconButton(
-                  icon: Icon(Icons.check, color: Colors.green),
+                  icon: const Icon(Icons.check, color: Colors.green),
                   onPressed: () async {
                     final response = await Dio().post(
                       'http://10.0.2.2:8080/servers/${invitation['Server']['ID']}/join',
@@ -132,17 +135,17 @@ class _NotificationPageState extends State<NotificationPage> {
                       );
                       if (response.statusCode == 204) {
                         _getInvitations();
-                        _showSuccessDialog('You have successfully joined the server');
+                        _showSuccessDialog(AppLocalizations.of(context)!.joinSuccessMessage);
                       } else {
-                        _showErrorDialog('Failed to delete invitation');
+                        _showErrorDialog(AppLocalizations.of(context)!.deleteInvitationError);
                       }
                     } else {
-                      _showErrorDialog('Failed to accept invitation');
+                      _showErrorDialog(AppLocalizations.of(context)!.acceptInvitationError);
                     }
                   },
                 ),
                 IconButton(
-                  icon: Icon(Icons.close, color: Colors.red),
+                  icon: const Icon(Icons.close, color: Colors.red),
                   onPressed: () async {
                     final response = await Dio().delete(
                       'http://10.0.2.2:8080/invitations/${invitation['ID']}',
@@ -156,7 +159,7 @@ class _NotificationPageState extends State<NotificationPage> {
                     if (response.statusCode == 204) {
                       _getInvitations();
                     } else {
-                      _showErrorDialog('Failed to delete invitation');
+                      _showErrorDialog(AppLocalizations.of(context)!.deleteInvitationError);
                     }
                   },
                 ),
@@ -166,4 +169,5 @@ class _NotificationPageState extends State<NotificationPage> {
         },
       ),
     );
-  }}
+  }
+}

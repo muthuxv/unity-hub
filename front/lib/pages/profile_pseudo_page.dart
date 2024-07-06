@@ -3,9 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ProfilePseudoPage extends StatefulWidget {
-  const ProfilePseudoPage({Key? key}) : super(key: key);
+  const ProfilePseudoPage({super.key});
 
   @override
   _ProfilePseudoPageState createState() => _ProfilePseudoPageState();
@@ -74,8 +75,8 @@ class _ProfilePseudoPageState extends State<ProfilePseudoPage> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Pseudo mis à jour'),
-          content: const Text('Votre pseudo a été mis à jour avec succès.'),
+          title: Text(AppLocalizations.of(context)!.pseudoUpdated),
+          content: Text(AppLocalizations.of(context)!.pseudoUpdatedSuccess),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -88,7 +89,7 @@ class _ProfilePseudoPageState extends State<ProfilePseudoPage> {
         ),
       );
     } else {
-      _showErrorDialog('Erreur lors de la mise à jour du pseudo');
+      _showErrorDialog(AppLocalizations.of(context)!.errorUpdatingPseudo);
     }
   }
 
@@ -96,7 +97,7 @@ class _ProfilePseudoPageState extends State<ProfilePseudoPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Erreur'),
+        title: Text(AppLocalizations.of(context)!.error),
         content: Text(message),
         actions: [
           TextButton(
@@ -112,7 +113,10 @@ class _ProfilePseudoPageState extends State<ProfilePseudoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Modifier Pseudo', style: GoogleFonts.nunito(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+        title: Text(
+          AppLocalizations.of(context)!.modifyPseudo,
+          style: GoogleFonts.nunito(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.deepPurple[300],
       ),
       body: _isLoading
@@ -125,8 +129,8 @@ class _ProfilePseudoPageState extends State<ProfilePseudoPage> {
             TextFormField(
               controller: _pseudoController,
               decoration: InputDecoration(
-                labelText: "Pseudo",
-                hintText: "Entrez votre nouveau pseudo",
+                labelText: AppLocalizations.of(context)!.pseudo,
+                hintText: AppLocalizations.of(context)!.enterNewPseudo,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
               ),
               onChanged: (value) {
@@ -145,7 +149,10 @@ class _ProfilePseudoPageState extends State<ProfilePseudoPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
-                child: Text('Enregistrer', style: GoogleFonts.nunito(fontSize: 16)),
+                child: Text(
+                  AppLocalizations.of(context)!.save,
+                  style: GoogleFonts.nunito(fontSize: 16),
+                ),
               ),
             ),
           ],

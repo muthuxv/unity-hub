@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:unity_hub/utils/messaging_service.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FriendPage extends StatefulWidget {
   const FriendPage({super.key});
@@ -142,6 +143,7 @@ class _FriendPageState extends State<FriendPage> {
         _pendingRequests.removeWhere((item) => item['ID'].toString() == friendId);
 
         var newFriend = {
+          'ID': response.data['ID'],
           'FriendID': response.data['FriendID'],
           'Status': response.data['Status'],
           'UserPseudo': response.data['UserPseudo'],
@@ -154,7 +156,7 @@ class _FriendPageState extends State<FriendPage> {
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Demande d'ami acceptée avec succès"))
+            SnackBar(content: Text(AppLocalizations.of(context)!.friendRequestAccepted))
         );
       });
     } else {
@@ -168,6 +170,10 @@ class _FriendPageState extends State<FriendPage> {
   }
 
   void _refuseFriendRequest(String friendId) async {
+    setState(() {
+      _showLoading = true;
+    });
+
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
@@ -191,14 +197,18 @@ class _FriendPageState extends State<FriendPage> {
       setState(() {
         _pendingRequests.removeWhere((item) => item['ID'].toString() == friendId);
       });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Demande refusée avec succès')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.friendRequestRefused)));
     } else {
       _showErrorDialog('Failed to refuse friend request: ${response.data['message']}');
     }
+
+    setState(() {
+      _pendingRequests.removeWhere((item) => item['FriendID'].toString() == friendId);
+      _showLoading = false;
+    });
   }
 
   void _cancelFriendRequest(String friendId) async {
-    print("Attempting to cancel friend request with ID: $friendId");
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
@@ -218,17 +228,17 @@ class _FriendPageState extends State<FriendPage> {
 
       if (response.statusCode == 204) {
         setState(() {
-          _sentRequests.removeWhere((item) => item['FriendID'].toString() == friendId);
+          _sentRequests.removeWhere((item) => item['ID'].toString() == friendId);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Demande d'ami annulée avec succès")),
+          SnackBar(content: Text(AppLocalizations.of(context)!.friendRequestCancelled)),
         );
       } else {
-        _showErrorDialog(response.data['message'] ?? "Erreur lors de l'annulation de la demande d'ami");
+        _showErrorDialog(response.data['message'] ?? AppLocalizations.of(context)!.errorCancellingFriendRequest);
       }
     } on DioError catch (e) {
       if (e.response != null) {
-        _showErrorDialog(e.response!.data['message'] ?? "Une erreur inattendue s'est produite");
+        _showErrorDialog(e.response!.data['message'] ?? AppLocalizations.of(context)!.unexpectedError);
       } else {
         _showErrorDialog("Failed to cancel friend request. Please check your network connection.");
       }
@@ -263,30 +273,30 @@ class _FriendPageState extends State<FriendPage> {
       onTap: () => _showFriendRequestDialog(request),
       child: Container(
         width: 200,
-        height: 80,  // Hauteur fixe pour la carte
+        height: 80,
         margin: const EdgeInsets.all(10),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.lightBlue[50],  // Couleur de fond claire
+          color: Colors.lightBlue[50],
           border: Border.all(color: Colors.blueAccent),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
             Container(
-              width: 60,  // Largeur de l'avatar
-              height: 60,  // Hauteur de l'avatar
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
-                color: Colors.blueGrey,  // Couleur de fond de l'avatar
+                color: Colors.blueGrey,
                 borderRadius: BorderRadius.circular(5),
               ),
               alignment: Alignment.center,
               child: Text(
-                request['UserPseudo'][0].toUpperCase(),  // Première lettre du pseudo
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                request['UserPseudo'][0].toUpperCase(),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,12 +304,12 @@ class _FriendPageState extends State<FriendPage> {
                 children: [
                   Text(
                     request['UserPseudo'],
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     request['Status'],
-                    style: TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16),
                   ),
                 ],
               ),
@@ -311,26 +321,25 @@ class _FriendPageState extends State<FriendPage> {
   }
 
   void _showFriendRequestDialog(Map request) {
-    print(request);
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Voulez-vous devenir ami avec ${request['UserPseudo']} ?'),
+          title: Text('${AppLocalizations.of(context)!.wantToBeFriendWith} ${request['UserPseudo']} ?'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                _acceptFriendRequest(request['FriendID'].toString());
+                _acceptFriendRequest(request['ID'].toString());
                 Navigator.of(context).pop();
               },
-              child: Text('Accepter'),
+              child: Text(AppLocalizations.of(context)!.accept),
             ),
             TextButton(
               onPressed: () {
-                _refuseFriendRequest(request['FriendID'].toString());
+                _refuseFriendRequest(request['ID'].toString());
                 Navigator.of(context).pop();
               },
-              child: Text('Refuser'),
+              child: Text(AppLocalizations.of(context)!.refuse),
             ),
           ],
         );
@@ -342,7 +351,7 @@ class _FriendPageState extends State<FriendPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Erreur'),
+        title: Text(AppLocalizations.of(context)!.error),
         content: Text(message),
         actions: [
           TextButton(
@@ -379,7 +388,7 @@ class _FriendPageState extends State<FriendPage> {
               Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Text(
-                  friend['UserPseudo'], // Assurez-vous que la clé est correcte
+                  friend['UserPseudo'],
                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -387,30 +396,29 @@ class _FriendPageState extends State<FriendPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[200], // Vous pouvez ajuster cette couleur
+                    color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       ListTile(
-                        leading: Icon(Icons.group_add),
-                        title: Text('Inviter sur les serveurs'),
+                        leading: const Icon(Icons.group_add),
+                        title: Text(AppLocalizations.of(context)!.inviteToServer),
                         onTap: () {
                           Navigator.pop(context);
-                          // Naviguer au profil de l'ami
                         },
                       ),
                       Container(
-                        margin: EdgeInsets.symmetric(horizontal: 50), // Ajustez selon le design souhaité
+                        margin: const EdgeInsets.symmetric(horizontal: 50),
                         child: Divider(color: Colors.grey[400], thickness: 1),
                       ),
                       ListTile(
-                        leading: Icon(Icons.delete),
-                        title: Text('Supprimer'),
+                        leading: const Icon(Icons.delete),
+                        title: Text(AppLocalizations.of(context)!.delete),
                         onTap: () {
                           Navigator.pop(context);
-                          _showDeleteConfirmationDialog(friend); // Afficher la boîte de dialogue de confirmation
+                          _showDeleteConfirmationDialog(friend);
                         },
                       ),
                     ],
@@ -425,25 +433,24 @@ class _FriendPageState extends State<FriendPage> {
   }
 
   void _showDeleteConfirmationDialog(Map friend) {
-    print(friend);
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Êtes-vous sûr de supprimer cet ami ?'),
+          title: Text(AppLocalizations.of(context)!.deleteFriendConfirmation),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Fermer la boîte de dialogue de confirmation
-                _deleteFriend(friend); // Supprimer l'ami
+                Navigator.of(context).pop();
+                _deleteFriend(friend);
               },
-              child: const Text('Oui'),
+              child: Text(AppLocalizations.of(context)!.yes),
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Fermer la boîte de dialogue de confirmation
+                Navigator.of(context).pop();
               },
-              child: const Text('Non'),
+              child: Text(AppLocalizations.of(context)!.no),
             ),
           ],
         );
@@ -457,7 +464,7 @@ class _FriendPageState extends State<FriendPage> {
 
     try {
       final response = await Dio().delete(
-        'http://10.0.2.2:8080/friends/${friend['FriendID']}',
+        'http://10.0.2.2:8080/friends/${friend['ID']}',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -470,16 +477,17 @@ class _FriendPageState extends State<FriendPage> {
       if (response.statusCode == 204) {
         setState(() {
           _friends.removeWhere((f) => f['FriendID'].toString() == friend['FriendID'].toString());
+          _filteredFriends.removeWhere((f) => f['FriendID'].toString() == friend['FriendID'].toString());
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Ami supprimé avec succès")),
+          SnackBar(content: Text(AppLocalizations.of(context)!.friendDeleted)),
         );
       } else {
-        _showErrorDialog(response.data['message'] ?? "Erreur lors de la suppression de l'ami");
+        _showErrorDialog(response.data['message'] ?? AppLocalizations.of(context)!.errorDeletingFriend);
       }
     } on DioError catch (e) {
       if (e.response != null) {
-        _showErrorDialog(e.response!.data['message'] ?? "Une erreur inattendue s'est produite");
+        _showErrorDialog(e.response!.data['message'] ?? AppLocalizations.of(context)!.unexpectedErrorOccurred);
       } else {
         _showErrorDialog("Failed to delete friend. Please check your network connection.");
       }
@@ -506,17 +514,17 @@ class _FriendPageState extends State<FriendPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    const Text(
-                      "Ajouter par pseudo d'utilisateur",
+                    Text(
+                      AppLocalizations.of(context)!.addUserByPseudo,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      "Qui sera ton nouvel ami ?",
+                      AppLocalizations.of(context)!.whoWillBeYourNewFriend,
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.grey[600],
@@ -531,7 +539,7 @@ class _FriendPageState extends State<FriendPage> {
                         }
                       },
                       decoration: InputDecoration(
-                        hintText: "Entrez un pseudo d'utilisateur",
+                        hintText: AppLocalizations.of(context)!.enterUserPseudo,
                         filled: true,
                         fillColor: Colors.grey[200],
                         border: OutlineInputBorder(
@@ -553,7 +561,7 @@ class _FriendPageState extends State<FriendPage> {
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
                       ),
-                      child: const Text("Envoyer une demande d'ami", style: TextStyle(fontSize: 18)),
+                      child: Text(AppLocalizations.of(context)!.sendFriendRequest, style: const TextStyle(fontSize: 18)),
                     ),
                   ],
                 ),
@@ -616,8 +624,8 @@ class _FriendPageState extends State<FriendPage> {
               'message': {
                 'token': fcmToken,
                 'notification': {
-                  'title': 'Demande d\'ami',
-                  'body': 'Vous avez reçu une demande d\'ami de ${decodedToken['jti']}',
+                  'title': AppLocalizations.of(context)!.friendRequest,
+                  'body': AppLocalizations.of(context)!.youReceivedFriendRequest + decodedToken['jti'],
                 },
               },
             },
@@ -635,8 +643,8 @@ class _FriendPageState extends State<FriendPage> {
           _sentRequests.add({
             'UserPseudo': pseudo,
             'Status': 'pending',
-            'ID': response.data['friend']['UserID2'],
-            'FriendID': response.data['friend']['ID'],
+            'ID': response.data['friend']['ID'],
+            'FriendID': response.data['friend']['UserID2'],
           });
         });
         _getFriends();
@@ -657,21 +665,21 @@ class _FriendPageState extends State<FriendPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Annuler la demande d\'ami'),
-          content: Text('Voulez-vous annuler la demande d\'ami à ${request['UserPseudo']} ?'),
+          title: Text(AppLocalizations.of(context)!.cancelFriendRequest),
+          content: Text('${AppLocalizations.of(context)!.cancelFriendRequestConfirmation + request['UserPseudo']}?'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                _cancelFriendRequest(request['FriendID'].toString());
+                _cancelFriendRequest(request['ID'].toString());
               },
-              child: const Text('Annuler la demande d\'ami'),
+              child: Text(AppLocalizations.of(context)!.cancelFriendRequest),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Retour'),
+              child: Text(AppLocalizations.of(context)!.back),
             ),
           ],
         );
@@ -681,7 +689,7 @@ class _FriendPageState extends State<FriendPage> {
 
   Widget buildSentRequestsTab() {
     return _sentRequests.isEmpty
-        ? const Center(child: Text("Tu n'as pas encore fait de demande", style: TextStyle(fontSize: 16)))
+        ? Center(child: Text(AppLocalizations.of(context)!.noFriendRequestsSent, style: const TextStyle(fontSize: 16)))
         : ListView.builder(
       itemCount: _sentRequests.length,
       itemBuilder: (context, index) {
@@ -689,7 +697,7 @@ class _FriendPageState extends State<FriendPage> {
         return ListTile(
           leading: const Icon(Icons.person),
           title: Text(request['UserPseudo']),
-          subtitle: const Text("Demande envoyée"),
+          subtitle: Text(AppLocalizations.of(context)!.friendRequestSent),
           trailing: IconButton(
             icon: const Icon(Icons.arrow_forward),
             onPressed: () => _showCancelFriendRequestDialog(request),
@@ -713,8 +721,8 @@ class _FriendPageState extends State<FriendPage> {
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Rechercher des amis...',
-              prefixIcon: Icon(Icons.search),
+              hintText: AppLocalizations.of(context)!.searchFriends,
+              prefixIcon: const Icon(Icons.search),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide.none,
@@ -725,7 +733,7 @@ class _FriendPageState extends State<FriendPage> {
           ),
         ),
         if (_showLoading)
-          Expanded(
+          const Expanded(
             child: Center(
               child: CircularProgressIndicator(),
             ),
@@ -742,8 +750,8 @@ class _FriendPageState extends State<FriendPage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  "Pas de demande d'ami",
-                  style: TextStyle(fontSize: 16, color: Colors.black54),
+                  AppLocalizations.of(context)!.noFriendRequests,
+                  style: const TextStyle(fontSize: 16, color: Colors.black54),
                 ),
               ),
             )
@@ -763,8 +771,8 @@ class _FriendPageState extends State<FriendPage> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                "Pas encore d'ami 😭",
-                style: TextStyle(fontSize: 16, color: Colors.black54),
+                AppLocalizations.of(context)!.noFriendsYet,
+                style: const TextStyle(fontSize: 16, color: Colors.black54),
               ),
             ),
           )
@@ -781,7 +789,7 @@ class _FriendPageState extends State<FriendPage> {
                   ),
                   title: Text(
                     _filteredFriends[index]['UserPseudo'],
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(_filteredFriends[index]['Status']),
                   onTap: () => _showBottomModal(_filteredFriends[index]),
@@ -797,30 +805,30 @@ class _FriendPageState extends State<FriendPage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2, // Total number of tabs
+      length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Amis', style: TextStyle(color: Colors.white)),
+          title: Text(AppLocalizations.of(context)!.friends, style: const TextStyle(color: Colors.white)),
           backgroundColor: Colors.deepPurple[300],
           elevation: 0,
           actions: <Widget>[
             Container(
               margin: const EdgeInsets.only(right: 10),
               child: TextButton.icon(
-                icon: Icon(Icons.person_add, color: Colors.white),
-                label: const Text(
-                  'Ajouter des amis',
-                  style: TextStyle(color: Colors.white),
+                icon: const Icon(Icons.person_add, color: Colors.white),
+                label: Text(
+                  AppLocalizations.of(context)!.addFriends,
+                  style: const TextStyle(color: Colors.white),
                 ),
                 onPressed: _showAddFriendDialog,
                 style: TextButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
-                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                 ),
               ),
             ),
           ],
-          bottom: TabBar(
+          bottom: const TabBar(
             tabs: [
               Tab(icon: Icon(Icons.group, color: Colors.white)),
               Tab(icon: Icon(Icons.send, color: Colors.white)),
@@ -829,8 +837,8 @@ class _FriendPageState extends State<FriendPage> {
         ),
         body: TabBarView(
           children: [
-            buildFriendPageContent(), // Existing friends page content
-            buildSentRequestsTab(), // Placeholder for second tab
+            buildFriendPageContent(),
+            buildSentRequestsTab(),
           ],
         ),
       ),

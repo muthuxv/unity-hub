@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class Server {
   final int id;
@@ -81,6 +80,7 @@ class CommunityHubPage extends StatefulWidget {
 class _CommunityHubPageState extends State<CommunityHubPage> {
   late Future<List<Server>> futureServers;
   TextEditingController searchController = TextEditingController();
+  List<Server> allServers = [];  // Stocker tous les serveurs récupérés
   List<Server> displayedServers = [];
 
   @override
@@ -108,6 +108,7 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
         List jsonResponse = response.data;
         List<Server> servers = jsonResponse.map((server) => Server.fromJson(server)).toList();
         setState(() {
+          allServers = servers;  // Stocker tous les serveurs récupérés
           displayedServers = servers;
         });
         return servers;
@@ -119,68 +120,17 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
     }
   }
 
-  Future<void> searchServers(String searchTerm) async {
+  void searchServers(String searchTerm) {
     if (searchTerm.isEmpty) {
       setState(() {
-        futureServers = fetchServers();
+        displayedServers = allServers;
       });
       return;
     }
 
-    try {
-      final response = await Dio().get(
-        'http://10.0.2.2:8080/servers/search',
-        queryParameters: {'name': searchTerm},
-      );
-
-      if (response.statusCode == 200) {
-        List jsonResponse = response.data;
-        List<Server> searchedServers =
-        jsonResponse.map((server) => Server.fromJson(server)).toList();
-        setState(() {
-          displayedServers = searchedServers;
-        });
-      } else {
-        setState(() {
-          displayedServers = [];
-        });
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Aucun serveur trouvé'),
-              content: Text('Il n\'y a pas de serveur portant ce nom.'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
-      }
-    } catch (e) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Erreur'),
-            content: Text('Échec de la recherche de serveurs: $e'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-    }
+    setState(() {
+      displayedServers = allServers.where((server) => server.name.toLowerCase().contains(searchTerm.toLowerCase())).toList();
+    });
   }
 
   Future<void> _joinServer(int serverId) async {
@@ -200,6 +150,7 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
 
       if (response.statusCode == 200) {
         setState(() {
+          allServers.removeWhere((server) => server.id == serverId);
           displayedServers.removeWhere((server) => server.id == serverId);
         });
 
@@ -207,14 +158,14 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('Succès'),
-              content: Text('Vous avez rejoint le serveur avec succès.'),
+              title: Text(AppLocalizations.of(context)!.success),
+              content: Text(AppLocalizations.of(context)!.serverJoinedSuccessfully),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('OK'),
+                  child: const Text('OK'),
                 ),
               ],
             );
@@ -225,14 +176,14 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('Erreur'),
-              content: Text('Échec de la jonction du serveur.'),
+              title: Text(AppLocalizations.of(context)!.error),
+              content: Text(AppLocalizations.of(context)!.failedJoinServer),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('OK'),
+                  child: const Text('OK'),
                 ),
               ],
             );
@@ -244,14 +195,14 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Erreur'),
-            content: Text('Échec de la jonction du serveur: $e'),
+            title: Text(AppLocalizations.of(context)!.error),
+            content: Text('${AppLocalizations.of(context)!.failedJoinServer}: $e'),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: Text('OK'),
+                child: const Text('OK'),
               ),
             ],
           );
@@ -265,20 +216,20 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Voulez-vous vraiment rejoindre ce serveur ?'),
+          title: Text(AppLocalizations.of(context)!.joinServerConfirmation),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Non'),
+              child: Text(AppLocalizations.of(context)!.no),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _joinServer(server.id);
               },
-              child: Text('Oui'),
+              child: Text(AppLocalizations.of(context)!.yes),
             ),
           ],
         );
@@ -301,17 +252,17 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
                 future: futureServers,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
+                    return const CircularProgressIndicator();
                   } else if (snapshot.hasError) {
                     return Text("${snapshot.error}");
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.info, size: 80, color: Colors.grey),
+                        const Icon(Icons.info, size: 80, color: Colors.grey),
                         Text(
-                          'Aucun serveur public disponible',
-                          style: TextStyle(fontSize: 20, color: Colors.grey),
+                          AppLocalizations.of(context)!.no_public_servers,
+                          style: const TextStyle(fontSize: 20, color: Colors.grey),
                         ),
                       ],
                     );
@@ -356,7 +307,7 @@ class CategorySection extends StatelessWidget {
   final List<Server> servers;
   final Function(Server) onJoinServer;
 
-  const CategorySection({Key? key, required this.tagName, required this.servers, required this.onJoinServer}) : super(key: key);
+  const CategorySection({super.key, required this.tagName, required this.servers, required this.onJoinServer});
 
   @override
   Widget build(BuildContext context) {
@@ -397,7 +348,7 @@ class CategorySection extends StatelessWidget {
                     width: 200,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [Colors.purpleAccent, Colors.deepPurple],
@@ -407,7 +358,7 @@ class CategorySection extends StatelessWidget {
                           color: Colors.black.withOpacity(0.3),
                           spreadRadius: 2,
                           blurRadius: 10,
-                          offset: Offset(0, 3),
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
@@ -415,7 +366,7 @@ class CategorySection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                           child: Image.network(
                             'http://10.0.2.2:8080/uploads/${server.media.fileName}?rand=${DateTime.now().millisecondsSinceEpoch}',
                             height: 120,
@@ -430,12 +381,12 @@ class CategorySection extends StatelessWidget {
                             children: [
                               Text(
                                 server.name,
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                               ),
                               SizedBox(height: 4),
                               Text(
                                 server.tags.map((tag) => tag.name).join(', '),
-                                style: TextStyle(color: Colors.white),
+                                style: const TextStyle(color: Colors.white),
                               ),
                             ],
                           ),
@@ -457,13 +408,13 @@ class SearchBar extends StatelessWidget {
   final Function(String) onSearch;
   final TextEditingController searchController;
 
-  const SearchBar({Key? key, required this.onSearch, required this.searchController}) : super(key: key);
+  const SearchBar({super.key, required this.onSearch, required this.searchController});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
         color: Colors.deepPurple,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -471,7 +422,7 @@ class SearchBar extends StatelessWidget {
         children: [
           Expanded(
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -482,15 +433,15 @@ class SearchBar extends StatelessWidget {
                   onSearch(value);
                 },
                 decoration: InputDecoration(
-                  hintText: 'Rechercher un serveur',
+                  hintText: AppLocalizations.of(context)!.search_server,
                   border: InputBorder.none,
-                  icon: Icon(Icons.search, color: Colors.grey),
+                  icon: const Icon(Icons.search, color: Colors.grey),
                 ),
               ),
             ),
           ),
-          SizedBox(width: 16),
-          Icon(Icons.filter_list, color: Colors.white),
+          const SizedBox(width: 16),
+          const Icon(Icons.filter_list, color: Colors.white),
         ],
       ),
     );
@@ -498,7 +449,7 @@ class SearchBar extends StatelessWidget {
 }
 
 void main() {
-  runApp(MaterialApp(
+  runApp(const MaterialApp(
     debugShowCheckedModeBanner: false,
     home: CommunityHubPage(),
   ));
