@@ -46,6 +46,7 @@ func MakeMigrations() {
 		&models.Server{},
 		&models.EventServer{},
 		&models.Friend{},
+		&models.Feature{},
 		&models.Invitation{},
 		&models.Logs{},
 		&models.Message{},

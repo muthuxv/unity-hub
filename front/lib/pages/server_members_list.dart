@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ServerMembersList extends StatefulWidget {
   final String serverId;
@@ -77,7 +78,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Membres du serveur'),
+        title: Text(AppLocalizations.of(context)!.server_members),
       ),
       body: _isLoading
           ? const Center(
@@ -96,9 +97,9 @@ class _ServerMembersListState extends State<ServerMembersList> {
                 height: 40,
                 width: 40,
               )
-                  : Text(
-                member['Profile'] ?? 'No Profile',
-                style: const TextStyle(fontSize: 20),
+                  : CircleAvatar(
+                radius: 50,
+                backgroundImage: NetworkImage(member['Profile']),
               ),
             ),
           );

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class AddChannelPage extends StatefulWidget {
   final String serverId;
@@ -44,14 +44,14 @@ class _AddChannelPageState extends State<AddChannelPage> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Erreur'),
-            content: const Text('Une erreur s\'est produite lors de la création du channel.'),
+            title: Text(AppLocalizations.of(context)!.channel_creation_error_title),
+            content: Text(AppLocalizations.of(context)!.channel_creation_error_message),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: const Text('OK'),
+                child: Text(AppLocalizations.of(context)!.ok_button),
               ),
             ],
           );
@@ -59,6 +59,7 @@ class _AddChannelPageState extends State<AddChannelPage> {
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -69,12 +70,12 @@ class _AddChannelPageState extends State<AddChannelPage> {
         appBar: AppBar(
           centerTitle: true,
           backgroundColor: Colors.transparent,
-          title: const Text(
-              'Ajouter un channel',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+          title: Text(
+              AppLocalizations.of(context)!.add_channel,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               )
           ),
           iconTheme: const IconThemeData(color: Colors.white),
@@ -101,24 +102,24 @@ class _AddChannelPageState extends State<AddChannelPage> {
                 const SizedBox(height: 16.0),
                 TextField(
                   controller: _channelNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom du channel',
-                    labelStyle: TextStyle(color: Colors.white),
-                    focusedBorder: UnderlineInputBorder(
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.channel_name_label,
+                    labelStyle: const TextStyle(color: Colors.white),
+                    focusedBorder: const UnderlineInputBorder(
                       borderSide: BorderSide(color: Colors.white),
                     ),
-                    enabledBorder: UnderlineInputBorder(
+                    enabledBorder: const UnderlineInputBorder(
                       borderSide: BorderSide(color: Colors.white),
                     ),
                   ),
                 ),
                 const SizedBox(height: 32.0),
-                const Text(
-                  'Type de channel',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                Text(
+                  AppLocalizations.of(context)!.channel_type_label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.start,
                 ),
@@ -143,21 +144,21 @@ class _AddChannelPageState extends State<AddChannelPage> {
                               });
                             },
                           ),
-                          const Column(
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '#Textuel',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                AppLocalizations.of(context)!.text_channel,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                'Envoyez des messages, des emojis et pleins d\'autres.',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
+                                AppLocalizations.of(context)!.text_channel_description,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
                                 ),
                               ),
                             ],
@@ -184,19 +185,19 @@ class _AddChannelPageState extends State<AddChannelPage> {
                               });
                             },
                           ),
-                          const Column(
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '#Vocal',
-                                style: TextStyle(
+                                AppLocalizations.of(context)!.voice_channel,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                'Parlez avec vos amis en vocal.',
-                                style: TextStyle(
+                                AppLocalizations.of(context)!.voice_channel_description,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
                                 ),
@@ -211,7 +212,7 @@ class _AddChannelPageState extends State<AddChannelPage> {
                 const SizedBox(height: 16.0),
                 ElevatedButton(
                   onPressed: _addChannel,
-                  child: const Text('Ajouter'),
+                  child: Text(AppLocalizations.of(context)!.add_channel_button),
                 ),
               ],
             ),

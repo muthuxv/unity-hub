@@ -3,12 +3,16 @@ package services
 import (
 	"app/db"
 	"app/db/models"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type UpdateServerInput struct {
@@ -24,8 +28,40 @@ type TagsInput struct {
 
 func GetAllServers() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		claims, exists := c.Get("jwt_claims")
+		if !exists {
+			handleError(c, http.StatusUnauthorized, "Erreur lors de la récupération des revendications JWT")
+			return
+		}
+
+		jwtClaims, ok := claims.(jwt.MapClaims)
+		if !ok {
+			handleError(c, http.StatusInternalServerError, "Erreur lors de l'extraction des revendications JWT")
+			return
+		}
+
+		userIDStr, ok := jwtClaims["jti"].(string)
+		if !ok {
+			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération de l'ID utilisateur")
+			return
+		}
+
+		userID, err := strconv.Atoi(userIDStr)
+		if err != nil {
+			handleError(c, http.StatusInternalServerError, "Erreur lors de la conversion de l'ID utilisateur")
+			return
+		}
+
 		var servers []models.Server
-		if err := db.GetDB().Preload("Media").Preload("Tags").Find(&servers).Error; err != nil {
+
+		// Query servers excluding those where user is already on
+		if err := db.GetDB().
+			Table("servers").
+			Where("id NOT IN (SELECT server_id FROM on_servers WHERE user_id = ?)", userID).
+			Where("deleted_at IS NULL").
+			Preload("Media").
+			Preload("Tags").
+			Find(&servers).Error; err != nil {
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des serveurs")
 			return
 		}
@@ -74,7 +110,6 @@ func SearchServerByName() gin.HandlerFunc {
 func NewServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var inputServer models.Server
-		var tagsInput TagsInput // Struct to hold tag IDs from JSON
 
 		if err := c.ShouldBindJSON(&inputServer); err != nil {
 			handleError(c, http.StatusBadRequest, "Erreur lors de la liaison des données JSON")
@@ -88,6 +123,11 @@ func NewServer() gin.HandlerFunc {
 
 		if inputServer.Visibility == "" {
 			handleError(c, http.StatusBadRequest, "La visibilité du serveur est requise")
+			return
+		}
+
+		if inputServer.Visibility == "public" && len(inputServer.Tags) == 0 {
+			handleError(c, http.StatusBadRequest, "Un tag est requis pour les serveurs publics")
 			return
 		}
 
@@ -129,78 +169,82 @@ func NewServer() gin.HandlerFunc {
 
 		tx := db.GetDB().Begin()
 
+		for _, tagID := range inputServer.Tags {
+			var tag models.Tag
+			if err := tx.First(&tag, tagID.ID).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					tx.Rollback()
+					handleError(c, http.StatusBadRequest, fmt.Sprintf("Le tag avec l'ID %d n'existe pas", tagID.ID))
+					return
+				} else {
+					tx.Rollback()
+					handleError(c, http.StatusInternalServerError, "Erreur lors de la recherche du tag")
+					return
+				}
+			}
+		}
+
+		// Create server
 		if err := tx.Create(&inputServer).Error; err != nil {
 			tx.Rollback()
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la création du serveur")
 			return
 		}
 
-		for _, tagID := range tagsInput.TagIDs {
-			var tag models.Tag
-			if err := tx.First(&tag, tagID).Error; err != nil {
-				tx.Rollback()
-				handleError(c, http.StatusInternalServerError, "Erreur lors de la recherche du tag")
-				return
-			}
-			if err := tx.Model(&inputServer).Association("Tags").Append(&tag); err != nil {
-				tx.Rollback()
-				handleError(c, http.StatusInternalServerError, "Erreur lors de l'association du tag avec le serveur")
-				return
-			}
-		}
-
+		// Preload media
 		if err := tx.Preload("Media").First(&inputServer).Error; err != nil {
 			tx.Rollback()
-			handleError(c, http.StatusInternalServerError, "Error preloading Media")
+			handleError(c, http.StatusInternalServerError, "Erreur lors du préchargement du média")
 			return
 		}
 
+		// Create association server-user
 		inputOnServer := models.OnServer{
 			ServerID: inputServer.ID,
 			UserID:   userID,
 		}
-
 		if err := tx.Create(&inputOnServer).Error; err != nil {
 			tx.Rollback()
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la création de l'association serveur-utilisateur")
 			return
 		}
 
+		// Create default role
 		inputRole := models.Role{
 			ServerID: inputServer.ID,
 			Label:    "membre",
 		}
-
 		if err := tx.Create(&inputRole).Error; err != nil {
 			tx.Rollback()
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la création du rôle")
 			return
 		}
 
+		// Create role-user association
 		inputRoleUser := models.RoleUser{
 			RoleID: inputRole.ID,
 			UserID: userID,
 		}
-
 		if err := tx.Create(&inputRoleUser).Error; err != nil {
 			tx.Rollback()
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la création de l'association rôle-utilisateur")
 			return
 		}
 
+		// Create default channel
 		inputChannel := models.Channel{
 			ServerID:   inputServer.ID,
 			Name:       "général",
 			Type:       "text",
 			Permission: "all",
 		}
-
 		if err := tx.Create(&inputChannel).Error; err != nil {
 			tx.Rollback()
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la création du canal")
 			return
 		}
 
+		// Commit transaction if all operations succeed
 		tx.Commit()
 
 		c.JSON(http.StatusCreated, gin.H{"data": inputServer})
@@ -335,7 +379,6 @@ func LeaveServer() gin.HandlerFunc {
 			return
 		}
 
-		// Begin a transaction
 		tx := db.GetDB().Begin()
 		defer func() {
 			if r := recover(); r != nil {
@@ -358,7 +401,6 @@ func LeaveServer() gin.HandlerFunc {
 			return
 		}
 
-		// Check if the user has a role on the server, if so, delete it
 		var roleUser models.RoleUser
 		if err := tx.Where("role_id IN (SELECT id FROM roles WHERE server_id = ?) AND user_id = ?", serverID, userID).First(&roleUser).Error; err == nil {
 			if err := tx.Delete(&roleUser).Error; err != nil {
@@ -515,13 +557,31 @@ func UpdateServerByID() gin.HandlerFunc {
 
 		// Mise à jour des tags
 		if len(input.TagIDs) > 0 {
-			var tags []models.Tag
-			if err := tx.Where("id IN ?", input.TagIDs).Find(&tags).Error; err != nil {
+			var existingTags []models.Tag
+
+			// Vérifier l'existence des tags dans la base de données
+			if err := tx.Where("id IN ?", input.TagIDs).Find(&existingTags).Error; err != nil {
 				tx.Rollback()
 				handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des tags")
 				return
 			}
-			if err := tx.Model(&server).Association("Tags").Replace(tags); err != nil {
+
+			// Vérifier que tous les tags spécifiés existent
+			existingTagIDs := make(map[uint]bool)
+			for _, tag := range existingTags {
+				existingTagIDs[tag.ID] = true
+			}
+
+			for _, tagID := range input.TagIDs {
+				if !existingTagIDs[tagID] {
+					tx.Rollback()
+					handleError(c, http.StatusBadRequest, fmt.Sprintf("Le tag avec l'ID %d n'existe pas", tagID))
+					return
+				}
+			}
+
+			// Mettre à jour les tags du serveur
+			if err := tx.Model(&server).Association("Tags").Replace(existingTags); err != nil {
 				tx.Rollback()
 				handleError(c, http.StatusInternalServerError, "Erreur lors de la mise à jour des tags du serveur")
 				return

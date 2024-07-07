@@ -1,139 +1,82 @@
 package services
 
 import (
-    "context"
-    "encoding/json"
-    "errors"
-    "fmt"
-    "io/ioutil"
-    "log"
-    "net/http"
-    "os"
-    "time"
-    "app/controllers"
-    "app/db"
-    "app/db/models"
-    "gorm.io/gorm"
+	"app/controllers"
+	"app/db"
+	"app/db/models"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
 
-    "github.com/gin-gonic/gin"
-    "golang.org/x/oauth2"
-    "golang.org/x/oauth2/github"
-)
+	"gorm.io/gorm"
 
-var (
-    githubOauthConfig = &oauth2.Config{
-        RedirectURL:  "http://195.35.29.110:8080/auth/github/callback",
-        ClientID:     os.Getenv("CLIENT_ID_GITHUB_AUTH"),
-        ClientSecret: os.Getenv("CLIENT_SECRET_GITHUB_AUTH"),
-        Scopes:       []string{"user:email"},
-        Endpoint:     github.Endpoint,
-    }
+	"github.com/gin-gonic/gin"
 )
 
 func OAuthCallbackHandler(provider string) gin.HandlerFunc {
-    return func(c *gin.Context) {
-        accessToken := c.Query("token")
-        log.Printf("Access Token: %v", accessToken)
+	return func(c *gin.Context) {
+		// Récupération des données du corps de la requête
+		var data map[string]interface{}
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Échec de la lecture du corps de la requête"})
+			return
+		}
+		if err := json.Unmarshal(body, &data); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Échec de l'analyse du corps de la requête"})
+			return
+		}
 
-        token := &oauth2.Token{
-            AccessToken: accessToken,
-            TokenType:   "Bearer",
-            Expiry:      time.Now().Add(time.Hour),
-        }
+		// Logs pour débogage
+		fmt.Println(data)
 
-        client := githubOauthConfig.Client(context.Background(), token)
-        userEmail, err := fetchUserEmail(client)
-        if err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to fetch GitHub user email"})
-            return
-        }
+		// Vérification des clés et des types
+		email, okEmail := data["email"].(string)
+		displayName, okDisplayName := data["displayName"].(string)
+		avatar, okAvatar := data["photoURL"].(string)
+		if !okEmail || !okDisplayName || !okAvatar {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Données d'entrée invalides"})
+			return
+		}
 
-        var user models.User
-        result := db.GetDB().Where("email = ?", userEmail).First(&user)
-        if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-            return
-        }
+		println(email, displayName, avatar)
 
-        if result.RowsAffected == 0 {
-            githubUser, err := fetchGitHubUserProfile(client)
-            if err != nil {
-                c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to fetch GitHub user profile"})
-                return
-            }
+		var user models.User
+		result := db.GetDB().Where("email = ?", email).First(&user)
+		if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur de base de données"})
+			return
+		}
 
-            user = models.User{
-                Email:    userEmail,
-                Pseudo:   githubUser.Pseudo,
-                Provider: "github",
-                IsVerified: true,
-            }
-            if err := db.GetDB().Create(&user).Error; err != nil {
-                c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
-                return
-            }
-        }
+		if result.RowsAffected == 0 {
+			user = models.User{
+				Email:      email,
+				Pseudo:     displayName,
+				Provider:   provider,
+				IsVerified: true,
+				Profile:    avatar,
+			}
 
-        tokenString, err := controllers.GenerateJWT(user.ID, user.Email, user.Role)
-        if err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate JWT"})
-            return
-        }
+			if err := db.GetDB().Create(&user).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Échec de la création de l'utilisateur"})
+				return
+			}
+		} else {
+			if user.Provider != provider {
+				c.JSON(http.StatusForbidden, gin.H{"error": "Utilisateur déjà existant avec un autre fournisseur"})
+				return
+			}
+		}
 
-        c.JSON(http.StatusOK, gin.H{"token": tokenString})
-    }
-}
+		// Génération du JWT
+		tokenString, err := controllers.GenerateJWT(user.ID, user.Email, user.Role)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Échec de la génération du JWT"})
+			return
+		}
 
-func fetchUserEmail(client *http.Client) (string, error) {
-    req, _ := http.NewRequest("GET", "https://api.github.com/user/emails", nil)
-    req.Header.Add("Accept", "application/json")
-    resp, err := client.Do(req)
-    if err != nil {
-        return "", err
-    }
-    defer resp.Body.Close()
-    body, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-        return "", err
-    }
-
-    var emails []struct {
-        Email      string `json:"email"`
-        Primary    bool   `json:"primary"`
-        Verified   bool   `json:"verified"`
-    }
-    if err := json.Unmarshal(body, &emails); err != nil {
-        return "", err
-    }
-
-    for _, email := range emails {
-        if email.Primary && email.Verified {
-            return email.Email, nil
-        }
-    }
-    return "", fmt.Errorf("no verified primary email found")
-}
-
-func fetchGitHubUserProfile(client *http.Client) (models.User, error) {
-    req, _ := http.NewRequest("GET", "https://api.github.com/user", nil)
-    req.Header.Add("Accept", "application/json")
-    resp, err := client.Do(req)
-    if err != nil {
-        return models.User{}, err
-    }
-    defer resp.Body.Close()
-
-    body, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-        return models.User{}, err
-    }
-
-    var userProfile struct {
-        Login string `json:"login"`
-    }
-    if err := json.Unmarshal(body, &userProfile); err != nil {
-        return models.User{}, err
-    }
-
-    return models.User{Pseudo: userProfile.Login}, nil
+		c.JSON(http.StatusOK, gin.H{"token": tokenString})
+	}
 }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:unity_hub/pages/intro_page.dart';
-import 'package:unity_hub/pages/security/auth_page.dart';
-import 'package:unity_hub/pages/home_page.dart';
-import 'package:github_sign_in_plus/github_sign_in_plus.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:dio/dio.dart';
+import 'package:unity_hub/pages/security/auth_page.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../firebase_options.dart';
 
 class GithubSignInButton extends StatefulWidget {
   const GithubSignInButton({super.key});
@@ -15,81 +15,18 @@ class GithubSignInButton extends StatefulWidget {
 }
 
 class _GithubSignInButtonState extends State<GithubSignInButton> {
-  /*
-  void handleSignIn() async {
-    if (!mounted) return; // Check if the widget is still mounted
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final Dio _dio = Dio();
 
-    final GitHubSignIn gitHubSignIn = GitHubSignIn(
-      clientId: dotenv.env['CLIENT_ID_GITHUB_AUTH']!,
-      clientSecret: dotenv.env['CLIENT_SECRET_GITHUB_AUTH']!,
-      redirectUrl: dotenv.env['GITHUB_REDIRECT_URL']!,
-    );
-
-    final result = await gitHubSignIn.signIn(context);
-    final accessToken = result.token;
-
-    if (!mounted) {
-      print(context);
-      print('mounted');
-      return;
-    }
-
-    switch (result.status) {
-      case GitHubSignInResultStatus.ok:
-        final dio = Dio();
-        final response = await dio.get(
-          'http://195.35.29.110:8080/auth/github/callback?token=$accessToken',
-        );
-        print(response.data);
-        print(context);
-        break;
-      case GitHubSignInResultStatus.cancelled:
-        print('Sign in cancelled by user');
-        break;
-      case GitHubSignInResultStatus.failed:
-        print('Sign in failed');
-        break;
-      default:
-        print('Sign in failed');
-        break;
-    }
-  }
-
-   */
-
-  Future<void> handleSignIn(BuildContext context) async {
-    final GitHubSignIn gitHubSignIn = GitHubSignIn(
-      clientId: dotenv.env['CLIENT_ID_GITHUB_AUTH']!,
-      clientSecret: dotenv.env['CLIENT_SECRET_GITHUB_AUTH']!,
-      redirectUrl: dotenv.env['GITHUB_REDIRECT_URL']!,
-    );
-
-    final result = await gitHubSignIn.signIn(context);
-    final accessToken = result.token;
-
-    print('GitHub accesstoken: $accessToken');
-
-    try {
-      final result = await gitHubSignIn.signIn(context);
-
-      if (result.status == GitHubSignInResultStatus.ok) {
-        print('GitHub token: $accessToken');
-      } else {
-        // Handle sign-in failure
-        print('GitHub sign-in failed: ${result.errorMessage}');
-      }
-    } catch (error) {
-      // Handle any errors that occur during sign-in process
-      print('Error signing in with GitHub: $error');
-    }
-
-  }
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
-      child: OutlinedButton(
+      child: isLoading ? const CircularProgressIndicator(
+        color: Colors.white,
+      ) : OutlinedButton(
         style: ButtonStyle(
           backgroundColor: MaterialStateProperty.all(Colors.white),
           shape: MaterialStateProperty.all(
@@ -98,34 +35,90 @@ class _GithubSignInButtonState extends State<GithubSignInButton> {
             ),
           ),
         ),
-        onPressed: () async {
-          handleSignIn(context);
-        },
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Image(
-              image: AssetImage("lib/images/github_logo.png"),
-              height: 35.0,
-            ),
-            Padding(
-              padding: EdgeInsets.only(left: 10),
-              child: Text(
-                'Sign in with Github',
+        onPressed: _signInWithGithub,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'lib/images/github_logo.png',
+                height: 24,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Continuer avec GitHub',
                 style: TextStyle(
-                  fontSize: 20,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                  fontSize: 16,
                 ),
               ),
-            )
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+
+  Future<void> _signInWithGithub() async {
+    setState(() {
+      isLoading = true;
+    });
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+    final OAuthProvider githubProvider = OAuthProvider('github.com');
+    githubProvider.addScope('repo');
+    githubProvider.addScope('read:user');
+    githubProvider.addScope('user:email');
+
+    try {
+      final UserCredential userCredential = await _auth.signInWithProvider(githubProvider);
+      final User? user = userCredential.user;
+
+      if (user != null) {
+        final oauthCredential = userCredential.credential;
+        final accessToken = oauthCredential?.accessToken;
+
+        final response = await _dio.get(
+          'https://api.github.com/user',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $accessToken',
+            },
+          ),
+        );
+
+        final githubUserData = response.data;
+        final githubUsername = githubUserData['login'];
+        final githubAvatarUrl = githubUserData['avatar_url'];
+
+        final serverResponse = await _dio.get(
+          'http://10.0.2.2:8080/auth/github/callback',
+          data: {
+            'uid': user.uid,
+            'email': user.email,
+            'displayName': githubUsername,
+            'photoURL': githubAvatarUrl,
+          },
+        );
+
+        const storage = FlutterSecureStorage();
+        await storage.write(key: 'token', value: serverResponse.data['token']);
+
+        setState(() {
+          isLoading = false;
+        });
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const AuthPage()
+          ),
+        );
+
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
 }
-
-
-

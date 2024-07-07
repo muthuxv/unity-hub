@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SendInvitationPage extends StatefulWidget {
   final String serverId;
@@ -79,12 +80,12 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invitation sent successfully'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.invitationSentSuccess),
           ),
         );
       } else {
-        String errorMessage = 'Failed to send invitation';
+        String errorMessage = AppLocalizations.of(context)!.invitationSendFailure;
         if (response.data != null && response.data['error'] != null) {
           errorMessage = response.data['error'];
         }
@@ -105,7 +106,7 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Send Invitations'),
+        title: Text(AppLocalizations.of(context)!.sendInvitations),
         backgroundColor: Colors.deepPurple,
       ),
       body: _isLoading
@@ -141,9 +142,9 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
                 backgroundColor: Colors.deepPurple,
                 padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
               ),
-              child: const Text(
-                'Envoyer',
-                style: TextStyle(color: Colors.white),
+              child: Text(
+                AppLocalizations.of(context)!.sendButton,
+                style: const TextStyle(color: Colors.white),
               ),
             ),
           ],

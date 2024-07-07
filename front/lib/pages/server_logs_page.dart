@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ServerLogsPage extends StatefulWidget {
   final String serverId;
@@ -39,8 +40,8 @@ class _ServerLogsPageState extends State<ServerLogsPage> {
               itemCount: logs.length,
               itemBuilder: (context, index) {
                 if (logs.isEmpty) {
-                  return const Center(
-                    child: Text('Aucun log'),
+                  return Center(
+                    child: Text(AppLocalizations.of(context)!.no_logs),
                   );
                 }
                 final log = logs[index];

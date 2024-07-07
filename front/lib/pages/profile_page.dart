@@ -6,9 +6,12 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'friend_page.dart';
 import 'update_profile_page.dart';
 import 'profile_settings_page.dart';
+import 'package:flutter_svg/svg.dart';
+import '../main.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -18,6 +21,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isLoading = true;
   String _pseudo = 'Pseudo Utilisateur';
   String _email = 'pseudo@exemple.com';
+  String _avatar = '';
 
   @override
   void initState() {
@@ -47,13 +51,14 @@ class _ProfilePageState extends State<ProfilePage> {
         setState(() {
           _pseudo = response.data['Pseudo'];
           _email = response.data['Email'];
+          _avatar = response.data['Profile'] ?? '';
           _isLoading = false;
         });
       } else {
-        print('Erreur lors de la récupération des données utilisateur');
+        print(AppLocalizations.of(context)!.errorFetchingUserData);
       }
     } catch (e) {
-      print('Erreur de connexion: $e');
+      print("${AppLocalizations.of(context)!.connectionError}$e");
     }
   }
 
@@ -62,26 +67,61 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Profil', style: GoogleFonts.nunito(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+        title: Text(
+          AppLocalizations.of(context)!.profile,
+          style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.deepPurple[300],
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.settings, color: Colors.white),
+            icon: const Icon(Icons.settings, color: Colors.white),
             onPressed: () async {
               var result = await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const ProfileSettingsPage()),
               );
               if (result == true) {
-                _loadUserData();  // Rechargez les données utilisateur si la page de mise à jour renvoie true
+                _loadUserData();
               }
             },
-          )
+          ),
+          IconButton(
+            icon: const Icon(Icons.language, color: Colors.white),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text(AppLocalizations.of(context)!.changeLanguage),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          title: Text(AppLocalizations.of(context)!.french),
+                          onTap: () {
+                            MyApp.setLocale(context, const Locale('fr'));
+                            Navigator.pop(context);
+                          },
+                        ),
+                        ListTile(
+                          title: Text(AppLocalizations.of(context)!.english),
+                          onTap: () {
+                            MyApp.setLocale(context, const Locale('en'));
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
         child: Column(
           children: [
@@ -100,22 +140,28 @@ class _ProfilePageState extends State<ProfilePage> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.deepPurple[300],
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(45)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(45)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircleAvatar(
-            radius: 60,
+            radius: 55,
             backgroundColor: Colors.deepPurple[50],
-            child: CircleAvatar(
-              radius: 55,
-              backgroundImage: AssetImage('assets/avatar.jpg'), // Assurez-vous que cette image est disponible
+            child: _avatar.contains('<svg')
+                ? SvgPicture.string(
+              _avatar,
+              height: 120,
+              width: 120,
+            )
+                : CircleAvatar(
+              radius: 50,
+              backgroundImage: NetworkImage(_avatar),
             ),
           ),
-          SizedBox(height: 10),
-          Text(_pseudo, style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-          Text(_email, style: GoogleFonts.nunito(fontSize: 16, color: Colors.white70)),
+          const SizedBox(height: 10),
+          Text(_pseudo, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(_email, style: const TextStyle(fontSize: 16, color: Colors.white70)),
         ],
       ),
     );
@@ -131,12 +177,11 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("À propos de moi",
-                  style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-              SizedBox(height: 10),
+              Text(AppLocalizations.of(context)!.aboutMe, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+              const SizedBox(height: 10),
               Text(
-                "Bienvenue sur votre profil ! Modifiez vos informations ou consultez vos amis.",
-                style: GoogleFonts.nunito(fontSize: 16, color: Colors.black87),
+                AppLocalizations.of(context)!.welcomeToProfile,
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
               ),
             ],
           ),
@@ -157,19 +202,19 @@ class _ProfilePageState extends State<ProfilePage> {
                 MaterialPageRoute(builder: (context) => const UpdateProfilePage()),
               );
               if (result == true) {
-                _loadUserData();  // Rechargez les données utilisateur si la page de mise à jour renvoie true
+                _loadUserData();
               }
             },
-            child: Text('Modifier le profil', style: GoogleFonts.nunito(fontSize: 16)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepPurple,
               foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(vertical: 20),
+              padding: const EdgeInsets.symmetric(vertical: 20),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              minimumSize: Size(double.infinity, 56),
+              minimumSize: const Size(double.infinity, 56),
             ),
+            child: Text(AppLocalizations.of(context)!.modifyProfile),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ElevatedButton.icon(
             onPressed: () {
               Navigator.push(
@@ -177,14 +222,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 MaterialPageRoute(builder: (context) => const FriendPage()),
               );
             },
-            icon: Icon(Icons.people, size: 28),
-            label: Text('Mes amis', style: GoogleFonts.nunito(fontSize: 16)),
+            icon: const Icon(Icons.people, size: 28),
+            label: Text(AppLocalizations.of(context)!.myFriends),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.purple[400],
               foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(vertical: 20),
+              padding: const EdgeInsets.symmetric(vertical: 20),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              minimumSize: Size(double.infinity, 56),
+              minimumSize: const Size(double.infinity, 56),
             ),
           ),
         ],

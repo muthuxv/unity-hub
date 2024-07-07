@@ -154,22 +154,21 @@ class IntroPage extends StatelessWidget {
                         //Oauth2
                         Container(
                           constraints: const BoxConstraints(maxHeight: 200),
-                          child: Column(
+                          child: const Column(
                             children: [
-                              const SizedBox(height: 16),
-                              const Text(
+                              SizedBox(height: 16),
+                              Text(
                                 'Ou connecte-toi avec',
                                 style: TextStyle(
                                   color: Colors.white,
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              SizedBox(height: 16),
                               Expanded(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    GoogleSignInButton(),
-                                    const GithubSignInButton(),
+                                    GithubSignInButton(),
                                   ],
                                 ),
                               ),

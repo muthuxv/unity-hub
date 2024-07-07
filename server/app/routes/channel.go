@@ -1,10 +1,11 @@
 package routes
 
 import (
-    "app/controllers"
-	"github.com/gin-gonic/gin"
+	"app/controllers"
 	"app/db/models"
 	"app/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 func ChannelRoutes(r *gin.Engine) {
@@ -15,4 +16,5 @@ func ChannelRoutes(r *gin.Engine) {
 	r.DELETE("/channels/:id", controllers.Delete(func() interface{} { return &models.Channel{} }))
 
 	r.GET("/channels/:id/messages", services.GetChannelMessages())
+	r.GET("/users/:id/channels", services.GetUserChannels())
 }

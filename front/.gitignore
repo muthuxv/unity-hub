@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/release
 
 .env
+service-account.json
+
+*/.idea
+*/.DS_Store

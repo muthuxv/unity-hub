@@ -3,9 +3,11 @@ package main
 import (
 	"app/controllers"
 	"app/db"
+	_ "app/docs"
 	"app/routes"
-
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func initDb() {
@@ -13,10 +15,30 @@ func initDb() {
 	db.MakeMigrations()
 }
 
+// @title Swagger API pour le projet Go
+// @version 1.0
+// @description Cette API permet d'interagir avec le projet Go.
+// @host localhost:8080
+// @BasePath /
 func main() {
 	initDb()
 
 	r := gin.Default()
+
+	// Configuration CORS
+	r.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(200)
+			return
+		}
+
+		c.Next()
+	})
 
 	r.Use(controllers.ErrorHandling())
 
@@ -46,6 +68,7 @@ func main() {
 	routes.RoleUserRoutes(r)
 	routes.ServerRoutes(r)
 	routes.TagRoutes(r)
+	routes.FeatureRoutes(r)
 	routes.ThemeRoutes(r)
 	routes.ThemeServerRoutes(r)
 	routes.RuleRoutes(r)
@@ -57,6 +80,9 @@ func main() {
 	routes.WebSocketRoutes(r)
 	routes.AuthV2Routes(r)
 	routes.VocalRoutes(r)
+
+	// Swagger
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	//uploads
 	r.Static("/uploads", "./upload")

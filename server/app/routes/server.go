@@ -12,7 +12,7 @@ func ServerRoutes(r *gin.Engine) {
 	r.POST("/servers", controllers.Create(func() interface{} { return &models.Server{} }))
 	r.DELETE("/servers/:id", controllers.Delete(func() interface{} { return &models.Server{} }))
 
-	r.GET("/servers", services.GetAllServers())
+	r.GET("/servers", controllers.TokenAuthMiddleware("user"), services.GetAllServers())
 	r.GET("/servers/search", services.SearchServerByName())
 	r.GET("/servers/:id", services.GetServerByID())
 	r.PUT("/servers/:id", services.UpdateServerByID())

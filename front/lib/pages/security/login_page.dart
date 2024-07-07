@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../home_page.dart';
-import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -54,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.statusCode == 200) {
-        final storage = FlutterSecureStorage();
+        const storage = FlutterSecureStorage();
         await storage.write(key: 'token', value: response.data['token']);
         Navigator.pushAndRemoveUntil(
           context,
@@ -64,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
       } else {
         _showErrorDialog(context, 'Erreur', 'Erreur lors de la connexion. Veuillez réessayer.');
       }
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       if (e.response != null) {
         if (e.response!.statusCode == 404) {
           _showErrorDialog(context, 'Erreur', 'Utilisateur non trouvé.');
