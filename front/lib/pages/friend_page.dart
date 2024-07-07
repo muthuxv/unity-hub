@@ -127,8 +127,8 @@ class _FriendPageState extends State<FriendPage> {
     final response = await Dio().post(
       'http://10.0.2.2:8080/friends/accept',
       data: {
-        'ID': int.tryParse(friendId),
-        'UserID2': int.tryParse(userId),
+        'ID': friendId,
+        'UserID2': userId,
       },
       options: Options(
         headers: {
@@ -182,8 +182,8 @@ class _FriendPageState extends State<FriendPage> {
     final response = await Dio().post(
       'http://10.0.2.2:8080/friends/refuse',
       data: {
-        'ID': int.tryParse(friendId),
-        'UserID2': int.tryParse(userId),
+        'ID': friendId,
+        'UserID2': userId,
       },
       options: Options(
         headers: {
@@ -590,7 +590,7 @@ class _FriendPageState extends State<FriendPage> {
           validateStatus: (status) => status! < 500,
         ),
         data: {
-          'userId': int.tryParse(userId),
+          'userId': userId,
           'userPseudo': pseudo,
         },
       );

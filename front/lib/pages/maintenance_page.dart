@@ -8,13 +8,6 @@ class MaintenancePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
-      appBar: AppBar(
-        backgroundColor: Colors.deepPurple[300],
-        title: Text(
-          AppLocalizations.of(context)!.maintenanceTitle,
-          style: const TextStyle(color: Colors.white),
-        ),
-      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

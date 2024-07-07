@@ -23,7 +23,7 @@ func AcceptFriend() gin.HandlerFunc {
 
 		// Verification of existence
 		var friend models.Friend
-		result := db.GetDB().Preload("User1").Preload("User2").First(&friend, inputFriend.ID)
+		result := db.GetDB().Where("id = ?", inputFriend.ID).Preload("User1").Preload("User2").First(&friend)
 		if result.Error != nil {
 			c.JSON(http.StatusNotFound, gin.H{"message": "Demande d'ami non trouvée"})
 			return
@@ -42,7 +42,7 @@ func AcceptFriend() gin.HandlerFunc {
 		}
 
 		// Update the status
-		result = db.GetDB().Model(&friend).Update("status", "accepted")
+		result = db.GetDB().Model(&friend).UpdateColumn("status", "accepted")
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update friend request"})
 			return
@@ -104,7 +104,7 @@ func RefuseFriend() gin.HandlerFunc {
 		}
 
 		// Update the status to "refused"
-		result = db.GetDB().Model(&friend).Update("status", "refused")
+		result = db.GetDB().Model(&friend).UpdateColumn("status", "refused")
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update friend request"})
 			return

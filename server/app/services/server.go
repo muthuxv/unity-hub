@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
@@ -46,7 +45,7 @@ func GetAllServers() gin.HandlerFunc {
 			return
 		}
 
-		userID, err := strconv.Atoi(userIDStr)
+		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la conversion de l'ID utilisateur")
 			return
