@@ -14,8 +14,6 @@ class WebSocketService {
   }
 
   void send(dynamic message) {
-    print('Sending message: $message');
-    print(message is String ? message : jsonEncode(message));
     _channel?.sink.add(jsonEncode(message));
   }
 

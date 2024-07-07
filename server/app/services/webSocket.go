@@ -225,7 +225,7 @@ func AddChannelHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		return
 	}
 
-	serverIDUint := uuid.UUID(serverID)
+	serverIDU := uuid.UUID(serverID)
 
 	var channel Channel
 	if err := json.NewDecoder(r.Body).Decode(&channel); err != nil {
@@ -238,7 +238,18 @@ func AddChannelHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		Name:       channel.Name,
 		Type:       channel.Type,
 		Permission: channel.Permission,
-		ServerID:   serverIDUint,
+		ServerID:   serverIDU,
+	}
+
+	servers[serverIDU].Broadcast <- WebSocketMessage{
+		Type: "new_channel",
+		Channel: map[string]interface{}{
+			"ID":         newChannel.ID,
+			"Name":       newChannel.Name,
+			"Type":       newChannel.Type,
+			"Permission": newChannel.Permission,
+			"ServerID":   newChannel.ServerID,
+		},
 	}
 
 	if err := db.GetDB().Create(&newChannel).Error; err != nil {
