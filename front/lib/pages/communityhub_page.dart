@@ -133,7 +133,7 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
     });
   }
 
-  Future<void> _joinServer(int serverId) async {
+  Future<void> _joinServer(String serverId) async {
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'token');
