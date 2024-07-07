@@ -3,9 +3,11 @@ package main
 import (
 	"app/controllers"
 	"app/db"
+	_ "app/docs"
 	"app/routes"
-
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func initDb() {
@@ -13,6 +15,11 @@ func initDb() {
 	db.MakeMigrations()
 }
 
+// @title Swagger API pour le projet Go
+// @version 1.0
+// @description Cette API permet d'interagir avec le projet Go.
+// @host localhost:8080
+// @BasePath /
 func main() {
 	initDb()
 
@@ -61,14 +68,21 @@ func main() {
 	routes.RoleUserRoutes(r)
 	routes.ServerRoutes(r)
 	routes.TagRoutes(r)
+	routes.FeatureRoutes(r)
 	routes.ThemeRoutes(r)
 	routes.ThemeServerRoutes(r)
-	routes.NotificationRoutes(r)
-	routes.ActiveNotificationRoutes(r)
+	routes.RuleRoutes(r)
+	routes.ActiveRuleRoutes(r)
+	routes.GroupRoutes(r)
+	routes.GroupMemberRoutes(r)
+	routes.BanRoutes(r)
 	/*workers*/
 	routes.WebSocketRoutes(r)
 	routes.AuthV2Routes(r)
 	routes.VocalRoutes(r)
+
+	// Swagger
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	//uploads
 	r.Static("/uploads", "./upload")

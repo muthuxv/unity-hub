@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class UpdateProfilePage extends StatefulWidget {
   const UpdateProfilePage({super.key});
@@ -15,6 +16,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   final _formKey = GlobalKey<FormState>();
   String _pseudo = '';
   String _originalPseudo = '';
+  String _mail = '';
   bool _isLoading = true;
   bool _isButtonEnabled = false;
 
@@ -47,15 +49,16 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       if (response.statusCode == 200) {
         setState(() {
           _pseudo = response.data['Pseudo'];
+          _mail = response.data['Email'];
           _originalPseudo = response.data['Pseudo'];
           _isLoading = false;
           _isButtonEnabled = false;
         });
       } else {
-        _showErrorDialog('Erreur lors de la récupération des données utilisateur');
+        _showErrorDialog(AppLocalizations.of(context)!.errorFetchingUserData);
       }
     } catch (e) {
-      _showErrorDialog('Erreur de connexion');
+      _showErrorDialog(AppLocalizations.of(context)!.connectionError);
     }
   }
 
@@ -82,13 +85,13 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Profil mis à jour'),
-          content: const Text('Votre pseudo a été mis à jour avec succès.'),
+          title: Text(AppLocalizations.of(context)!.profileUpdated),
+          content: Text(AppLocalizations.of(context)!.pseudoUpdatedSuccessfully),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Ferme la boîte de dialogue
-                Navigator.of(context).pop(true); // Redirige vers la page précédente avec un signal de mise à jour
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(true);
               },
               child: const Text('OK'),
             ),
@@ -96,7 +99,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         ),
       );
     } else {
-      _showErrorDialog('Erreur lors de la mise à jour du profil');
+      _showErrorDialog(AppLocalizations.of(context)!.errorUpdatingProfile);
     }
   }
 
@@ -104,7 +107,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Erreur'),
+        title: Text(AppLocalizations.of(context)!.error),
         content: Text(message),
         actions: [
           TextButton(
@@ -121,7 +124,10 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Modifier Profil', style: GoogleFonts.nunito(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+        title: Text(
+          AppLocalizations.of(context)!.modifyProfile,
+          style: GoogleFonts.nunito(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.deepPurple[300],
         elevation: 0,
         leading: IconButton(
@@ -141,8 +147,8 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                   children: [
                     TextFormField(
                       decoration: InputDecoration(
-                        labelText: "Pseudo",
-                        hintText: "Entrez votre nouveau pseudo",
+                        labelText: AppLocalizations.of(context)!.pseudo,
+                        hintText: AppLocalizations.of(context)!.enterNewPseudo,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
                       ),
                       initialValue: _pseudo,
@@ -152,7 +158,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                           _isButtonEnabled = _pseudo != _originalPseudo;
                         });
                       },
-                      validator: (value) => value!.isEmpty ? "Le pseudo ne peut pas être vide" : null,
+                      validator: (value) => value!.isEmpty ? AppLocalizations.of(context)!.pseudoCannotBeEmpty : null,
                     ),
                     const SizedBox(height: 30),
                     ElevatedButton(
@@ -167,7 +173,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                         padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       ),
-                      child: Text('Mettre à jour', style: GoogleFonts.nunito(fontSize: 18)),
+                      child: Text(AppLocalizations.of(context)!.update, style: GoogleFonts.nunito(fontSize: 18)),
                     ),
                   ],
                 ),
@@ -200,23 +206,23 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                   backgroundColor: Colors.deepPurple[50],
                   child: const CircleAvatar(
                     radius: 55,
-                    backgroundImage: AssetImage('assets/avatar.jpg'), // Assurez-vous que cette image est disponible
+                    backgroundImage: AssetImage('assets/avatar.jpg'),
                   ),
                 ),
               ),
               Positioned(
-                right: 0, // Ajustez la position selon le besoin
-                top: 0, // Ajustez la position selon le besoin
+                right: 0,
+                top: 0,
                 child: GestureDetector(
                   onTap: () => _changeAvatar(context),
                   child: Container(
-                    padding: const EdgeInsets.all(6), // Ajoutez un padding pour dégager l'icône des bords de l'avatar
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
                       border: Border.all(width: 2, color: Colors.deepPurple[300]!),
                     ),
-                    child: Icon(Icons.edit, color: Colors.deepPurple[300], size: 20), // Augmentez la taille de l'icône
+                    child: Icon(Icons.edit, color: Colors.deepPurple[300], size: 20),
                   ),
                 ),
               ),
@@ -224,11 +230,11 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
           ),
           const SizedBox(height: 10),
           Text(
-            "Pseudo Utilisateur",
+            _pseudo,
             style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           Text(
-            "pseudo@exemple.com",
+            _mail,
             style: GoogleFonts.nunito(fontSize: 16, color: Colors.white70),
           ),
         ],
@@ -243,23 +249,21 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         return SingleChildScrollView(
           child: Container(
             padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom), // pour s'ajuster avec le clavier
+                bottom: MediaQuery.of(context).viewInsets.bottom),
             child: Column(
-              mainAxisSize: MainAxisSize.min, // Assurez-vous que la colonne prend la taille minimale nécessaire
+              mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
                   leading: const Icon(Icons.camera),
-                  title: const Text('Prendre une photo'),
+                  title: Text(AppLocalizations.of(context)!.takePhoto),
                   onTap: () {
-                    // Implémentez la fonctionnalité pour prendre une photo
                     Navigator.pop(context);
                   },
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_library),
-                  title: const Text('Choisir depuis la galerie'),
+                  title: Text(AppLocalizations.of(context)!.chooseFromGallery),
                   onTap: () {
-                    // Implémentez la fonctionnalité pour choisir une photo depuis la galerie
                     Navigator.pop(context);
                   },
                 ),

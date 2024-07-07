@@ -4,9 +4,9 @@ import (
 	"app/db"
 	"app/db/models"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func GetAllTags() gin.HandlerFunc {
@@ -23,7 +23,7 @@ func GetAllTags() gin.HandlerFunc {
 
 func GetServersByTag() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tagID, err := strconv.Atoi(c.Param("id"))
+		tagID, err := uuid.Parse(c.Param("id"))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid tag ID"})
 			return

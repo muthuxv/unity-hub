@@ -132,7 +132,7 @@ func ChangePassword() gin.HandlerFunc {
 			NewPassword     string `json:"newPassword" binding:"required,min=6"`
 		}
 		if err := c.ShouldBindJSON(&input); err != nil {
-			c.Error(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 			return
 		}
 
@@ -140,12 +140,12 @@ func ChangePassword() gin.HandlerFunc {
 		var user models.User
 		result := db.GetDB().First(&user, userID)
 		if result.Error != nil {
-			c.Error(result.Error)
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
 
 		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.CurrentPassword)); err != nil {
-			c.Error(fmt.Errorf("current password is incorrect"))
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Current password is incorrect"})
 			return
 		}
 
@@ -183,7 +183,7 @@ func RegisterFcmToken() gin.HandlerFunc {
 		}
 
 		var user models.User
-		result := db.GetDB().First(&user, userID)
+		result := db.GetDB().Where("id = ?", userID).First(&user)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})

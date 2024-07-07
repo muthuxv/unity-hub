@@ -12,9 +12,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:unity_hub/utils/messaging_service.dart';
 
 class ChannelPage extends StatefulWidget {
-  final int channelId;
+  final String channelId;
   final String channelName;
-  final int serverId;
+  final String serverId;
 
   const ChannelPage({super.key, required this.channelId, required this.channelName, required this.serverId});
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'profile_account_page.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ProfileSettingsPage extends StatelessWidget {
   const ProfileSettingsPage({super.key});
@@ -9,7 +10,10 @@ class ProfileSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Paramètres', style: GoogleFonts.nunito(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+        title: Text(
+          AppLocalizations.of(context)!.settings,
+          style: GoogleFonts.nunito(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.deepPurple[300],
       ),
       body: Padding(
@@ -17,7 +21,10 @@ class ProfileSettingsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Paramètres du compte", style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(
+              AppLocalizations.of(context)!.accountSettings,
+              style: GoogleFonts.nunito(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 20),
             Container(
               decoration: BoxDecoration(
@@ -36,7 +43,10 @@ class ProfileSettingsPage extends StatelessWidget {
                 children: [
                   ListTile(
                     leading: const Icon(Icons.account_circle, color: Colors.deepPurple),
-                    title: Text("Compte", style: GoogleFonts.nunito(fontSize: 18)),
+                    title: Text(
+                      AppLocalizations.of(context)!.account,
+                      style: GoogleFonts.nunito(fontSize: 18),
+                    ),
                     trailing: const Icon(Icons.arrow_forward),
                     onTap: () {
                       Navigator.push(
@@ -51,7 +61,10 @@ class ProfileSettingsPage extends StatelessWidget {
                   ),
                   ListTile(
                     leading: const Icon(Icons.lock, color: Colors.deepPurple),
-                    title: Text("Confidentialités & Sécurité", style: GoogleFonts.nunito(fontSize: 18)),
+                    title: Text(
+                      AppLocalizations.of(context)!.privacyAndSecurity,
+                      style: GoogleFonts.nunito(fontSize: 18),
+                    ),
                     trailing: const Icon(Icons.arrow_forward),
                     onTap: () {
                       // Navigation logic for Confidentiality & Security Page

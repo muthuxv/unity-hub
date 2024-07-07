@@ -7,9 +7,10 @@ import 'package:unity_hub/pages/server_logs_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 import 'server_update_tags_page.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ServerSettingsPage extends StatefulWidget {
-  final int serverId;
+  final String serverId;
   final String serverName;
   String serverAvatar;
   final String serverVisibility;
@@ -21,31 +22,31 @@ class ServerSettingsPage extends StatefulWidget {
 
 class _ServerSettingsPageState extends State<ServerSettingsPage> {
 
-  void _showInvitationDialog(BuildContext context, int serverId) {
+  void _showInvitationDialog(BuildContext context, String serverId) {
     final url = 'http://10.0.2.2:8080/servers/$serverId/join';
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Lien d\'invitation'),
+          title: Text(AppLocalizations.of(context)!.invitation_link),
           content: Text(url),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: url));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Lien copié dans le presse-papiers'),
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context)!.link_copied),
                   ),
                 );
               },
-              child: const Text('Copier le lien'),
+              child: Text(AppLocalizations.of(context)!.copy_link),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Fermer'),
+              child: Text(AppLocalizations.of(context)!.close),
             ),
           ],
         );
@@ -67,19 +68,20 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
             icon: const Icon(Icons.close, color: Colors.white),
             onPressed: () {
               Navigator.pop(
-                  context,
-                  {
-                    'avatar': widget.serverAvatar,
-                  },
+                context,
+                {
+                  'avatar': widget.serverAvatar,
+                },
               );
             },
           ),
-          title: const Text('Paramètres du serveur',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-              )
+          title: Text(
+            AppLocalizations.of(context)!.server_settings,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         body: Container(
@@ -111,7 +113,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                             });
 
                             try {
-                              final storage = FlutterSecureStorage();
+                              const storage = FlutterSecureStorage();
                               final token = await storage.read(key: 'token');
 
                               final response = await Dio().post(
@@ -149,14 +151,14 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                                     context: context,
                                     builder: (context) {
                                       return AlertDialog(
-                                        title: const Text('Erreur'),
-                                        content: const Text('Une erreur s\'est produite lors de la mise à jour de l\'avatar.'),
+                                        title: Text(AppLocalizations.of(context)!.error),
+                                        content: Text(AppLocalizations.of(context)!.avatar_update_error),
                                         actions: [
                                           TextButton(
                                             onPressed: () {
                                               Navigator.pop(context);
                                             },
-                                            child: const Text('OK'),
+                                            child: Text(AppLocalizations.of(context)!.ok),
                                           ),
                                         ],
                                       );
@@ -168,14 +170,14 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                                   context: context,
                                   builder: (context) {
                                     return AlertDialog(
-                                      title: const Text('Erreur'),
-                                      content: const Text('Une erreur s\'est produite lors de la mise à jour de l\'avatar.'),
+                                      title: Text(AppLocalizations.of(context)!.error),
+                                      content: Text(AppLocalizations.of(context)!.avatar_update_error),
                                       actions: [
                                         TextButton(
                                           onPressed: () {
                                             Navigator.pop(context);
                                           },
-                                          child: const Text('OK'),
+                                          child: Text(AppLocalizations.of(context)!.ok),
                                         ),
                                       ],
                                     );
@@ -188,14 +190,14 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                                 context: context,
                                 builder: (context) {
                                   return AlertDialog(
-                                    title: const Text('Erreur'),
-                                    content: const Text('Une erreur s\'est produite lors de la mise à jour de l\'avatar.'),
+                                    title: Text(AppLocalizations.of(context)!.error),
+                                    content: Text(AppLocalizations.of(context)!.avatar_update_error),
                                     actions: [
                                       TextButton(
                                         onPressed: () {
                                           Navigator.pop(context);
                                         },
-                                        child: const Text('OK'),
+                                        child: Text(AppLocalizations.of(context)!.ok),
                                       ),
                                     ],
                                   );
@@ -263,7 +265,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  padding: EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     border: Border.all(color: Colors.white),
@@ -272,11 +274,11 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                   child: Column(
                     children: [
                       ListTile(
-                        trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
-                        leading: Icon(Icons.admin_panel_settings_outlined, color: Colors.white),
+                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                        leading: const Icon(Icons.admin_panel_settings_outlined, color: Colors.white),
                         title: Text(
-                          'Rôles',
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.roles,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
@@ -299,11 +301,11 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                             ),
                           );
                         },
-                        trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
-                        leading: Icon(Icons.description_outlined, color: Colors.white),
+                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                        leading: const Icon(Icons.description_outlined, color: Colors.white),
                         title: Text(
-                          'Logs du serveur',
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.server_logs,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
@@ -313,47 +315,47 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                         onTap: () {
                           _showInvitationDialog(context, widget.serverId);
                         },
-                        trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
-                        leading: Icon(Icons.email_outlined, color: Colors.white),
+                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                        leading: const Icon(Icons.email_outlined, color: Colors.white),
                         title: Text(
-                          'Invitations',
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.invitations,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                       ListTile(
-                        trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
-                        leading: Icon(Icons.block, color: Colors.white),
+                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                        leading: const Icon(Icons.block, color: Colors.white),
                         title: Text(
-                          'Bannissements',
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.bans,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                       if (widget.serverVisibility == 'public')
-                      ListTile(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ServerUpdateTagsPage(serverId: widget.serverId),
+                        ListTile(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ServerUpdateTagsPage(serverId: widget.serverId),
+                              ),
+                            );
+                          },
+                          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                          leading: const Icon(Icons.label, color: Colors.white),
+                          title: Text(
+                            AppLocalizations.of(context)!.tags,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
-                          );
-                        },
-                        trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
-                        leading: Icon(Icons.label, color: Colors.white),
-                        title: Text(
-                          'Tags',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -364,14 +366,14 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                       context: context,
                       builder: (context) {
                         return AlertDialog(
-                          title: const Text('Supprimer le serveur'),
-                          content: const Text('Êtes-vous sûr de vouloir supprimer ce serveur ?'),
+                          title: Text(AppLocalizations.of(context)!.delete_server),
+                          content: Text(AppLocalizations.of(context)!.delete_server_confirmation),
                           actions: [
                             TextButton(
                               onPressed: () {
                                 Navigator.pop(context);
                               },
-                              child: const Text('Annuler'),
+                              child: Text(AppLocalizations.of(context)!.cancel),
                             ),
                             TextButton(
                               onPressed: () async {
@@ -380,18 +382,18 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                                   final token = await storage.read(key: 'token');
 
                                   final response = await Dio().delete(
-                                      'http://10.0.2.2:8080/servers/${widget.serverId}',
-                                      options: Options(
-                                        headers: {
-                                          'Content-Type': 'application/json',
-                                          'Authorization': 'Bearer $token',
-                                        },
-                                        validateStatus: (status) {
-                                          return status! < 500;
-                                        },
-                                      ),
+                                    'http://10.0.2.2:8080/servers/${widget.serverId}',
+                                    options: Options(
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': 'Bearer $token',
+                                      },
+                                      validateStatus: (status) {
+                                        return status! < 500;
+                                      },
+                                    ),
                                   );
-                                  if (response.statusCode == 200) {
+                                  if (response.statusCode == 204) {
                                     Navigator.pop(context);
                                     Navigator.pop(context);
                                   } else {
@@ -399,14 +401,14 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                                       context: context,
                                       builder: (context) {
                                         return AlertDialog(
-                                          title: const Text('Erreur'),
-                                          content: const Text('Une erreur s\'est produite lors de la suppression du serveur.'),
+                                          title: Text(AppLocalizations.of(context)!.error),
+                                          content: Text(AppLocalizations.of(context)!.server_deletion_error),
                                           actions: [
                                             TextButton(
                                               onPressed: () {
                                                 Navigator.pop(context);
                                               },
-                                              child: const Text('OK'),
+                                              child: Text(AppLocalizations.of(context)!.ok),
                                             ),
                                           ],
                                         );
@@ -419,14 +421,14 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                                     context: context,
                                     builder: (context) {
                                       return AlertDialog(
-                                        title: const Text('Erreur'),
-                                        content: const Text('Une erreur s\'est produite lors de la suppression du serveur.'),
+                                        title: Text(AppLocalizations.of(context)!.error),
+                                        content: Text(AppLocalizations.of(context)!.server_deletion_error),
                                         actions: [
                                           TextButton(
                                             onPressed: () {
                                               Navigator.pop(context);
                                             },
-                                            child: const Text('OK'),
+                                            child: Text(AppLocalizations.of(context)!.ok),
                                           ),
                                         ],
                                       );
@@ -434,7 +436,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                                   );
                                 }
                               },
-                              child: const Text('Supprimer'),
+                              child: Text(AppLocalizations.of(context)!.delete),
                             ),
                           ],
                         );
@@ -442,17 +444,17 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                     );
                   },
                   child: Container(
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.5),
                       border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const ListTile(
-                      leading: Icon(Icons.delete_forever, color: Colors.redAccent),
+                    child: ListTile(
+                      leading: const Icon(Icons.delete_forever, color: Colors.redAccent),
                       title: Text(
-                        'Supprimer le serveur',
-                        style: TextStyle(
+                        AppLocalizations.of(context)!.delete_server,
+                        style: const TextStyle(
                           color: Colors.redAccent,
                           fontWeight: FontWeight.bold,
                         ),

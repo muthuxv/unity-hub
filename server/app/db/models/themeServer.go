@@ -1,14 +1,15 @@
 package models
 
 import (
-    "gorm.io/gorm"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type ThemeServer struct {
-    gorm.Model
-    ID       uint `gorm:"primaryKey"`
-    ServerID uint `gorm:"validate:required"`
-    Server Server `gorm:"foreignKey:ServerID;references:ID;"`
-    ThemeID  uint `gorm:"validate:required"`
-    Theme  Theme  `gorm:"foreignKey:ThemeID;references:ID;"`
+	ID uuid.UUID `gorm:"type:uuid;primaryKey"`
+	gorm.Model
+	ServerID uuid.UUID `gorm:"validate:required"`
+	Server   Server    `gorm:"foreignKey:ServerID;references:ID;"`
+	ThemeID  uuid.UUID `gorm:"validate:required"`
+	Theme    Theme     `gorm:"foreignKey:ThemeID;references:ID;"`
 }

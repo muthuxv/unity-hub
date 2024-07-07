@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
 )
@@ -43,7 +43,7 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-var channelConnections = make(map[uint][]*websocket.Conn)
+var channelConnections = make(map[uuid.UUID][]*websocket.Conn)
 
 func ChannelWsHandler(w http.ResponseWriter, r *http.Request, channelId string) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -53,15 +53,15 @@ func ChannelWsHandler(w http.ResponseWriter, r *http.Request, channelId string) 
 	}
 	defer conn.Close()
 
-	channelIDUint, err := strconv.ParseUint(channelId, 10, 32)
+	channelIDuuid, err := uuid.Parse(channelId)
 	if err != nil {
 		log.Println("Channel ID conversion error:", err)
 		return
 	}
 
-	log.Printf("WebSocket connected for channel ID: %d\n", channelIDUint)
+	log.Printf("WebSocket connected for channel ID: %d\n", channelIDuuid)
 
-	channelID := uint(channelIDUint)
+	channelID := uuid.UUID(channelIDuuid)
 	channelConnections[channelID] = append(channelConnections[channelID], conn)
 
 	for {
@@ -78,12 +78,12 @@ func ChannelWsHandler(w http.ResponseWriter, r *http.Request, channelId string) 
 			continue
 		}
 
-		userID, _ := strconv.ParseUint(receivedMessage["UserID"].(string), 10, 64)
+		userID, _ := uuid.Parse(receivedMessage["UserID"].(string))
 		messageContent := receivedMessage["Content"].(string)
 
 		log.Printf("Received message on channel %d: %s\n", channelID, messageContent)
 
-		saveMessageToChannel(channelID, receivedMessage, uint(userID))
+		saveMessageToChannel(channelID, receivedMessage, userID)
 
 		var user models.User
 		db.GetDB().Where("id = ?", userID).First(&user)
@@ -119,7 +119,7 @@ func ChannelWsHandler(w http.ResponseWriter, r *http.Request, channelId string) 
 	}
 }
 
-func saveMessageToChannel(channelID uint, message map[string]interface{}, userID uint) {
+func saveMessageToChannel(channelID uuid.UUID, message map[string]interface{}, userID uuid.UUID) {
 	newMessage := models.Message{
 		Content:   message["Content"].(string),
 		Type:      message["Type"].(string),

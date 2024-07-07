@@ -5,6 +5,7 @@ import (
 	"app/fixtures"
 	"log"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -12,7 +13,7 @@ func mainO() {
 	db.InitDB()
 	database := db.GetDB()
 
-	userIDs := make([]uint, len(fixtures.Users))
+	userIDs := make([]uuid.UUID, len(fixtures.Users))
 
 	for i, user := range fixtures.Users {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)

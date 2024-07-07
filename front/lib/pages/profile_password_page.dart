@@ -3,10 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import 'profile_page.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ProfilePasswordPage extends StatefulWidget {
-  const ProfilePasswordPage({Key? key}) : super(key: key);
+  const ProfilePasswordPage({super.key});
 
   @override
   _ProfilePasswordPageState createState() => _ProfilePasswordPageState();
@@ -44,24 +44,30 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('Succès'),
-            content: Text('Votre mot de passe a été changé avec succès.'),
+            title: Text(AppLocalizations.of(context)!.success),
+            content: Text(AppLocalizations.of(context)!.passwordChanged),
             actions: <Widget>[
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Ferme la boîte de dialogue
+                  Navigator.of(context).pop();
                   Navigator.of(context).pop(true);
                 },
-                child: Text('OK'),
+                child: const Text('OK'),
               ),
             ],
           ),
         );
       } else {
-        _showErrorDialog('Erreur lors de la mise à jour du mot de passe');
+        _showErrorDialog('Error: ${response.data['error']}');
+      }
+    } on DioError catch (e) {
+      if (e.response != null) {
+        _showErrorDialog('Error: ${e.response!.data['error']}');
+      } else {
+        _showErrorDialog('Connection Error: ${e.message}');
       }
     } catch (e) {
-      _showErrorDialog('Erreur de connexion: $e');
+      _showErrorDialog('Unexpected Error: $e');
     }
   }
 
@@ -69,12 +75,12 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Erreur'),
+        title: Text(AppLocalizations.of(context)!.error),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -85,7 +91,10 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Changer le Mot de Passe', style: GoogleFonts.nunito(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+        title: Text(
+          AppLocalizations.of(context)!.changePassword,
+          style: GoogleFonts.nunito(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.deepPurple[300],
       ),
       body: Padding(
@@ -98,34 +107,37 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
               TextFormField(
                 controller: _currentPasswordController,
                 decoration: InputDecoration(
-                  labelText: "Mot de passe actuel",
-                  hintText: "Entrez votre mot de passe actuel",
+                  labelText: AppLocalizations.of(context)!.currentPassword,
+                  hintText: AppLocalizations.of(context)!.enterCurrentPassword,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
                 ),
                 obscureText: true,
-                validator: (value) => value!.isEmpty ? "Le mot de passe ne peut pas être vide" : null,
+                validator: (value) => value!.isEmpty ? AppLocalizations.of(context)!.passwordCannotBeEmpty : null,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _newPasswordController,
                 decoration: InputDecoration(
-                  labelText: "Nouveau mot de passe",
-                  hintText: "Entrez votre nouveau mot de passe",
+                  labelText: AppLocalizations.of(context)!.newPassword,
+                  hintText: AppLocalizations.of(context)!.enterNewPassword,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
                 ),
                 obscureText: true,
-                validator: (value) => value!.isEmpty || value.length < 6 ? "Le nouveau mot de passe doit avoir au moins 6 caractères" : null,
+                validator: (value) => value!.isEmpty || value.length < 6 ? AppLocalizations.of(context)!.newPasswordMinLength : null,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Center(
                 child: ElevatedButton(
                   onPressed: _changePassword,
-                  child: Text('Changer le mot de passe', style: GoogleFonts.nunito(fontSize: 16)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context)!.changePassword,
+                    style: GoogleFonts.nunito(fontSize: 16),
                   ),
                 ),
               ),

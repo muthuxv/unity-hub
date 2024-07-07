@@ -1,0 +1,81 @@
+basePath: /
+host: localhost:8080
+info:
+  contact: {}
+  description: Cette API permet d'interagir avec le projet Go.
+  title: Swagger API pour le projet Go
+  version: "1.0"
+paths:
+  /friends:
+    get:
+      description: Get a list of all items
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: object
+            type: array
+      summary: Get all items
+    post:
+      consumes:
+      - application/json
+      description: Create a new item
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+      summary: Create a new item
+  /friends/{id}:
+    delete:
+      description: Delete an item by ID
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      summary: Delete an item by ID
+    get:
+      description: Get a single item by ID
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      summary: Get an item by ID
+    put:
+      consumes:
+      - application/json
+      description: Update an item by ID
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      summary: Update an item by ID
+swagger: "2.0"

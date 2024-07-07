@@ -3,65 +3,67 @@ package controllers
 import (
 	"app/db"
 	"app/db/models"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"strconv"
+	"github.com/google/uuid"
 )
 
 func ErrorHandling() gin.HandlerFunc {
-    return func(c *gin.Context) {
-        c.Next()
+	return func(c *gin.Context) {
+		c.Next()
 
-        if len(c.Errors) > 0 {
-            err := c.Errors.Last().Err
-            switch err.(type) {
-            case *gin.Error:
-                c.JSON(http.StatusInternalServerError, gin.H{"Muthu error": err.Error()})
-            default:
-                c.JSON(http.StatusInternalServerError, gin.H{"Muthu error": "Une erreur inconnue est survenue"})
-            }
-            c.Abort()
-        }
-    }
+		if len(c.Errors) > 0 {
+			err := c.Errors.Last().Err
+			switch err.(type) {
+			case *gin.Error:
+				c.JSON(http.StatusInternalServerError, gin.H{"Muthu error": err.Error()})
+			default:
+				c.JSON(http.StatusInternalServerError, gin.H{"Muthu error": "Une erreur inconnue est survenue"})
+			}
+			c.Abort()
+		}
+	}
 }
 
 func GenerateLogMiddleware(action string) gin.HandlerFunc {
-    return func(c *gin.Context) {
-        c.Next()
+	return func(c *gin.Context) {
+		c.Next()
 
-        serverIDStr := c.Param("id")
-        id, err := strconv.Atoi(serverIDStr)
-        if err != nil {
-            return 
-        }
-        serverID := uint(id)
+		serverIDStr := c.Param("id")
+		_, err := uuid.Parse(serverIDStr)
+		if err != nil {
+			return
+		}
 
-        claims, exists := c.Get("jwt_claims")
-        if !exists {
-            return 
-        }
+		serverID := uuid.MustParse(serverIDStr)
 
-        jwtClaims, ok := claims.(jwt.MapClaims)
-        if !ok {
-            return 
-        }
+		claims, exists := c.Get("jwt_claims")
+		if !exists {
+			return
+		}
 
-        userIDStr, ok := jwtClaims["jti"].(string)
-        if !ok {
-            return 
-        }
+		jwtClaims, ok := claims.(jwt.MapClaims)
+		if !ok {
+			return
+		}
 
-        _, err = strconv.Atoi(userIDStr)
-        if err != nil {
-            return
-        }
+		userIDStr, ok := jwtClaims["jti"].(string)
+		if !ok {
+			return
+		}
 
-        logEntry := models.Logs{
-            Message:  "User " + userIDStr + " " + action + " server",
-            ServerID: serverID,
-        }
+		_, err = uuid.Parse(userIDStr)
+		if err != nil {
+			return
+		}
 
-        db.GetDB().Create(&logEntry)
-    }
+		logEntry := models.Logs{
+			Message:  "User " + userIDStr + " " + action + " server",
+			ServerID: serverID,
+		}
+
+		db.GetDB().Create(&logEntry)
+	}
 }

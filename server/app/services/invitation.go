@@ -5,10 +5,11 @@ import (
 	"app/db/models"
 	"app/helpers"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func SendInvitation(createLink bool) gin.HandlerFunc {
@@ -37,7 +38,7 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 
 		// Get the ServerID from the URL parameter
 		serverIDStr := c.Param("id")
-		serverID, err := strconv.Atoi(serverIDStr)
+		serverID, err := uuid.Parse(serverIDStr)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "ID du serveur invalide"})
 			return
@@ -45,16 +46,22 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 
 		// Get the UserReceiverID from the request body
 		var receiver struct {
-			UserReceiverID uint `json:"userReceiverId"`
+			UserReceiverID string `json:"userReceiverId"`
 		}
 		if err := c.ShouldBindJSON(&receiver); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "ID du destinataire invalide"})
 			return
 		}
 
+		userReceiverID, err := uuid.Parse(receiver.UserReceiverID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "ID du destinataire invalide"})
+			return
+		}
+
 		// Check if the UserReceiver is already part of the server
 		var count int64
-		result = db.GetDB().Table("role_users").Joins("JOIN roles ON role_users.role_id = roles.id").Where("role_users.user_id = ? AND roles.server_id = ?", receiver.UserReceiverID, serverID).Count(&count)
+		result = db.GetDB().Table("role_users").Joins("JOIN roles ON role_users.role_id = roles.id").Where("role_users.user_id = ? AND roles.server_id = ?", userReceiverID, serverID).Count(&count)
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la vérification de l'appartenance du destinataire au serveur"})
 			return
@@ -66,7 +73,7 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 		}
 
 		// Check if the UserReceiver has already received an invitation for this server
-		result = db.GetDB().Table("invitations").Where("user_receiver_id = ? AND server_id = ?", receiver.UserReceiverID, serverID).Count(&count)
+		result = db.GetDB().Table("invitations").Where("user_receiver_id = ? AND server_id = ?", userReceiverID, serverID).Count(&count)
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la vérification des invitations existantes"})
 			return
@@ -79,15 +86,15 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 
 		// Create a new invitation with an expiry of 3 days
 		invitation := models.Invitation{
-			UserSenderID:   uint(userID),
-			UserReceiverID: receiver.UserReceiverID,
-			ServerID:       uint(serverID),
+			UserSenderID:   userID,
+			UserReceiverID: userReceiverID,
+			ServerID:       serverID,
 			Expire:         time.Now().Add(72 * time.Hour),
 		}
 
 		if createLink {
 			invitation.Expire = time.Now().Add(1 * time.Hour)
-			invitation.Link = fmt.Sprintf("http://localhost:8080/servers/%d/join", serverID)
+			invitation.Link = fmt.Sprintf("http://localhost:8080/servers/%s/join", serverID)
 		}
 
 		result = db.GetDB().Create(&invitation)
@@ -105,7 +112,7 @@ func GetInvitationsByUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get the user's ID from the URL parameter
 		userIDStr := c.Param("id")
-		userID, err := strconv.Atoi(userIDStr)
+		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "ID utilisateur invalide"})
 			return

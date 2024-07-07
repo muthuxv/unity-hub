@@ -4,13 +4,16 @@ import 'package:unity_hub/pages/message_page.dart';
 import 'package:unity_hub/pages/notification_page.dart';
 import 'package:unity_hub/pages/profile_page.dart';
 import 'package:unity_hub/pages/communityhub_page.dart';
+import 'package:dio/dio.dart';
 import '../components/bottom_navbar.dart';
 import 'server_page.dart';
 import 'security/auth_page.dart';
 import 'package:unity_hub/utils/messaging_service.dart';
+import 'package:unity_hub/pages/maintenance_page.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,6 +26,24 @@ class _HomePageState extends State<HomePage> {
   final MessagingService messagingService = MessagingService();
   int _selectedIndex = 0;
   String email = '';
+
+  Future<List<Map<String, dynamic>>> fetchFeatureStatuses() async {
+    try {
+      final response = await Dio().get('http://10.0.2.2:8080/features');
+      if (response.statusCode == 200) {
+        List<dynamic> data = response.data;
+        return List<Map<String, dynamic>>.from(data);
+      } else {
+        // Handle unexpected status codes or errors here
+        print('Failed to load feature statuses');
+        return [];
+      }
+    } catch (e) {
+      // Handle Dio errors or network errors here
+      print('Error fetching feature statuses: $e');
+      return [];
+    }
+  }
 
   void navigateBottomNavBar(int value) {
     setState(() {
@@ -74,7 +95,7 @@ class _HomePageState extends State<HomePage> {
 
     _pages = [
       const ServerPage(),
-      const MessagePage(),
+      const CommunityHubPage(),
       const NotificationPage(),
       const ProfilePage(),
     ];
@@ -108,21 +129,22 @@ class _HomePageState extends State<HomePage> {
           children: [
             Column(
               children: [
-                DrawerHeader(
-                  child: Image.asset(
-                    'lib/images/unitylog.png',
-                    width: 100,
-                  ),
+                DrawerHeader(child: Image.asset(
+                  'lib/images/unitylog.png',
+                  width: 100,
                 ),
+                ),
+
                 Padding(
                   padding: const EdgeInsets.only(left: 25.0, top: 25.0),
                   child: ListTile(
-                    leading: const Icon(Icons.home),
-                    title: const Text('CommunityHub'),
+                    leading: const Icon(
+                        Icons.home),
+                    title: const Text("CommunityHub"),
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => CommunityHubPage()),
+                        MaterialPageRoute(builder: (context) => const CommunityHubPage()),
                       );
                     },
                   ),
@@ -132,8 +154,9 @@ class _HomePageState extends State<HomePage> {
             Padding(
               padding: const EdgeInsets.only(left: 25.0, bottom: 25.0),
               child: ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Se déconnecter'),
+                leading: const Icon(
+                    Icons.logout),
+                title: Text(AppLocalizations.of(context)!.logout),
                 onTap: () {
                   _logout();
                 },
@@ -143,9 +166,46 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       body: Center(
-        child: _pages.elementAt(_selectedIndex),
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: fetchFeatureStatuses(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const CircularProgressIndicator();
+            } else if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Text('No data available');
+            } else {
+              // Process feature statuses and decide which page to show
+              bool serversEnabled = snapshot.data![0]['Status'] == 'true';
+              bool communityHubEnabled = snapshot.data![1]['Status'] == 'true';
+              bool notificationsEnabled = snapshot.data![2]['Status'] == 'true';
+              bool profileEnabled = snapshot.data![3]['Status'] == 'true';
+
+              Widget pageToDisplay;
+
+              switch (_selectedIndex) {
+                case 0:
+                  pageToDisplay = serversEnabled ? const ServerPage() : const MaintenancePage();
+                  break;
+                case 1:
+                  pageToDisplay = communityHubEnabled ? const CommunityHubPage() : const MaintenancePage();
+                  break;
+                case 2:
+                  pageToDisplay = notificationsEnabled ? const NotificationPage() : const MaintenancePage();
+                  break;
+                case 3:
+                  pageToDisplay = profileEnabled ? const ProfilePage() : const MaintenancePage();
+                  break;
+                default:
+                  pageToDisplay = const ServerPage();
+              }
+
+              return pageToDisplay;
+            }
+          },
+        ),
       ),
     );
   }
 }
-

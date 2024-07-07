@@ -3,9 +3,10 @@ package services
 import (
 	"app/db"
 	"app/db/models"
-	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type ModelFactory func() interface{}
@@ -34,8 +35,8 @@ func AddRoleToServer(factory ModelFactory) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		serverIDInt, _ := strconv.Atoi(serverID)
-		role.(*models.Role).ServerID = uint(serverIDInt)
+		serverIDInt, _ := uuid.Parse(serverID)
+		role.(*models.Role).ServerID = serverIDInt
 		if err := db.GetDB().Create(role).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
