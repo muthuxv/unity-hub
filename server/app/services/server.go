@@ -567,7 +567,7 @@ func UpdateServerByID() gin.HandlerFunc {
 			}
 
 			// Vérifier que tous les tags spécifiés existent
-			existingTagIDs := make(map[uint]bool)
+			existingTagIDs := make(map[uuid.UUID]bool)
 			for _, tag := range existingTags {
 				existingTagIDs[tag.ID] = true
 			}
