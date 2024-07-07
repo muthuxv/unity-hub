@@ -13,8 +13,7 @@ import 'package:unity_hub/pages/invitations/send_invitation_page.dart';
 import 'package:unity_hub/utils/websocket_service.dart';
 
 class ServerPage extends StatefulWidget {
-  final int serverId;
-  const ServerPage({super.key, this.serverId = 0});
+  const ServerPage({super.key});
 
   @override
   State<ServerPage> createState() => _ServerPageState();
@@ -63,14 +62,13 @@ class _ServerPageState extends State<ServerPage> {
       if (response.statusCode == 200) {
         setState(() {
           _servers = response.data['data'];
-          if (widget.serverId != 0) {
-            _selectedServer = _servers.firstWhere((server) => server['ID'] == widget.serverId, orElse: () => {});
-          } else if (_servers.isNotEmpty) {
+          if (_servers.isNotEmpty) {
             _selectedServer = _servers[0];
-          }
-          if (_selectedServer.isNotEmpty) {
             _connectWebSocket(_selectedServer['ID']);
+          } else {
+            _selectedServer = {};
           }
+
         });
       } else {
         _showErrorDialog(response.data['message']);
@@ -84,7 +82,7 @@ class _ServerPageState extends State<ServerPage> {
     }
   }
 
-  void _connectWebSocket(int serverId) {
+  void _connectWebSocket(String serverId) {
     _webSocketService.disconnect();
     _webSocketService.connect('ws://10.0.2.2:8080/ws/servers/$serverId');
   }

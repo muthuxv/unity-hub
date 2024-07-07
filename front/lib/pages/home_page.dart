@@ -186,7 +186,7 @@ class _HomePageState extends State<HomePage> {
 
               switch (_selectedIndex) {
                 case 0:
-                  pageToDisplay = serversEnabled ? const ServerPage() : const MaintenancePage();
+                  pageToDisplay = serversEnabled ? ServerPage() : const MaintenancePage();
                   break;
                 case 1:
                   pageToDisplay = communityHubEnabled ? const CommunityHubPage() : const MaintenancePage();
@@ -198,7 +198,7 @@ class _HomePageState extends State<HomePage> {
                   pageToDisplay = profileEnabled ? const ProfilePage() : const MaintenancePage();
                   break;
                 default:
-                  pageToDisplay = const ServerPage();
+                  pageToDisplay = ServerPage();
               }
 
               return pageToDisplay;

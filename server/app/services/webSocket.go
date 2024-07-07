@@ -145,15 +145,15 @@ type Channel struct {
 }
 
 type Server struct {
-	ID        int
+	ID        uuid.UUID
 	Clients   map[*websocket.Conn]bool
 	Broadcast chan WebSocketMessage
 }
 
-var servers = make(map[int]*Server)
+var servers = make(map[uuid.UUID]*Server)
 
 func ServerWsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	serverID, err := strconv.Atoi(ps.ByName("id"))
+	serverID, err := uuid.Parse(ps.ByName("id"))
 	if err != nil {
 		log.Println("Invalid server ID:", err)
 		return
@@ -203,7 +203,7 @@ func ServerWsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 	}
 }
 
-func handleMessages(serverID int) {
+func handleMessages(serverID uuid.UUID) {
 	for {
 		message := <-servers[serverID].Broadcast
 
@@ -219,13 +219,13 @@ func handleMessages(serverID int) {
 }
 
 func AddChannelHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	serverID, err := strconv.Atoi(ps.ByName("id"))
+	serverID, err := uuid.Parse(ps.ByName("id"))
 	if err != nil {
 		http.Error(w, "Invalid server ID", http.StatusBadRequest)
 		return
 	}
 
-	serverIDUint := uint(serverID)
+	serverIDUint := uuid.UUID(serverID)
 
 	var channel Channel
 	if err := json.NewDecoder(r.Body).Decode(&channel); err != nil {
