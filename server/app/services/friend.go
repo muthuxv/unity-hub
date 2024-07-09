@@ -158,17 +158,19 @@ func GetFriendsByUser() gin.HandlerFunc {
 
 		friendsResponse := make([]map[string]interface{}, 0)
 		for _, friend := range friends {
-			var friendPseudo, friendEmail string
+			var friendPseudo, friendEmail, friendProfile string
 			var friendID uuid.UUID
 
 			if friend.UserID1 == uuid.MustParse(userIDStr) {
 				friendPseudo = friend.User2.Pseudo
 				friendEmail = friend.User2.Email
 				friendID = friend.UserID2
+				friendProfile = friend.User2.Profile
 			} else {
 				friendPseudo = friend.User1.Pseudo
 				friendEmail = friend.User1.Email
 				friendID = friend.UserID1
+				friendProfile = friend.User1.Profile
 			}
 
 			friendData := map[string]interface{}{
@@ -177,6 +179,7 @@ func GetFriendsByUser() gin.HandlerFunc {
 				"Status":     friend.Status,
 				"UserPseudo": friendPseudo,
 				"UserMail":   friendEmail,
+				"Profile":    friendProfile,
 			}
 			friendsResponse = append(friendsResponse, friendData)
 		}

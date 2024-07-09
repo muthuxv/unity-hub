@@ -594,10 +594,13 @@ func GetServersByUser() gin.HandlerFunc {
 
 		var servers []models.Server
 		if err := db.GetDB().Table("servers").
+			Joins("JOIN on_servers ON servers.id = on_servers.server_id").
+		if err := db.GetDB().Table("servers").
 			Joins("JOIN on_servers ON servers.id = on_servers.server_id AND on_servers.deleted_at IS NULL").
 			Joins("LEFT JOIN bans ON servers.id = bans.server_id AND bans.user_id = ?", userID).
 			Preload("Media").
 			Preload("Tags").
+			Where("on_servers.user_id = ? AND on_servers.deleted_at IS NULL", userID).
 			Where("on_servers.user_id = ?", userID).
 			Where("(bans.user_id IS NULL OR bans.deleted_at IS NOT NULL)").
 			Find(&servers).Error; err != nil {
