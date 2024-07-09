@@ -189,5 +189,19 @@
   "invitationMessage": "vous invite à rejoindre le serveur {serverName}.",
   "acceptInvitationError": "Échec de l'acceptation de l'invitation",
   "deleteInvitationError": "Échec de la suppression de l'invitation",
-  "joinSuccessMessage": "Vous avez rejoint le serveur avec succès"
+  "joinSuccessMessage": "Vous avez rejoint le serveur avec succès",
+  "banMember": "Bannir le membre",
+  "banMemberConfirmation": "Êtes-vous sûr de vouloir bannir ce membre ?",
+  "reason": "Raison",
+  "duration": "Durée",
+  "fillAllFields": "Merci de remplir tous les champs",
+  "bannedMembers": "Membres bannis",
+  "noBannedMembers": "Aucun membre banni",
+  "bannedFor": "Banni pour",
+  "bannedUntil": "Banni jusqu'à",
+  "unbanMemberConfirmation": "Êtes-vous sûr de vouloir débannir ce membre ?",
+  "unbanMemberConfirmationMessage": "Vous êtes sur le point de débannir ce membre.",
+  "memberUnbanned": "Membre débanni",
+  "memberBannedSuccessfully": "Membre banni avec succès",
+  "failedBanMember": "Échec du bannissement du membre"
 }
