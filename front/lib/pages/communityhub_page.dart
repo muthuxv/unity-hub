@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class Server {
@@ -81,7 +80,7 @@ class CommunityHubPage extends StatefulWidget {
 class _CommunityHubPageState extends State<CommunityHubPage> {
   late Future<List<Server>> futureServers;
   TextEditingController searchController = TextEditingController();
-  List<Server> allServers = [];
+  List<Server> allServers = [];  // Stocker tous les serveurs récupérés
   List<Server> displayedServers = [];
 
   @override
@@ -94,11 +93,9 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'token');
-      final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
-      final userId = decodedToken['jti'];
 
       final response = await Dio().get(
-        'http://10.0.2.2:8080/servers/public/available/$userId',
+        'http://10.0.2.2:8080/servers',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -108,10 +105,10 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
       );
 
       if (response.statusCode == 200) {
-        List jsonResponse = response.data['data']; // Adjust based on your API response structure
+        List jsonResponse = response.data;
         List<Server> servers = jsonResponse.map((server) => Server.fromJson(server)).toList();
         setState(() {
-          allServers = servers;
+          allServers = servers;  // Stocker tous les serveurs récupérés
           displayedServers = servers;
         });
         return servers;
@@ -457,4 +454,3 @@ void main() {
     home: CommunityHubPage(),
   ));
 }
-

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -16,7 +17,7 @@ class SendInvitationPage extends StatefulWidget {
 class _SendInvitationPageState extends State<SendInvitationPage> {
   bool _isLoading = false;
   List _friends = [];
-  final List<int> _selectedFriends = [];
+  final Map<String, bool> _selectedFriends = {};
 
   @override
   void initState() {
@@ -63,7 +64,8 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
-    for (int friendId in _selectedFriends) {
+    for (String friendId in _selectedFriends.keys) {
+      print("object" + friendId);
       final response = await Dio().post(
         'http://10.0.2.2:8080/invitations/server/${widget.serverId}',
         data: {'userReceiverId': friendId},
@@ -120,32 +122,39 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
                 itemCount: _friends.length,
                 itemBuilder: (context, index) {
                   final friend = _friends[index];
-                  return CheckboxListTile(
+                  return ListTile(
                     title: Text(friend['UserPseudo']),
-                    value: _selectedFriends.contains(friend['FriendID']),
-                    onChanged: (bool? value) {
-                      setState(() {
-                        if (value == true) {
-                          _selectedFriends.add(friend['FriendID']);
-                        } else {
-                          _selectedFriends.remove(friend['FriendID']);
-                        }
-                      });
-                    },
+                    leading: CircleAvatar(
+                      child: (friend['Profile'] != null && friend['Profile'].contains('<svg'))
+                          ? SvgPicture.string(
+                        friend['Profile'],
+                        height: 40,
+                        width: 40,
+                      )
+                          : (friend['Profile'] != null && friend['UserPseudo'].isNotEmpty)
+                          ? CircleAvatar(
+                        radius: 50,
+                        backgroundImage: NetworkImage(friend['Profile']),
+                      )
+                          : CircleAvatar(
+                        child: Text(friend['UserPseudo'] != null ? friend['UserPseudo'][0] : 'U'),
+                      ),
+                    ),
+                    trailing: Checkbox(
+                      value: _selectedFriends[friend['FriendID']] ?? false,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _selectedFriends[friend['FriendID']] = value ?? false;
+                        });
+                      },
+                    ),
                   );
                 },
               ),
             ),
             ElevatedButton(
-              onPressed: _selectedFriends.isEmpty ? null : _sendInvitations,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
-              ),
-              child: Text(
-                AppLocalizations.of(context)!.sendButton,
-                style: const TextStyle(color: Colors.white),
-              ),
+              onPressed: _selectedFriends.values.any((isSelected) => isSelected) ? _sendInvitations : null,
+              child: Text(AppLocalizations.of(context)!.sendButton),
             ),
           ],
         ),
