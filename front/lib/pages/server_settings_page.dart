@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:unity_hub/pages/roles/role_page.dart';
 import 'package:unity_hub/pages/server_logs_page.dart';
+import 'package:unity_hub/pages/server_ban_members_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 import 'server_update_tags_page.dart';
@@ -326,6 +327,14 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                         ),
                       ),
                       ListTile(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ServerBanMembersPage(serverId: widget.serverId),
+                            ),
+                          );
+                        },
                         trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
                         leading: const Icon(Icons.block, color: Colors.white),
                         title: Text(

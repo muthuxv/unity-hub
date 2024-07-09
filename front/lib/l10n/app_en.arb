@@ -189,5 +189,19 @@
   "invitationMessage": "invites you to join the server {serverName}.",
   "acceptInvitationError": "Failed to accept invitation",
   "deleteInvitationError": "Failed to delete invitation",
-  "joinSuccessMessage": "You have successfully joined the server"
+  "joinSuccessMessage": "You have successfully joined the server",
+  "banMember": "Ban Member",
+  "banMemberConfirmation": "Are you sure you want to ban this member?",
+  "reason": "Reason",
+  "duration": "Duration",
+  "fillAllFields": "Please fill in all fields",
+  "bannedMembers": "Banned Members",
+  "noBannedMembers": "No banned members",
+  "bannedFor": "Banned for",
+  "bannedUntil": "Banned until",
+  "unbanMemberConfirmation": "Are you sure you want to unban this member?",
+  "unbanMemberConfirmationMessage": "This member will be able to join the server again.",
+  "memberUnbanned": "Member unbanned",
+  "memberBannedSuccessfully": "Member banned successfully",
+  "failedBanMember": "Failed to ban member"
 }

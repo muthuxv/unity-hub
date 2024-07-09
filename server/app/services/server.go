@@ -5,8 +5,8 @@ import (
 	"app/db/models"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
@@ -21,8 +21,9 @@ type UpdateServerInput struct {
 	TagIDs     []uuid.UUID `json:"tag_ids"`
 }
 
-type TagsInput struct {
-	TagIDs []uuid.UUID `json:"tag_ids"`
+type BanUserInput struct {
+	Reason   string `json:"reason" binding:"required"`
+	Duration int    `json:"duration" binding:"required"`
 }
 
 func GetAllServers() gin.HandlerFunc {
@@ -53,7 +54,6 @@ func GetAllServers() gin.HandlerFunc {
 
 		var servers []models.Server
 
-		// Query servers excluding those where user is already on
 		if err := db.GetDB().
 			Table("servers").
 			Where("id NOT IN (SELECT server_id FROM on_servers WHERE user_id = ?)", userID).
@@ -66,6 +66,154 @@ func GetAllServers() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, servers)
+	}
+}
+
+func GetServerBans() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		serverID := c.Param("id")
+		if serverID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Server ID is required"})
+			return
+		}
+
+		var bans []models.Ban
+		result := db.GetDB().Preload("User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, pseudo, email, role, profile")
+		}).Preload("Server", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, name, visibility, user_id")
+		}).Preload("BannedBy", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, pseudo, email, role, profile")
+		}).Where("server_id = ?", serverID).Find(&bans)
+
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, bans)
+	}
+}
+
+func BanUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		serverID := c.Param("id")
+		userID := c.Param("userID")
+		var input BanUserInput
+
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		serverUUID, err := uuid.Parse(serverID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid server ID"})
+			return
+		}
+
+		userUUID, err := uuid.Parse(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+
+		var onServer models.OnServer
+		if err := db.GetDB().Where("server_id = ? AND user_id = ?", serverUUID, userUUID).First(&onServer).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User is not a member of this server"})
+			return
+		}
+
+		var server models.Server
+		if err := db.GetDB().First(&server, "id = ?", serverUUID).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Server not found"})
+			return
+		}
+
+		var existingBan models.Ban
+		if err := db.GetDB().Where("server_id = ? AND user_id = ?", serverUUID, userUUID).First(&existingBan).Error; err == nil {
+			c.JSON(http.StatusConflict, gin.H{"error": "User is already banned from this server"})
+			return
+		}
+
+		claims, exists := c.Get("jwt_claims")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+		jwtClaims := claims.(jwt.MapClaims)
+		bannedByIDStr := jwtClaims["jti"].(string)
+		bannedByID, err := uuid.Parse(bannedByIDStr)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse the user ID from JWT"})
+			return
+		}
+
+		if server.UserID != bannedByID {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Only the server creator can ban users"})
+			return
+		}
+
+		tx := db.GetDB().Begin()
+
+		ban := models.Ban{
+			Reason:     input.Reason,
+			Duration:   time.Now().AddDate(0, 0, input.Duration),
+			UserID:     userUUID,
+			ServerID:   serverUUID,
+			BannedByID: bannedByID,
+		}
+
+		if err := tx.Create(&ban).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if err := tx.Where("server_id = ? AND user_id = ?", serverUUID, userUUID).Delete(&models.OnServer{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if err := tx.Commit().Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, ban)
+	}
+}
+
+func UnbanUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		serverID := c.Param("id")
+		userID := c.Param("userID")
+
+		serverUUID, err := uuid.Parse(serverID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid server ID"})
+			return
+		}
+
+		userUUID, err := uuid.Parse(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+
+		var ban models.Ban
+		if err := db.GetDB().Where("server_id = ? AND user_id = ?", serverUUID, userUUID).First(&ban).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Ban not found"})
+			return
+		}
+
+		if err := db.GetDB().Delete(&ban).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unban user"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "User unbanned"})
 	}
 }
 
@@ -131,7 +279,6 @@ func NewServer() gin.HandlerFunc {
 		}
 
 		if inputServer.MediaID == uuid.Nil {
-			// Default media
 			var media models.Media
 			if err := db.GetDB().Where("file_name = ?", "default.png").First(&media).Error; err != nil {
 				handleError(c, http.StatusInternalServerError, "Erreur lors de la recherche du média par défaut")
@@ -183,21 +330,18 @@ func NewServer() gin.HandlerFunc {
 			}
 		}
 
-		// Create server
 		if err := tx.Create(&inputServer).Error; err != nil {
 			tx.Rollback()
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la création du serveur")
 			return
 		}
 
-		// Preload media
 		if err := tx.Preload("Media").First(&inputServer).Error; err != nil {
 			tx.Rollback()
 			handleError(c, http.StatusInternalServerError, "Erreur lors du préchargement du média")
 			return
 		}
 
-		// Create association server-user
 		inputOnServer := models.OnServer{
 			ServerID: inputServer.ID,
 			UserID:   userID,
@@ -208,7 +352,6 @@ func NewServer() gin.HandlerFunc {
 			return
 		}
 
-		// Create default role
 		inputRole := models.Role{
 			ServerID: inputServer.ID,
 			Label:    "membre",
@@ -219,7 +362,6 @@ func NewServer() gin.HandlerFunc {
 			return
 		}
 
-		// Create role-user association
 		inputRoleUser := models.RoleUser{
 			RoleID: inputRole.ID,
 			UserID: userID,
@@ -230,7 +372,6 @@ func NewServer() gin.HandlerFunc {
 			return
 		}
 
-		// Create default channel
 		inputChannel := models.Channel{
 			ServerID:   inputServer.ID,
 			Name:       "général",
@@ -243,7 +384,6 @@ func NewServer() gin.HandlerFunc {
 			return
 		}
 
-		// Commit transaction if all operations succeed
 		tx.Commit()
 
 		c.JSON(http.StatusCreated, gin.H{"data": inputServer})
@@ -283,7 +423,6 @@ func JoinServer() gin.HandlerFunc {
 			return
 		}
 
-		// Begin a transaction
 		tx := db.GetDB().Begin()
 		defer func() {
 			if r := recover(); r != nil {
@@ -342,6 +481,35 @@ func JoinServer() gin.HandlerFunc {
 		tx.Commit()
 
 		c.JSON(http.StatusOK, gin.H{"data": onServer})
+	}
+}
+
+func GetPublicAvailableServers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userIDStr := c.Param("id")
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			handleError(c, http.StatusBadRequest, "ID utilisateur invalide")
+			return
+		}
+
+		var servers []models.Server
+
+		if err := db.GetDB().Table("servers").
+			Joins("LEFT JOIN on_servers ON servers.id = on_servers.server_id AND on_servers.user_id = ? AND on_servers.deleted_at IS NULL", userID).
+			Joins("LEFT JOIN bans ON servers.id = bans.server_id AND bans.user_id = ? AND bans.deleted_at IS NULL", userID).
+			Where("servers.user_id != ?", userID).
+			Where("servers.visibility = ?", "public").
+			Where("on_servers.user_id IS NULL").
+			Where("bans.user_id IS NULL").
+			Preload("Media").
+			Preload("Tags").
+			Find(&servers).Error; err != nil {
+			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des serveurs publics disponibles")
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"data": servers})
 	}
 }
 
@@ -418,7 +586,6 @@ func LeaveServer() gin.HandlerFunc {
 func GetServersByUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDStr := c.Param("id")
-		log.Println(userIDStr)
 		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
 			handleError(c, http.StatusBadRequest, "ID utilisateur invalide")
@@ -426,10 +593,13 @@ func GetServersByUser() gin.HandlerFunc {
 		}
 
 		var servers []models.Server
-		if err := db.GetDB().Table("servers").Joins("JOIN on_servers ON servers.id = on_servers.server_id").
+		if err := db.GetDB().Table("servers").
+			Joins("JOIN on_servers ON servers.id = on_servers.server_id AND on_servers.deleted_at IS NULL").
+			Joins("LEFT JOIN bans ON servers.id = bans.server_id AND bans.user_id = ?", userID).
 			Preload("Media").
 			Preload("Tags").
 			Where("on_servers.user_id = ?", userID).
+			Where("(bans.user_id IS NULL OR bans.deleted_at IS NOT NULL)").
 			Find(&servers).Error; err != nil {
 			handleError(c, http.StatusInternalServerError, "Error retrieving user's servers")
 			return
@@ -455,7 +625,11 @@ func GetServerMembers() gin.HandlerFunc {
 		}
 
 		var users []models.User
-		if err := db.GetDB().Table("users").Joins("JOIN on_servers ON users.id = on_servers.user_id").Where("on_servers.server_id = ?", serverID).Find(&users).Error; err != nil {
+		if err := db.GetDB().Table("users").
+			Joins("JOIN on_servers ON users.id = on_servers.user_id").
+			Where("on_servers.server_id = ?", serverID).
+			Where("on_servers.deleted_at IS NULL").
+			Find(&users).Error; err != nil {
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des membres du serveur.")
 			return
 		}
@@ -541,7 +715,6 @@ func UpdateServerByID() gin.HandlerFunc {
 			return
 		}
 
-		// Mise à jour des champs du serveur
 		if input.Name != "" {
 			server.Name = input.Name
 		}
@@ -554,18 +727,15 @@ func UpdateServerByID() gin.HandlerFunc {
 
 		tx := db.GetDB().Begin()
 
-		// Mise à jour des tags
 		if len(input.TagIDs) > 0 {
 			var existingTags []models.Tag
 
-			// Vérifier l'existence des tags dans la base de données
 			if err := tx.Where("id IN ?", input.TagIDs).Find(&existingTags).Error; err != nil {
 				tx.Rollback()
 				handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des tags")
 				return
 			}
 
-			// Vérifier que tous les tags spécifiés existent
 			existingTagIDs := make(map[uuid.UUID]bool)
 			for _, tag := range existingTags {
 				existingTagIDs[tag.ID] = true
@@ -579,7 +749,6 @@ func UpdateServerByID() gin.HandlerFunc {
 				}
 			}
 
-			// Mettre à jour les tags du serveur
 			if err := tx.Model(&server).Association("Tags").Replace(existingTags); err != nil {
 				tx.Rollback()
 				handleError(c, http.StatusInternalServerError, "Erreur lors de la mise à jour des tags du serveur")
@@ -595,7 +764,6 @@ func UpdateServerByID() gin.HandlerFunc {
 
 		tx.Commit()
 
-		// Récupération du serveur mis à jour avec ses tags
 		if err := db.GetDB().Preload("Tags").First(&server, serverID).Error; err != nil {
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des tags après mise à jour")
 			return

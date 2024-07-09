@@ -48,7 +48,7 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
     }
   }
 
-  Future<void> updateServerTags(List<int> tagIds) async {
+  Future<void> updateServerTags(List<String> tagIds) async {
     try {
       Response response = await Dio().put(
         'http://10.0.2.2:8080/servers/${widget.serverId}',
@@ -203,8 +203,8 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  List<int> tagIds =
-                  _serverTags.map<int>((tag) => tag['ID']).toList();
+                  List<String> tagIds =
+                  _serverTags.map<String>((tag) => tag['ID']).toList();
                   updateServerTags(tagIds);
                 },
                 style: ElevatedButton.styleFrom(

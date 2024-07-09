@@ -1,9 +1,10 @@
 package routes
 
 import (
-    "app/controllers"
-	"github.com/gin-gonic/gin"
+	"app/controllers"
 	"app/db/models"
+
+	"github.com/gin-gonic/gin"
 )
 
 func BanRoutes(r *gin.Engine) {
