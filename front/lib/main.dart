@@ -9,6 +9,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'firebase_options.dart';
 import 'package:unity_hub/theme.dart';
 import '/pages/profile_page.dart';
+import 'package:provider/provider.dart';
+import 'package:unity_hub/providers/group_provider.dart';
 
 void main() async {
   await dotenv.load(fileName: ".env");
@@ -16,11 +18,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   static void setLocale(BuildContext context, Locale newLocale) {
     _MyAppState state = context.findAncestorStateOfType<_MyAppState>()!;
@@ -44,21 +46,26 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     TextTheme myTextTheme = ThemeData.light().textTheme;
     MaterialTheme myTheme = MaterialTheme(myTextTheme);
-    return MaterialApp(
-      title: 'Unity Hub',
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => GroupProvider()),
       ],
-      supportedLocales: const [
-        Locale('en'),
-        Locale('fr'),
-      ],
-      locale: _locale,
-      theme: myTheme.lightMediumContrast(),
-      home: const AuthPage(),
+      child: MaterialApp(
+        title: 'Unity Hub',
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en'),
+          Locale('fr'),
+        ],
+        locale: _locale,
+        theme: myTheme.lightMediumContrast(),
+        home: const AuthPage(),
+      ),
     );
   }
 }

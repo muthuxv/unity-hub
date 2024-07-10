@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:unity_hub/pages/intro_page.dart';
-import 'package:unity_hub/pages/message_page.dart';
+import 'package:unity_hub/pages/group_page.dart';
 import 'package:unity_hub/pages/notification_page.dart';
 import 'package:unity_hub/pages/profile_page.dart';
 import 'package:unity_hub/pages/communityhub_page.dart';
@@ -53,7 +53,7 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> _pages = [
     const ServerPage(),
-    const CommunityHubPage(),
+    GroupPage(),
     const NotificationPage(),
     const ProfilePage(),
   ];
@@ -188,7 +188,7 @@ class _HomePageState extends State<HomePage> {
                   pageToDisplay = serversEnabled ? const ServerPage() : const MaintenancePage();
                   break;
                 case 1:
-                  pageToDisplay = communityHubEnabled ? const CommunityHubPage() : const MaintenancePage();
+                  pageToDisplay = communityHubEnabled ? GroupPage() : const MaintenancePage();
                   break;
                 case 2:
                   pageToDisplay = notificationsEnabled ? const NotificationPage() : const MaintenancePage();

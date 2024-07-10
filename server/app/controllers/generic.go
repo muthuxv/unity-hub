@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type ModelFactory func() interface{}
@@ -15,10 +16,27 @@ type ModelFactory func() interface{}
 // @Produce json
 // @Success 200 {array} interface{}
 // @Router /friends [get]
-func GetAll(factory ModelFactory) gin.HandlerFunc {
+type PreloadField struct {
+	Association string
+	Fields      []string
+}
+
+func GetAll(factory ModelFactory, preloads ...PreloadField) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		modelSlice := factory()
-		if err := db.GetDB().Find(modelSlice).Error; err != nil {
+		query := db.GetDB().Model(modelSlice)
+
+		for _, preload := range preloads {
+			if len(preload.Fields) > 0 {
+				query = query.Preload(preload.Association, func(db *gorm.DB) *gorm.DB {
+					return db.Select(preload.Fields)
+				})
+			} else {
+				query = query.Preload(preload.Association)
+			}
+		}
+
+		if err := query.Find(modelSlice).Error; err != nil {
 			c.Error(err)
 			return
 		}
