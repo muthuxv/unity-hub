@@ -106,13 +106,16 @@ class _ReportsPageState extends State<ReportsPage> {
 
   Future<void> _deleteMessage(String messageId) async {
     try {
-      await Dio().delete('http://10.0.2.2:8080/messages/$messageId');
+      await Dio().put(
+        'http://10.0.2.2:8080/messages/$messageId',
+        data: {'Content': 'Ce message a été supprimé après signalement'},
+      );
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Message deleted successfully')),
+        SnackBar(content: Text('Message updated successfully')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error deleting message: $e')),
+        SnackBar(content: Text('Error updating message: $e')),
       );
     }
   }

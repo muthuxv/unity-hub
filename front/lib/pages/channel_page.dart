@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:unity_hub/pages/profil/user_profil_page.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/svg.dart';
@@ -214,6 +215,14 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                   _showReportDialog(context, message);
                 },
               ),
+            ListTile(
+              leading: Icon(Icons.report),
+              title: Text("Signaler l'utilisateur"),
+              onTap: () {
+                Navigator.pop(context);
+                _showReportUserDialog(context, message);
+              },
+            ),
           ],
         );
       },
@@ -272,6 +281,59 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     );
   }
 
+  void _showReportUserDialog(BuildContext context, dynamic message) {
+    TextEditingController _reportController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        bool _isButtonDisabled = true;
+
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: Text("Signaler l'utilisateur"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _reportController,
+                    decoration: InputDecoration(
+                      labelText: 'Raison du signalement',
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _isButtonDisabled = value.trim().isEmpty;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('Annuler'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: Text('Envoyer'),
+                  onPressed: _isButtonDisabled
+                      ? null
+                      : () async {
+                    Navigator.of(context).pop();
+                    await _sendUserReport(message['UserID'], _reportController.text);
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+
   Future<void> _sendReport(String messageID, String reportMessage) async {
     const storage = FlutterSecureStorage();
     final jwtToken = await storage.read(key: 'token');
@@ -284,6 +346,35 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       "messageID": messageID,
       "userID": userID,
       "serverID": widget.serverId,
+    };
+
+    try {
+      await Dio().post(
+        'http://10.0.2.2:8080/reports',
+        data: reportData,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Message signalé avec succès')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de l\'envoi du signalement: $e')),
+      );
+    }
+  }
+
+  Future<void> _sendUserReport(String reportedID, String reportMessage) async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+    final decodedToken = JwtDecoder.decode(jwtToken!);
+    final userID = decodedToken['jti'];
+
+    final reportData = {
+      "message": reportMessage,
+      "status": "pending",
+      "userID": userID,
+      "serverID": widget.serverId,
+      "ReportedID": reportedID,
     };
 
     try {
@@ -344,10 +435,20 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                             child: Row(
                               children: [
                                 if (!isCurrentUser)
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 8.0),
-                                    child: CircleAvatar(
-                                      child: _buildProfileWidget(message),
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => UserProfilePage(serverId: widget.serverId, userId: message['User']['ID']),
+                                        ),
+                                      );
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 8.0),
+                                      child: CircleAvatar(
+                                        child: _buildProfileWidget(message),
+                                      ),
                                     ),
                                   ),
                                 Expanded(
