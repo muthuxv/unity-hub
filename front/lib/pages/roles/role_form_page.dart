@@ -1,6 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RolePageForm extends StatefulWidget {
@@ -48,6 +48,9 @@ class _RolePageFormState extends State<RolePageForm> {
           ),
         );
         _nameController.clear();
+
+        // Return to previous page and refresh
+        Navigator.pop(context, true); // Signal successful creation
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -97,8 +100,7 @@ class _RolePageFormState extends State<RolePageForm> {
                   : ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 32.0, vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
                 ),
                 onPressed: _createRole,
                 child: Text(

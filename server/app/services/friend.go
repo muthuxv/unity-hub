@@ -57,6 +57,7 @@ func AcceptFriend() gin.HandlerFunc {
 				"Status":     friend.Status,
 				"UserPseudo": friend.User2.Pseudo,
 				"UserMail":   friend.User2.Email,
+				"Profile":    friend.User2.Profile,
 			}
 		} else {
 			friendData = map[string]interface{}{
@@ -65,6 +66,7 @@ func AcceptFriend() gin.HandlerFunc {
 				"Status":     friend.Status,
 				"UserPseudo": friend.User1.Pseudo,
 				"UserMail":   friend.User1.Email,
+				"Profile":    friend.User1.Profile,
 			}
 		}
 
@@ -214,6 +216,8 @@ func GetPendingFriendsByUser() gin.HandlerFunc {
 				"FriendUser1ID": friend.User1.ID,
 				"Status":        friend.Status,
 				"UserPseudo":    friend.User1.Pseudo,
+				"UserMail":      friend.User1.Email,
+				"Profile":       friend.User1.Profile,
 			}
 			friendsResponse[i] = friendData
 		}
@@ -247,6 +251,8 @@ func GetPendingFriendsFromUser() gin.HandlerFunc {
 				"FriendID":   friend.User2.ID,
 				"Status":     friend.Status,
 				"UserPseudo": friend.User2.Pseudo,
+				"UserMail":   friend.User2.Email,
+				"Profile":    friend.User2.Profile,
 			}
 			friendsResponse[i] = friendData
 		}
@@ -258,8 +264,8 @@ func GetPendingFriendsFromUser() gin.HandlerFunc {
 func CreateFriendRequest() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input struct {
-			UserID     uuid.UUID `json:"userId"`     // ID of the user sending the friend request
-			UserPseudo string    `json:"userPseudo"` // Pseudo of the user to be added as a friend
+			UserID     uuid.UUID `json:"userId"`
+			UserPseudo string    `json:"userPseudo"`
 		}
 
 		if err := c.ShouldBindJSON(&input); err != nil {
@@ -313,6 +319,9 @@ func CreateFriendRequest() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to send friend request"})
 			return
 		}
+
+		// Preload the user information
+		db.GetDB().Preload("User1").Preload("User2").First(&friend)
 
 		c.JSON(http.StatusOK, gin.H{"message": "Demande d'ami envoyée avec succès", "friend": friend})
 	}

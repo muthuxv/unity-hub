@@ -15,11 +15,11 @@ func FriendRoutes(r *gin.Engine) {
 	r.PUT("/friends/:id", controllers.Update(func() interface{} { return &models.Friend{} }))
 	r.DELETE("/friends/:id", controllers.Delete(func() interface{} { return &models.Friend{} }))
 
-	r.POST("/friends/accept", services.AcceptFriend())
-	r.POST("/friends/refuse", services.RefuseFriend())
-	r.GET("/friends/search/:pseudo", services.SearchUser())
-	r.GET("/friends/users/:id", services.GetFriendsByUser())
-	r.GET("/friends/pending/:id", services.GetPendingFriendsByUser())
-	r.GET("/friends/sent/:id", services.GetPendingFriendsFromUser())
-	r.POST("/friends/request", services.CreateFriendRequest())
+	r.POST("/friends/accept", controllers.TokenAuthMiddleware("user"), services.AcceptFriend())
+	r.POST("/friends/refuse", controllers.TokenAuthMiddleware("user"), services.RefuseFriend())
+	r.GET("/friends/search/:pseudo", controllers.TokenAuthMiddleware("user"), services.SearchUser())
+	r.GET("/friends/users/:id", controllers.TokenAuthMiddleware("user"), services.GetFriendsByUser())
+	r.GET("/friends/pending/:id", controllers.TokenAuthMiddleware("user"), services.GetPendingFriendsByUser())
+	r.GET("/friends/sent/:id", controllers.TokenAuthMiddleware("user"), services.GetPendingFriendsFromUser())
+	r.POST("/friends/request", controllers.TokenAuthMiddleware("user"), services.CreateFriendRequest())
 }

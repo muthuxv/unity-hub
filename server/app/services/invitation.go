@@ -84,7 +84,6 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 			return
 		}
 
-		// Create a new invitation with an expiry of 3 days
 		invitation := models.Invitation{
 			UserSenderID:   userID,
 			UserReceiverID: userReceiverID,

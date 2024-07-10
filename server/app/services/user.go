@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -87,7 +88,8 @@ func Login() gin.HandlerFunc {
 			return
 		}
 
-		// Check if user exists, if not return 404
+		payload.Email = strings.ToLower(payload.Email)
+
 		if err := db.GetDB().Where("email = ?", payload.Email).First(&user).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return

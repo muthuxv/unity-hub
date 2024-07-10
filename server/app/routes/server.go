@@ -10,7 +10,6 @@ import (
 
 func ServerRoutes(r *gin.Engine) {
 	r.POST("/servers", controllers.Create(func() interface{} { return &models.Server{} }))
-	r.DELETE("/servers/:id", controllers.Delete(func() interface{} { return &models.Server{} }))
 
 	r.GET("/servers", controllers.TokenAuthMiddleware("user"), services.GetAllServers())
 	r.GET("/servers/search", services.SearchServerByName())
@@ -27,4 +26,5 @@ func ServerRoutes(r *gin.Engine) {
 	r.GET("/servers/:id/bans", services.GetServerBans())
 	r.POST("/servers/:id/ban/users/:userID", controllers.TokenAuthMiddleware("user"), services.BanUser())
 	r.DELETE("/servers/:id/unban/users/:userID", controllers.TokenAuthMiddleware("user"), services.UnbanUser())
+	r.DELETE("/servers/:id", controllers.TokenAuthMiddleware("user"), services.DeleteServerByID())
 }
