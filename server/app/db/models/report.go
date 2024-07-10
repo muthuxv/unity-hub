@@ -2,18 +2,22 @@ package models
 
 import (
 	"github.com/google/uuid"
-    "gorm.io/gorm"
+	"gorm.io/gorm"
 )
 
 type Report struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey"`
-    gorm.Model
-    Message   string `gorm:"validate:required"`
-    Status    string `gorm:"validate:required"`
-    MessageID uuid.UUID   `gorm:"validate:required"` 
-    ReportedMessage Message `gorm:"foreignKey:MessageID;references:ID;"`
-	UserID    uuid.UUID   `gorm:"not null"`
-	Reporter  User   `gorm:"foreignKey:UserID;references:ID;"`
+	gorm.Model
+	Message         string `gorm:"validate:required"`
+	Status          string `gorm:"validate:required"`
+	MessageID       *uuid.UUID
+	ReportedMessage Message   `gorm:"foreignKey:MessageID;references:ID;"`
+	UserID          uuid.UUID `gorm:"not null"`
+	Reporter        User      `gorm:"foreignKey:UserID;references:ID;"`
+	ReportedID      *uuid.UUID
+	Reported        User      `gorm:"foreignKey:ReportedID;references:ID;"`
+	ServerID        uuid.UUID `gorm:"validate:required"`
+	Server          Server    `gorm:"foreignKey:ServerID;references:ID;"`
 }
 
 func (r *Report) BeforeCreate(tx *gorm.DB) (err error) {

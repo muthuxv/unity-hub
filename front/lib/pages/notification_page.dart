@@ -107,7 +107,10 @@ class _NotificationPageState extends State<NotificationPage> {
         itemBuilder: (context, index) {
           var invitation = _invitations[index];
           return ListTile(
-            title: Text('${invitation['UserSender']['Pseudo']} ${AppLocalizations.of(context)!.invitationMessage} ${invitation['Server']['Name']}.'),
+            title: Text(
+                '${invitation['UserSender']['Pseudo']} '
+                    '${AppLocalizations.of(context)!.invitationMessage(invitation['Server']['Name'])}'
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[

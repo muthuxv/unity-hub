@@ -598,8 +598,7 @@ func GetServersByUser() gin.HandlerFunc {
 			Joins("LEFT JOIN bans ON servers.id = bans.server_id AND bans.user_id = ?", userID).
 			Preload("Media").
 			Preload("Tags").
-			Where("on_servers.user_id = ?", userID).
-			Where("(bans.user_id IS NULL OR bans.deleted_at IS NOT NULL)").
+			Where("on_servers.user_id = ? AND (bans.user_id IS NULL OR bans.deleted_at IS NOT NULL)", userID).
 			Find(&servers).Error; err != nil {
 			handleError(c, http.StatusInternalServerError, "Error retrieving user's servers")
 			return
