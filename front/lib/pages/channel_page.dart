@@ -10,6 +10,7 @@ import 'package:giphy_picker/giphy_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:unity_hub/utils/messaging_service.dart';
+import 'package:flutter/services.dart';
 
 class ChannelPage extends StatefulWidget {
   final String channelId;
@@ -187,6 +188,119 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     }
   }
 
+  void _showModalBottomSheet(BuildContext context, dynamic message) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: Icon(Icons.copy),
+              title: Text('Copier'),
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: message['Content']));
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Message copié')),
+                );
+              },
+            ),
+            if (message['UserID'].toString() != currentUserID)
+              ListTile(
+                leading: Icon(Icons.report),
+                title: Text('Signaler le message'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showReportDialog(context, message);
+                },
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showReportDialog(BuildContext context, dynamic message) {
+    TextEditingController _reportController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        bool _isButtonDisabled = true;
+
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: Text('Signaler le message'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _reportController,
+                    decoration: InputDecoration(
+                      labelText: 'Raison du signalement',
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _isButtonDisabled = value.trim().isEmpty;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('Annuler'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: Text('Envoyer'),
+                  onPressed: _isButtonDisabled
+                      ? null
+                      : () async {
+                    Navigator.of(context).pop();
+                    await _sendReport(message['ID'], _reportController.text);
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _sendReport(String messageID, String reportMessage) async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+    final decodedToken = JwtDecoder.decode(jwtToken!);
+    final userID = decodedToken['jti'];
+
+    final reportData = {
+      "message": reportMessage,
+      "status": "pending",
+      "messageID": messageID,
+      "userID": userID,
+      "serverID": widget.serverId,
+    };
+
+    try {
+      await Dio().post(
+        'http://10.0.2.2:8080/reports',
+        data: reportData,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Message signalé avec succès')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de l\'envoi du signalement: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -223,72 +337,75 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                         final dynamic message = messagesForDate[index];
                         final bool isCurrentUser = message['UserID'].toString() == currentUserID;
 
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: [
-                              if (!isCurrentUser)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: CircleAvatar(
-                                    child: _buildProfileWidget(message),
+                        return GestureDetector(
+                          onLongPress: () => _showModalBottomSheet(context, message),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                if (!isCurrentUser)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8.0),
+                                    child: CircleAvatar(
+                                      child: _buildProfileWidget(message),
+                                    ),
                                   ),
-                                ),
-                              Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.all(8.0),
-                                  decoration: BoxDecoration(
-                                    color: isCurrentUser
-                                        ? Theme.of(context).primaryColor
-                                        : Theme.of(context).cardColor,
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            message['User']['Pseudo'],
-                                            style: TextStyle(
-                                              color: isCurrentUser ? Colors.white : Colors.black,
-                                              fontWeight: FontWeight.bold,
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8.0),
+                                    decoration: BoxDecoration(
+                                      color: isCurrentUser
+                                          ? Theme.of(context).primaryColor
+                                          : Theme.of(context).cardColor,
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              message['User']['Pseudo'],
+                                              style: TextStyle(
+                                                color: isCurrentUser ? Colors.white : Colors.black,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 8.0),
-                                          Text(
-                                            DateFormat('HH:mm').format(DateTime.parse(message['SentAt'])),
-                                            style: TextStyle(
-                                              color: isCurrentUser ? Colors.white : Colors.black,
-                                              fontSize: 12.0,
+                                            const SizedBox(width: 8.0),
+                                            Text(
+                                              DateFormat('HH:mm').format(DateTime.parse(message['SentAt'])),
+                                              style: TextStyle(
+                                                color: isCurrentUser ? Colors.white : Colors.black,
+                                                fontSize: 12.0,
+                                              ),
                                             ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4.0),
+                                        if (message['Type'] == 'Text')
+                                          Text(
+                                            message['Content'],
+                                            style: TextStyle(color: isCurrentUser ? Colors.white : Colors.black),
                                           ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4.0),
-                                      if (message['Type'] == 'Text')
-                                        Text(
-                                          message['Content'],
-                                          style: TextStyle(color: isCurrentUser ? Colors.white : Colors.black),
-                                        ),
-                                      if (message['Type'] == 'Image')
-                                        Image.network(
-                                          message['Content'],
-                                          width: 200,
-                                          height: 200,
-                                        ),
-                                    ],
+                                        if (message['Type'] == 'Image')
+                                          Image.network(
+                                            message['Content'],
+                                            width: 200,
+                                            height: 200,
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                              if (isCurrentUser)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 8.0),
-                                  child: CircleAvatar(
-                                    child: _buildProfileWidget(message),
+                                if (isCurrentUser)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: CircleAvatar(
+                                      child: _buildProfileWidget(message),
+                                    ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
                         );
                       },

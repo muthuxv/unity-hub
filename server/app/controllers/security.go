@@ -77,6 +77,21 @@ func TokenAuthMiddleware(requiredRole string) gin.HandlerFunc {
 			return
 		}
 
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			roles := claims["aud"].([]interface{})
+			userRole := roles[0].(string)
+
+			if userRole != "admin" && userRole != requiredRole {
+				c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
+				c.Abort()
+				return
+			}
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
+
 		c.Set("jwt_claims", token.Claims)
 		c.Next()
 	}

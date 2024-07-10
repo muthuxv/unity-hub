@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 class MessagePage extends StatefulWidget {
   const MessagePage({super.key});
