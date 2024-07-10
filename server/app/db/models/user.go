@@ -1,6 +1,8 @@
 package models
 
 import (
+	"strings"
+
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -27,6 +29,7 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 func (u *User) BeforeSave(tx *gorm.DB) (err error) {
+	u.Email = strings.ToLower(u.Email)
 	if len(u.Password) > 0 {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), 14)
 		if err != nil {

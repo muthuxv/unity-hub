@@ -773,6 +773,67 @@ func UpdateServerByID() gin.HandlerFunc {
 	}
 }
 
+func DeleteServerByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		serverIDStr := c.Param("id")
+		serverID, err := uuid.Parse(serverIDStr)
+		if err != nil {
+			handleError(c, http.StatusBadRequest, "ID de serveur invalide")
+			return
+		}
+
+		claims, exists := c.Get("jwt_claims")
+		if !exists {
+			handleError(c, http.StatusUnauthorized, "Non autorisé")
+			return
+		}
+
+		jwtClaims := claims.(jwt.MapClaims)
+		userIDStr, ok := jwtClaims["jti"].(string)
+		if !ok {
+			handleError(c, http.StatusInternalServerError, "Échec de l'extraction de l'identifiant utilisateur depuis le JWT")
+			return
+		}
+
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			handleError(c, http.StatusInternalServerError, "Échec de l'extraction de l'identifiant utilisateur depuis le JWT")
+			return
+		}
+
+		var server models.Server
+		if err := db.GetDB().First(&server, serverID).Error; err != nil {
+			handleError(c, http.StatusNotFound, "Serveur introuvable")
+			return
+		}
+
+		if server.UserID != userID {
+			handleError(c, http.StatusForbidden, "Seul le créateur du serveur peut le supprimer")
+			return
+		}
+
+		var serverMembers []models.OnServer
+		if err := db.GetDB().Where("server_id = ?", serverID).Find(&serverMembers).Error; err != nil {
+			handleError(c, http.StatusInternalServerError, "Échec de la récupération des membres du serveur")
+			return
+		}
+
+		for _, member := range serverMembers {
+			if err := db.GetDB().Delete(&member).Error; err != nil {
+				handleError(c, http.StatusInternalServerError, "Échec de la suppression des membres du serveur")
+				return
+			}
+		}
+
+		if err := db.GetDB().Delete(&server).Error; err != nil {
+			handleError(c, http.StatusInternalServerError, "Échec de la suppression du serveur")
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Serveur supprimé avec succès"})
+	}
+}
+
 func handleError(c *gin.Context, statusCode int, message string) {
 	c.JSON(statusCode, gin.H{"error": message})
 }

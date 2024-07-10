@@ -203,5 +203,10 @@
   "unbanMemberConfirmationMessage": "This member will be able to join the server again.",
   "memberUnbanned": "Member unbanned",
   "memberBannedSuccessfully": "Member banned successfully",
-  "failedBanMember": "Failed to ban member"
+  "failedBanMember": "Failed to ban member",
+  "youAreCurrentUser": "You are the current user",
+  "onlyServerCreatorCanDeleteServer": "Only the server creator can delete the server.",
+  "notServerCreator": "You are not the server creator",
+  "onlyServerCreator": "Only the server creator can perform this action.",
+  "pending": "Pending"
 }

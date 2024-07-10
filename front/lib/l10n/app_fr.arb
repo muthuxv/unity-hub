@@ -156,7 +156,7 @@
   "friendRequestCancelled": "Demande d'ami annulée avec succès",
   "errorCancellingFriendRequest": "Erreur lors de l'annulation de la demande d'ami",
   "unexpectedError": "Une erreur inattendue s'est produite",
-  "wantToBeFriendWith": "Do you want to become friends with",
+  "wantToBeFriendWith": "Veux-tu être ami avec",
   "accept": "Accepter",
   "refuse": "Refuser",
   "inviteToServer": "Inviter sur le serveur",
@@ -203,5 +203,10 @@
   "unbanMemberConfirmationMessage": "Vous êtes sur le point de débannir ce membre.",
   "memberUnbanned": "Membre débanni",
   "memberBannedSuccessfully": "Membre banni avec succès",
-  "failedBanMember": "Échec du bannissement du membre"
+  "failedBanMember": "Échec du bannissement du membre",
+  "youAreCurrentUser": "Vous êtes l'utilisateur courant",
+  "onlyServerCreatorCanDeleteServer": "Seul le créateur du serveur peut le supprimer",
+  "notServerCreator": "Vous n'êtes pas le créateur du serveur",
+  "onlyServerCreator": "Seul le créateur du serveur peut effectuer cette action",
+  "pending": "En attente"
 }

@@ -345,6 +345,7 @@ class _ServerPageState extends State<ServerPage> {
                                                           serverName: _selectedServer['Name'],
                                                           serverAvatar: _selectedServer['Media']['FileName'],
                                                           serverVisibility: _selectedServer['Visibility'],
+                                                          servercreatorUserId: _selectedServer['UserID'],
                                                         ),
                                                       ),
                                                     );
@@ -372,6 +373,7 @@ class _ServerPageState extends State<ServerPage> {
                                                         builder: (context) =>
                                                             ServerMembersList(
                                                               serverId: _selectedServer['ID'],
+                                                              serverCreatorId: _selectedServer['UserID'],
                                                             ),
                                                       ),
                                                     );

@@ -8,8 +8,9 @@ import 'package:flutter/services.dart';
 
 class ServerMembersList extends StatefulWidget {
   final String serverId;
+  final String serverCreatorId;
 
-  const ServerMembersList({Key? key, required this.serverId}) : super(key: key);
+  const ServerMembersList({Key? key, required this.serverId, required this.serverCreatorId}) : super(key: key);
 
   @override
   State<ServerMembersList> createState() => _ServerMembersListState();
@@ -93,6 +94,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
       ),
       builder: (BuildContext context) {
         bool isCurrentUser = member['ID'] == currentUserId;
+        bool isServerCreator = currentUserId == widget.serverCreatorId;
 
         return Container(
           height: MediaQuery.of(context).size.height / 2,
@@ -123,7 +125,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      if (!isCurrentUser)
+                      if (isServerCreator)
                         ListTile(
                           leading: const Icon(Icons.delete),
                           title: Text(AppLocalizations.of(context)!.banMember),
@@ -134,11 +136,11 @@ class _ServerMembersListState extends State<ServerMembersList> {
                         ),
                       if (isCurrentUser)
                         ListTile(
-                          title: const Text('Vous êtes l\'utilisateur courant'),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _showSuccessDialog('Vous êtes l\'utilisateur courant');
-                          },
+                          title: Text(AppLocalizations.of(context)!.youAreCurrentUser),
+                        ),
+                      if (!isServerCreator && !isCurrentUser)
+                        ListTile(
+                          title: Text(AppLocalizations.of(context)!.onlyServerCreator),
                         ),
                     ],
                   ),

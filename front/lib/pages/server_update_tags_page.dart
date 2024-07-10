@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class ServerUpdateTagsPage extends StatefulWidget {
   final String serverId;
+  final String servercreatorUserId;
 
-  const ServerUpdateTagsPage({Key? key, required this.serverId}) : super(key: key);
+  const ServerUpdateTagsPage({
+    Key? key,
+    required this.serverId,
+    required this.servercreatorUserId,
+  }) : super(key: key);
 
   @override
   _ServerUpdateTagsPageState createState() => _ServerUpdateTagsPageState();
@@ -17,11 +24,29 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
 
   final TextEditingController _tagsController = TextEditingController();
 
+  String? currentUserId;
+
+  bool get isCreator => currentUserId == widget.servercreatorUserId;
+
   @override
   void initState() {
     super.initState();
+    _getCurrentUserId();
     fetchServerTags();
     fetchAllTags();
+  }
+
+  Future<void> _getCurrentUserId() async {
+    try {
+      final storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'token');
+      final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+      setState(() {
+        currentUserId = decodedToken['jti'];
+      });
+    } catch (e) {
+      print('Error fetching current user ID: $e');
+    }
   }
 
   Future<void> fetchServerTags() async {
@@ -134,7 +159,11 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
           children: [
             Text(
               AppLocalizations.of(context)!.currentServerTags,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 8.0),
             Wrap(
@@ -150,7 +179,11 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
             const SizedBox(height: 24.0),
             Text(
               AppLocalizations.of(context)!.selectNewTags,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 8.0),
             Expanded(
@@ -161,19 +194,24 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
                   bool isSelected =
                   _serverTags.any((t) => t['ID'] == tag['ID']);
                   return GestureDetector(
-                    onTap: () {
+                    onTap: isCreator
+                        ? () {
                       setState(() {
                         if (isSelected) {
-                          _serverTags.removeWhere((t) => t['ID'] == tag['ID']);
+                          _serverTags
+                              .removeWhere((t) => t['ID'] == tag['ID']);
                         } else {
                           _serverTags.add(tag);
                         }
                         if (_serverTags.isEmpty) {
-                          showErrorDialog(AppLocalizations.of(context)!.selectAtLeastOneTag);
+                          showErrorDialog(
+                              AppLocalizations.of(context)!
+                                  .selectAtLeastOneTag);
                           _serverTags.add(tag);
                         }
                       });
-                    },
+                    }
+                        : null,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut,
@@ -202,13 +240,16 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
             const SizedBox(height: 24.0),
             Center(
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: isCreator
+                    ? () {
                   List<String> tagIds =
                   _serverTags.map<String>((tag) => tag['ID']).toList();
                   updateServerTags(tagIds);
-                },
+                }
+                    : null,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 32.0, vertical: 16.0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),

@@ -1,10 +1,10 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RoleUpdatePageForm extends StatefulWidget {
-  final int roleId;
+  final String roleId;
   final String roleLabel;
 
   const RoleUpdatePageForm({super.key, required this.roleId, required this.roleLabel});
@@ -24,7 +24,7 @@ class _RoleUpdatePageFormState extends State<RoleUpdatePageForm> {
     _nameController.text = widget.roleLabel;
   }
 
-  void _updateRole() async { // Nom de la méthode mis à jour
+  void _updateRole() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -55,6 +55,8 @@ class _RoleUpdatePageFormState extends State<RoleUpdatePageForm> {
           ),
         );
         _nameController.clear();
+
+        Navigator.pop(context, true); // Signal successful modification
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -104,8 +106,7 @@ class _RoleUpdatePageFormState extends State<RoleUpdatePageForm> {
                   : ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 32.0, vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
                 ),
                 onPressed: _updateRole,
                 child: Text(
