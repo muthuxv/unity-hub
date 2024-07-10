@@ -496,26 +496,25 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                             ),
                           ),
                         ),
-                      ),
-                      ListTile(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ReportsPage(serverID: widget.serverId),
+                        ListTile(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ReportsPage(serverID: widget.serverId),
+                              ),
+                            );
+                          },
+                          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                          leading: const Icon(Icons.warning, color: Colors.white),
+                          title: Text(
+                            AppLocalizations.of(context)!.reports,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
-                          );
-                        },
-                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
-                        leading: const Icon(Icons.warning, color: Colors.white),
-                        title: Text(
-                          AppLocalizations.of(context)!.reports,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
                       if (widget.serverVisibility == 'public')
                         ListTile(
                           onTap: () {
