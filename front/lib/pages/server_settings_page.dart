@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:unity_hub/pages/reports/reports_page.dart';
 import 'package:unity_hub/pages/roles/role_page.dart';
 import 'package:unity_hub/pages/server_logs_page.dart';
 import 'package:unity_hub/pages/server_ban_members_page.dart';
@@ -339,6 +340,25 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                         leading: const Icon(Icons.block, color: Colors.white),
                         title: Text(
                           AppLocalizations.of(context)!.bans,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      ListTile(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ReportsPage(serverID: widget.serverId),
+                            ),
+                          );
+                        },
+                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                        leading: const Icon(Icons.warning, color: Colors.white),
+                        title: Text(
+                          AppLocalizations.of(context)!.reports,
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

@@ -12,9 +12,9 @@ import (
 func GetReportsByServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("serverId")
-		status := c.DefaultQuery("status", "pending")
-		log.Println(serverIDStr)
-		log.Println(status)
+		status := c.Query("status")
+		log.Println("ServerID:", serverIDStr)
+		log.Println("Status:", status)
 
 		serverID, err := uuid.Parse(serverIDStr)
 		if err != nil {
@@ -22,8 +22,18 @@ func GetReportsByServer() gin.HandlerFunc {
 			return
 		}
 
+		if status == "" {
+			handleError(c, http.StatusBadRequest, "Status is required")
+			return
+		}
+
 		var reports []models.Report
-		result := db.GetDB().Where("server_id = ? AND status = ?", serverID, status).Find(&reports)
+		result := db.GetDB().
+			Preload("ReportedMessage").
+			Preload("ReportedMessage.User").
+			Preload("Reporter").
+			Where("server_id = ? AND status = ?", serverID, status).
+			Find(&reports)
 		if result.Error != nil {
 			handleError(c, http.StatusInternalServerError, "Error retrieving reports")
 			return

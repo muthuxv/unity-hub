@@ -67,6 +67,7 @@
   "server_logs": "Server Logs",
   "invitations": "Invitations",
   "bans": "Bans",
+  "reports": "Reports",
   "tags": "Tags",
   "delete_server": "Delete Server",
   "delete_server_confirmation": "Are you sure you want to delete this server?",
