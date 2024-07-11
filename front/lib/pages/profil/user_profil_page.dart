@@ -18,7 +18,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
   late String currentUserID;
   bool isFriend = false;
   bool isLoading = true;
+  bool isPending = false; // Ajout de cet état pour les invitations en attente
   Map<String, dynamic> userInfo = {};
+  Map<String, dynamic> _friendInfo = {};
 
   @override
   void initState() {
@@ -30,6 +32,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     await _getCurrentUserID();
     await _fetchUserInfo();
     await _checkFriendStatus();
+    await _checkPendingInvitations(); // Ajout de cette ligne pour vérifier les invitations en attente
   }
 
   Future<void> _getCurrentUserID() async {
@@ -70,27 +73,66 @@ class _UserProfilePageState extends State<UserProfilePage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
-    try {
-      final response = await Dio().get(
-        'http://10.0.2.2:8080/friends',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-      final List<dynamic> friends = response.data;
+    final response = await Dio().get(
+      'http://10.0.2.2:8080/friends',
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      ),
+    );
 
-      setState(() {
-        isFriend = friends.any((friend) =>
-        (friend['UserID1'] == currentUserID && friend['UserID2'] == widget.userId) ||
-            (friend['UserID2'] == currentUserID && friend['UserID1'] == widget.userId)
-        );
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error checking friend status: $e')),
+    if (response.data != null) {
+      final friends = response.data as List;
+      final friend = friends.firstWhere(
+            (friend) => friend['FriendID'] == widget.userId,
+        orElse: () => null,
       );
+
+      if (friend != null) {
+        setState(() {
+          isFriend = true;
+          _friendInfo = friend;
+        });
+      }
+    }
+  }
+
+  Future<void> _checkPendingInvitations() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    final response = await Dio().get(
+      'http://10.0.2.2:8080/friends/pending/${userInfo['ID']}',
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        validateStatus: (status) {
+          return status! < 500;
+        },
+      ),
+    );
+
+    if (response.data != null) {
+      if (response.data.isEmpty) {
+        setState(() {
+          isPending = false;
+        });
+      }
+        final pendingInvitations = response.data as List;
+      final pending = pendingInvitations.firstWhere(
+            (invitation) => invitation['FriendID'] == widget.userId,
+        orElse: () => null,
+      );
+
+      if (pending != null) {
+        setState(() {
+          isPending = true;
+          _friendInfo = pending;
+        });
+      }
     }
   }
 
@@ -101,20 +143,22 @@ class _UserProfilePageState extends State<UserProfilePage> {
     try {
       await Dio().post(
         'http://10.0.2.2:8080/friends/request',
-        data: {
-          'userID1': currentUserID,
-          'userID2': widget.userId,
-        },
         options: Options(
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
           },
+          validateStatus: (status) => status! < 500,
         ),
+        data: {
+          'userId': currentUserID,
+          'userPseudo': userInfo['Pseudo'],
+        },
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Friend request sent')),
       );
-      _checkFriendStatus();
+      _checkPendingInvitations(); // Vérifie les invitations en attente après avoir envoyé la demande
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error sending friend request: $e')),
@@ -128,7 +172,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
     try {
       await Dio().delete(
-        'http://10.0.2.2:8080/friends/${widget.userId}',
+        'http://10.0.2.2:8080/friends/${_friendInfo['ID']}',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -139,9 +183,34 @@ class _UserProfilePageState extends State<UserProfilePage> {
         SnackBar(content: Text('Friend removed')),
       );
       _checkFriendStatus();
+      _checkPendingInvitations();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error removing friend: $e')),
+      );
+    }
+  }
+
+  Future<void> _cancelFriendRequest() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    try {
+      await Dio().delete(
+        'http://10.0.2.2:8080/friends/${_friendInfo['ID']}',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Friend request cancelled')),
+      );
+      _checkPendingInvitations();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error cancelling friend request: $e')),
       );
     }
   }
@@ -256,10 +325,22 @@ class _UserProfilePageState extends State<UserProfilePage> {
             ),
             SizedBox(height: 16),
             ElevatedButton(
-              onPressed: isFriend ? _removeFriend : _sendFriendRequest,
-              child: Text(isFriend ? 'Supprimer l\'ami' : 'Ajouter en ami'),
+              onPressed: isFriend
+                  ? _removeFriend
+                  : isPending
+                  ? _cancelFriendRequest
+                  : _sendFriendRequest,
+              child: Text(isFriend
+                  ? 'Supprimer l\'ami'
+                  : isPending
+                  ? 'Annuler la demande d\'ami'
+                  : 'Ajouter en ami'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isFriend ? Colors.red : Colors.green,
+                backgroundColor: isFriend
+                    ? Colors.red
+                    : isPending
+                    ? Colors.blueGrey
+                    : Colors.green,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
