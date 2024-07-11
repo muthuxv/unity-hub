@@ -2,9 +2,11 @@ import 'package:go_router/go_router.dart';
 import 'package:web_admin/providers/user_data_provider.dart';
 import 'package:web_admin/views/screens/buttons_screen.dart';
 import 'package:web_admin/views/screens/colors_screen.dart';
+import 'package:web_admin/views/screens/crud_detail_feature_screen.dart';
 import 'package:web_admin/views/screens/crud_detail_screen.dart';
 import 'package:web_admin/views/screens/create_user_screen.dart';
 import 'package:web_admin/views/screens/create_tag_screen.dart';
+import 'package:web_admin/views/screens/create_feature_screen.dart';
 import 'package:web_admin/views/screens/crud_detail_user_screen.dart';
 import 'package:web_admin/views/screens/crud_detail_tag_screen.dart';
 import 'package:web_admin/views/screens/crud_screen.dart';
@@ -22,6 +24,7 @@ import 'package:web_admin/views/screens/text_screen.dart';
 import 'package:web_admin/views/screens/users_screen.dart';
 import 'package:web_admin/views/screens/servers_screen.dart';
 import 'package:web_admin/views/screens/tags_screen.dart';
+import 'package:web_admin/views/screens/features_flipping_screen.dart';
 
 class RouteUri {
   static const String home = '/';
@@ -29,6 +32,7 @@ class RouteUri {
   static const String users = '/users';
   static const String servers = '/servers';
   static const String tags = '/tags';
+  static const String featuresFlipping = '/features-flipping';
   static const String myProfile = '/my-profile';
   static const String logout = '/logout';
   static const String form = '/form';
@@ -43,9 +47,11 @@ class RouteUri {
   static const String crud = '/crud';
   static const String crudDetail = '/crud-detail';
   static const String createUser = '/create-user';
-  static const String createTag = '/tag-user';
+  static const String createTag = '/create-tag';
+  static const String createFeature = '/create-feature';
   static const String crudDetailUser = '/user-detail';
   static const String crudDetailTag = '/tag-detail';
+  static const String crudDetailFeature = '/feature-detail';
   static const String iframe = '/iframe';
 }
 
@@ -99,6 +105,13 @@ GoRouter appRouter(UserDataProvider userDataProvider) {
         pageBuilder: (context, state) => NoTransitionPage<void>(
           key: state.pageKey,
           child: const TagsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: RouteUri.featuresFlipping,
+        pageBuilder: (context, state) => NoTransitionPage<void>(
+          key: state.pageKey,
+          child: const FeaturesFlippingScreen(),
         ),
       ),
       GoRoute(
@@ -201,6 +214,15 @@ GoRouter appRouter(UserDataProvider userDataProvider) {
         },
       ),
       GoRoute(
+        path: RouteUri.createFeature,
+        pageBuilder: (context, state) {
+          return NoTransitionPage<void>(
+            key: state.pageKey,
+            child: CreateFeatureScreen(id: state.uri.queryParameters['id'] ?? ''),
+          );
+        },
+      ),
+      GoRoute(
         path: RouteUri.crudDetailUser,
         pageBuilder: (context, state) {
           return NoTransitionPage<void>(
@@ -215,6 +237,15 @@ GoRouter appRouter(UserDataProvider userDataProvider) {
           return NoTransitionPage<void>(
             key: state.pageKey,
             child: CrudDetailTagScreen(id: state.uri.queryParameters['id'] ?? ''),
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteUri.crudDetailFeature,
+        pageBuilder: (context, state) {
+          return NoTransitionPage<void>(
+            key: state.pageKey,
+            child: CrudDetailFeatureScreen(id: state.uri.queryParameters['id'] ?? ''),
           );
         },
       ),
