@@ -27,7 +27,7 @@ final sidebarMenuConfigs = [
   ),
   SidebarMenuConfig(
     uri: RouteUri.featuresFlipping,
-    icon: Icons.label_rounded,
+    icon: Icons.toggle_on,
     title: (context) => 'Features Flipping',
   ),
   SidebarMenuConfig(
