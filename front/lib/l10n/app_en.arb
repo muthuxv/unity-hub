@@ -210,5 +210,7 @@
   "onlyServerCreatorCanDeleteServer": "Only the server creator can delete the server.",
   "notServerCreator": "You are not the server creator",
   "onlyServerCreator": "Only the server creator can perform this action.",
-  "pending": "Pending"
+  "pending": "Pending",
+  "generateNewAvatar": "Generate New Avatar",
+  "profilePictureUpdated": "Profile Picture Updated"
 }

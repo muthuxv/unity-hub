@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:random_avatar/random_avatar.dart';
 
 class UpdateProfilePage extends StatefulWidget {
   const UpdateProfilePage({super.key});
@@ -17,6 +19,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   String _pseudo = '';
   String _originalPseudo = '';
   String _mail = '';
+  String _avatar = '';
   bool _isLoading = true;
   bool _isButtonEnabled = false;
 
@@ -51,6 +54,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
           _pseudo = response.data['Pseudo'];
           _mail = response.data['Email'];
           _originalPseudo = response.data['Pseudo'];
+          _avatar = response.data['Profile'] ?? '';
           _isLoading = false;
           _isButtonEnabled = false;
         });
@@ -103,6 +107,40 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     }
   }
 
+  Future<void> _updateProfilePicture() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+    final userId = decodedToken['jti'];
+
+    final response = await Dio().put(
+      'http://10.0.2.2:8080/users/$userId',
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ),
+      data: {
+        'Profile': _avatar,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.profilePictureUpdated),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      _showErrorDialog(AppLocalizations.of(context)!.errorUpdatingProfile);
+    }
+  }
+
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -116,6 +154,33 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
           ),
         ],
       ),
+    );
+  }
+
+  void _generateRandomAvatar() {
+    setState(() {
+      _avatar = RandomAvatarString(DateTime.now().millisecondsSinceEpoch.toString());
+    });
+  }
+
+  void _changeAvatar() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.autorenew),
+              title: Text(AppLocalizations.of(context)!.generateNewAvatar),
+              onTap: () {
+                _generateRandomAvatar();
+                _updateProfilePicture();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -200,13 +265,19 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
             alignment: Alignment.center,
             children: [
               GestureDetector(
-                onTap: () => _changeAvatar(context),
+                onTap: _changeAvatar,
                 child: CircleAvatar(
                   radius: 60,
                   backgroundColor: Colors.deepPurple[50],
-                  child: const CircleAvatar(
-                    radius: 55,
-                    backgroundImage: AssetImage('assets/avatar.jpg'),
+                  child: _avatar.contains('<svg')
+                      ? SvgPicture.string(
+                    _avatar,
+                    height: 120,
+                    width: 120,
+                  )
+                      : CircleAvatar(
+                    radius: 50,
+                    backgroundImage: NetworkImage(_avatar),
                   ),
                 ),
               ),
@@ -214,7 +285,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                 right: 0,
                 top: 0,
                 child: GestureDetector(
-                  onTap: () => _changeAvatar(context),
+                  onTap: _changeAvatar,
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
@@ -239,39 +310,6 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
           ),
         ],
       ),
-    );
-  }
-
-  void _changeAvatar(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return SingleChildScrollView(
-          child: Container(
-            padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.camera),
-                  title: Text(AppLocalizations.of(context)!.takePhoto),
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: Text(AppLocalizations.of(context)!.chooseFromGallery),
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

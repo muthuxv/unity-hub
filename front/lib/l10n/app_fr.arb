@@ -210,5 +210,7 @@
   "onlyServerCreatorCanDeleteServer": "Seul le créateur du serveur peut le supprimer",
   "notServerCreator": "Vous n'êtes pas le créateur du serveur",
   "onlyServerCreator": "Seul le créateur du serveur peut effectuer cette action",
-  "pending": "En attente"
+  "pending": "En attente",
+  "generateNewAvatar": "Générer un nouvel avatar",
+  "profilePictureUpdated": "Photo de profil mise à jour"
 }
