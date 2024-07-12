@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ServerMembersList extends StatefulWidget {
   final String serverId;
@@ -17,6 +17,7 @@ class ServerMembersList extends StatefulWidget {
 }
 
 class _ServerMembersListState extends State<ServerMembersList> {
+  String currentUserId = '';
   bool _isLoading = false;
   List _serverMembers = [];
 
@@ -32,6 +33,15 @@ class _ServerMembersListState extends State<ServerMembersList> {
   void dispose() {
     _dio.close();
     super.dispose();
+  }
+
+  Future<void> _initializeCurrentUser() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+    setState(() {
+      currentUserId = decodedToken['jti'];
+    });
   }
 
   Future<void> _fetchServerMembers() async {
@@ -79,10 +89,6 @@ class _ServerMembersListState extends State<ServerMembersList> {
   }
 
   void _showBottomModal(Map member) async {
-    final storage = FlutterSecureStorage();
-    final token = await storage.read(key: 'token');
-    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
-    final currentUserId = decodedToken['jti'];
 
     showModalBottomSheet(
       context: context,
@@ -95,6 +101,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
       builder: (BuildContext context) {
         bool isCurrentUser = member['ID'] == currentUserId;
         bool isServerCreator = currentUserId == widget.serverCreatorId;
+        bool isAdmin = member['Role'] == 'admin';
 
         return Container(
           height: MediaQuery.of(context).size.height / 2,
@@ -110,9 +117,19 @@ class _ServerMembersListState extends State<ServerMembersList> {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.all(20.0),
-                child: Text(
-                  member['Pseudo'],
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                child: Row(
+                  children: [
+                    Text(
+                      member['Pseudo'],
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    if (isServerCreator)
+                      const Icon(Icons.star, color: Colors.amber),
+                    if (isCurrentUser)
+                      const Text(" (moi)", style: TextStyle(color: Colors.grey)),
+                    if (isAdmin)
+                      const Icon(Icons.shield, color: Colors.blue),
+                  ],
                 ),
               ),
               Padding(
@@ -127,16 +144,22 @@ class _ServerMembersListState extends State<ServerMembersList> {
                     children: <Widget>[
                       if (isServerCreator)
                         ListTile(
-                          leading: const Icon(Icons.delete),
-                          title: Text(AppLocalizations.of(context)!.banMember),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _showBanConfirmationDialog(member);
-                          },
+                          title: Text('AppLocalizations.of(context)!.youAreServerCreator'),
                         ),
                       if (isCurrentUser)
                         ListTile(
                           title: Text(AppLocalizations.of(context)!.youAreCurrentUser),
+                        ),
+                      if (!isServerCreator && !isCurrentUser)
+                        ListTile(
+                          leading: const Icon(Icons.delete),
+                          title: Text(AppLocalizations.of(context)!.banMember),
+                          onTap: () {
+                            print('---------');
+                            print(currentUserId);
+                            Navigator.pop(context);
+                            _showBanConfirmationDialog(member);
+                          },
                         ),
                       if (!isServerCreator && !isCurrentUser)
                         ListTile(
@@ -321,12 +344,27 @@ class _ServerMembersListState extends State<ServerMembersList> {
         itemCount: _serverMembers.length,
         itemBuilder: (context, index) {
           final member = _serverMembers[index];
+          bool isServerCreator = member['ID'] == widget.serverCreatorId;
+          bool isCurrentUser = member['ID'] == currentUserId;
+          bool isAdmin = member['Role'] == 'admin';
           return GestureDetector(
             onTap: () {
-              _showBottomModal(member);
+              if (!isServerCreator) {
+                _showBottomModal(member);
+              }
             },
             child: ListTile(
-              title: Text(member['Pseudo']),
+              title: Row(
+                children: [
+                  Text(member['Pseudo']),
+                  if (isServerCreator)
+                    const Icon(Icons.star, color: Colors.amber),
+                  if (isCurrentUser)
+                    const Text(" (moi)", style: TextStyle(color: Colors.grey)),
+                  if (isAdmin)
+                    const Icon(Icons.shield, color: Colors.blue),
+                ],
+              ),
               leading: CircleAvatar(
                 child: member['Profile'] != null && member['Profile'].contains('<svg')
                     ? SvgPicture.string(

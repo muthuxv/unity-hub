@@ -17,15 +17,16 @@ class SendInvitationPage extends StatefulWidget {
 class _SendInvitationPageState extends State<SendInvitationPage> {
   bool _isLoading = false;
   List _friends = [];
+  List _bannedUsers = [];
   final Map<String, bool> _selectedFriends = {};
 
   @override
   void initState() {
     super.initState();
-    _getFriends();
+    _getFriendsAndBans();
   }
 
-  void _getFriends() async {
+  Future<void> _getFriendsAndBans() async {
     setState(() {
       _isLoading = true;
     });
@@ -35,28 +36,51 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
-    final response = await Dio().get(
-      'http://10.0.2.2:8080/friends/users/$userId',
-      options: Options(
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        validateStatus: (status) {
-          return status! < 500;
-        },
-      ),
-    );
+    try {
+      // Fetch friends
+      final friendsResponse = await Dio().get(
+        'http://10.0.2.2:8080/friends/users/$userId',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          validateStatus: (status) {
+            return status! < 500;
+          },
+        ),
+      );
 
-    if (response.statusCode == 200) {
+      // Fetch banned users
+      final bansResponse = await Dio().get(
+        'http://10.0.2.2:8080/servers/${widget.serverId}/bans',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          validateStatus: (status) {
+            return status! < 500;
+          },
+        ),
+      );
+
+      if (friendsResponse.statusCode == 200 && bansResponse.statusCode == 200) {
+        setState(() {
+          _friends = friendsResponse.data;
+          _bannedUsers = bansResponse.data.map((ban) => ban['UserID']).toList();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
       setState(() {
-        _friends = response.data;
         _isLoading = false;
       });
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
+      print('An error occurred: $e');
     }
   }
 
@@ -65,7 +89,6 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
     final token = await storage.read(key: 'token');
 
     for (String friendId in _selectedFriends.keys) {
-      print("object" + friendId);
       final response = await Dio().post(
         'http://10.0.2.2:8080/invitations/server/${widget.serverId}',
         data: {'userReceiverId': friendId},
@@ -122,6 +145,10 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
                 itemCount: _friends.length,
                 itemBuilder: (context, index) {
                   final friend = _friends[index];
+                  // Filter out banned friends
+                  if (_bannedUsers.contains(friend['FriendID'])) {
+                    return SizedBox.shrink();
+                  }
                   return ListTile(
                     title: Text(friend['UserPseudo']),
                     leading: CircleAvatar(
