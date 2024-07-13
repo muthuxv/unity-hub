@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:unity_hub/providers/message_provider.dart';
 import 'pages/security/auth_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -49,6 +50,7 @@ class _MyAppState extends State<MyApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => GroupProvider()),
+        ChangeNotifierProvider(create: (context) => MessageProvider()),
       ],
       child: MaterialApp(
         title: 'Unity Hub',

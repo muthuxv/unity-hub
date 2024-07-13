@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
@@ -20,32 +19,61 @@ class GroupProvider with ChangeNotifier {
     final token = await storage.read(key: 'token');
     final decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
-    final response = await Dio().get('http://10.0.2.2:8080/groups/users/$userId');
-    if (response.statusCode == 200) {
-      print(response.data);
 
-      List<dynamic> data = response.data;
-      _groups = data.map((item) {
-        String groupName;
-        String groupImage;
+    try {
+      final response = await Dio().get('http://10.0.2.2:8080/groups/users/$userId');
+      if (response.statusCode == 200) {
+        List<dynamic>? data = response.data;
 
-        if (item['Type'] == 'dm') {
-          final otherMember = item['Members'].firstWhere((element) => element['ID'] != userId);
-          groupName = otherMember['Pseudo'];
-          groupImage = otherMember['Profile'];
+        // Check if the data is null or not a list
+        if (data == null) {
+          _groups = [];
         } else {
-          groupName = item['Channel']['Name'];
-          groupImage = '';
+          _groups = data.map((item) {
+            String groupName;
+            String groupImage;
+
+            if (item['Type'] == 'dm') {
+              final otherMember = item['Members'].firstWhere((element) => element['ID'] != userId);
+              groupName = otherMember['Pseudo'];
+              groupImage = otherMember['Profile'];
+            } else {
+              groupName = item['Channel']['Name'];
+              groupImage = '';
+            }
+            return Group(
+              id: item['ID'],
+              type: item['Type'],
+              channelId: item['ChannelID'],
+              name: groupName,
+              image: groupImage,
+              members: (item['Members'] as List).map((member) {
+                return User(
+                  id: member['ID'],
+                  name: member['Pseudo'],
+                  image: member['Profile'],
+                );
+              }).toList(),
+            );
+          }).toList();
         }
-        return Group(
-          id: item['ID'],
-          type: item['Type'],
-          channelId: item['ChannelID'],
-          name: groupName,
-          image: groupImage);
-      }).toList();
+        notifyListeners();
+      } else {
+        // Handle non-200 response status codes
+        _groups = [];
+        notifyListeners();
+      }
+    } catch (e) {
+      // Handle any exceptions that occur during the HTTP request
+      print('Error fetching groups: $e');
+      _groups = [];
       notifyListeners();
     }
+  }
+
+  void reset() {
+    _groups = [];
+    notifyListeners();
   }
 
   Future<void> createDM(String userId2) async {
@@ -61,14 +89,14 @@ class GroupProvider with ChangeNotifier {
     }
   }
 
-  Future<void> createGroup(List<String> memberIds) async {
+  Future<void> createGroup(List<String> memberIds, String groupId) async {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
     final response = await Dio().post('http://10.0.2.2:8080/groups/public/$userId',
-        data: {'member_ids': memberIds});
+        data: {'group_id': groupId, 'member_ids': memberIds});
     if (response.statusCode == 200 || response.statusCode == 201) {
       fetchGroups();
     }

@@ -73,12 +73,24 @@ func Create(factory ModelFactory) gin.HandlerFunc {
 // @Param id path string true "Item ID"
 // @Success 200 {object} interface{}
 // @Router /friends/{id} [get]
-func Get(factory ModelFactory) gin.HandlerFunc {
+func Get(factory ModelFactory, preloads ...PreloadField) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
 		model := factory()
-		if err := db.GetDB().Where("id = ?", id).First(model).Error; err != nil {
+		query := db.GetDB().Where("id = ?", id)
+
+		for _, preload := range preloads {
+			if len(preload.Fields) > 0 {
+				query = query.Preload(preload.Association, func(db *gorm.DB) *gorm.DB {
+					return db.Select(preload.Fields)
+				})
+			} else {
+				query = query.Preload(preload.Association)
+			}
+		}
+
+		if err := query.First(model).Error; err != nil {
 			c.Error(err)
 			return
 		}

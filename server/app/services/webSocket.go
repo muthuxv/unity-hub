@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/julienschmidt/httprouter"
 )
 
 var upgrader = websocket.Upgrader{
@@ -70,6 +71,8 @@ func ChannelWsHandler(w http.ResponseWriter, r *http.Request, channelId string) 
 			break
 		}
 
+		log.Printf("Received message on channel %d: %s\n", channelID, msgBytes)
+
 		var receivedMessage map[string]interface{}
 		err = json.Unmarshal(msgBytes, &receivedMessage)
 		if err != nil {
@@ -128,4 +131,137 @@ func saveMessageToChannel(channelID uuid.UUID, message map[string]interface{}, u
 	}
 
 	db.GetDB().Create(&newMessage)
+}
+
+type WebSocketMessage struct {
+	Type    string      `json:"type"`
+	Channel interface{} `json:"channel,omitempty"`
+}
+
+type Channel struct {
+	ID         int    `json:"ID,omitempty"`
+	Name       string `json:"Name"`
+	Type       string `json:"Type"`
+	Permission string `json:"Permission"`
+	ServerID   uint   `json:"ServerID"`
+}
+
+type Server struct {
+	ID        uuid.UUID
+	Clients   map[*websocket.Conn]bool
+	Broadcast chan WebSocketMessage
+}
+
+var servers = make(map[uuid.UUID]*Server)
+
+func ServerWsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	serverID, err := uuid.Parse(ps.ByName("id"))
+	if err != nil {
+		log.Println("Invalid server ID:", err)
+		return
+	}
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("Error upgrading to WebSocket:", err)
+		return
+	}
+
+	if _, ok := servers[serverID]; !ok {
+		servers[serverID] = &Server{
+			ID:        serverID,
+			Clients:   make(map[*websocket.Conn]bool),
+			Broadcast: make(chan WebSocketMessage),
+		}
+		go handleMessages(serverID)
+	}
+
+	servers[serverID].Clients[conn] = true
+	log.Println("Clients connected to server:", servers[serverID].Clients)
+
+	log.Printf("Client connected to server %d\n", serverID)
+	log.Printf("Number of clients connected to server %d: %d\n", serverID, len(servers[serverID].Clients))
+	log.Printf("Number of servers: %d\n", len(servers))
+	log.Printf("Server IDs: %v\n", servers)
+
+	defer func() {
+		conn.Close()
+		delete(servers[serverID].Clients, conn)
+	}()
+
+	for {
+		_, msgBytes, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("Error reading message:", err)
+			break
+		}
+
+		var receivedMessage map[string]interface{}
+		err = json.Unmarshal(msgBytes, &receivedMessage)
+		if err != nil {
+			log.Println("Error decoding JSON:", err)
+			continue
+		}
+	}
+}
+
+func handleMessages(serverID uuid.UUID) {
+	for {
+		message := <-servers[serverID].Broadcast
+
+		for client := range servers[serverID].Clients {
+			err := client.WriteJSON(message)
+			if err != nil {
+				log.Println("Error writing JSON:", err)
+				client.Close()
+				delete(servers[serverID].Clients, client)
+			}
+		}
+	}
+}
+
+func AddChannelHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	serverID, err := uuid.Parse(ps.ByName("id"))
+	if err != nil {
+		http.Error(w, "Invalid server ID", http.StatusBadRequest)
+		return
+	}
+
+	serverIDU := uuid.UUID(serverID)
+
+	var channel Channel
+	if err := json.NewDecoder(r.Body).Decode(&channel); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	// Create the channel in the database
+	newChannel := models.Channel{
+		Name:       channel.Name,
+		Type:       channel.Type,
+		Permission: channel.Permission,
+		ServerID:   serverIDU,
+	}
+
+	servers[serverIDU].Broadcast <- WebSocketMessage{
+		Type: "new_channel",
+		Channel: map[string]interface{}{
+			"ID":         newChannel.ID,
+			"Name":       newChannel.Name,
+			"Type":       newChannel.Type,
+			"Permission": newChannel.Permission,
+			"ServerID":   newChannel.ServerID,
+		},
+	}
+
+	if err := db.GetDB().Create(&newChannel).Error; err != nil {
+		http.Error(w, "Error creating channel", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(newChannel)
+
+	log.Printf("Channel created on server %d with ID %d\n", serverID, newChannel.ID)
 }

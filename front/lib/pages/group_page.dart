@@ -33,7 +33,7 @@ class GroupPage extends StatelessWidget {
               final group = provider.groups[index];
               return ListTile(
                 leading: group.type == 'dm' ? group.image.isNotEmpty ?
-                group.image.contains('svg') ? SvgPicture.string(group.image, width:50, height:50) : CircleAvatar(backgroundImage: NetworkImage(group.image), radius: 25,) : const CircleAvatar(child: Icon(Icons.person)) : const CircleAvatar(child: Icon(Icons.group), radius: 25),
+                group.image.contains('svg') ? SvgPicture.string(group.image, width:50, height:50) : CircleAvatar(backgroundImage: NetworkImage(group.image), radius: 25,) : const CircleAvatar(child: Icon(Icons.person)) : const CircleAvatar(radius: 25, child: Icon(Icons.group)),
                 title: group.type == 'dm' ? Text(group.name) : Text(group.name),
                 titleTextStyle: const TextStyle(
                   color: Colors.black,
@@ -45,7 +45,7 @@ class GroupPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => GroupChatPage(groupId: group.id, groupName: group.name, userId: getUserId())),
+                    MaterialPageRoute(builder: (context) => GroupChatPage(group: group, userId: getUserId())),
                   );
                 },
               );

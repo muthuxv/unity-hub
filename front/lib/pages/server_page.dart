@@ -27,6 +27,9 @@ class _ServerPageState extends State<ServerPage> {
   Map _selectedServer = {};
 
   void _getUserServers() async {
+    // Ensure the widget is still mounted before calling setState
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
     });
@@ -48,6 +51,8 @@ class _ServerPageState extends State<ServerPage> {
         },
       ),
     );
+
+    if (!mounted) return; // Ensure the widget is still mounted before calling setState again
 
     if (response.statusCode == 200) {
       setState(() {

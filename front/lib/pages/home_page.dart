@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:unity_hub/pages/intro_page.dart';
 import 'package:unity_hub/pages/group_page.dart';
 import 'package:unity_hub/pages/notification_page.dart';
@@ -6,6 +7,7 @@ import 'package:unity_hub/pages/profile_page.dart';
 import 'package:unity_hub/pages/communityhub_page.dart';
 import 'package:dio/dio.dart';
 import '../components/bottom_navbar.dart';
+import '../providers/group_provider.dart';
 import 'server_page.dart';
 import 'security/auth_page.dart';
 import 'package:unity_hub/utils/messaging_service.dart';
@@ -97,6 +99,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _checkToken();
     messagingService.init(context);
+    Provider.of<GroupProvider>(context, listen: false).fetchGroups();
   }
 
   @override
@@ -113,7 +116,7 @@ class _HomePageState extends State<HomePage> {
           builder: (context) => IconButton(
             icon: const Padding(
               padding: EdgeInsets.only(left: 12.0),
-              child: Icon(Icons.menu, color: Colors.white, size: 30.0),
+              child: Icon(Icons.menu, color: Colors.deepPurple, size: 30.0),
             ),
             onPressed: () {
               Scaffold.of(context).openDrawer();
@@ -188,7 +191,7 @@ class _HomePageState extends State<HomePage> {
                   pageToDisplay = serversEnabled ? const ServerPage() : const MaintenancePage();
                   break;
                 case 1:
-                  pageToDisplay = communityHubEnabled ? GroupPage() : const MaintenancePage();
+                  pageToDisplay = communityHubEnabled ? const GroupPage() : const MaintenancePage();
                   break;
                 case 2:
                   pageToDisplay = notificationsEnabled ? const NotificationPage() : const MaintenancePage();
