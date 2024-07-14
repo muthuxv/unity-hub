@@ -4,6 +4,7 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
 import 'package:web_admin/generated/l10n.dart';
+import 'package:web_admin/environment.dart';
 import 'package:web_admin/theme/theme_extensions/app_button_theme.dart';
 import 'package:web_admin/views/widgets/card_elements.dart';
 import 'package:web_admin/views/widgets/portal_master_layout/portal_master_layout.dart';
@@ -34,7 +35,7 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
   Future<bool> _getDataAsync() async {
     if (widget.id.isNotEmpty) {
       try {
-        final response = await Dio().get('http://localhost:8080/features/${widget.id}');
+        final response = await Dio().get('${env.apiBaseUrl}/features/${widget.id}');
         if (response.statusCode == 200) {
           final feature = response.data;
           _formData.id = widget.id;
@@ -65,7 +66,7 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
         btnOkOnPress: () async {
           try {
             final response = await Dio().put(
-              'http://localhost:8080/features/${widget.id}',
+              '${env.apiBaseUrl}/features/${widget.id}',
               data: {
                 'Status': _formData.status,
               },

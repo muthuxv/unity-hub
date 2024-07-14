@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
 import 'package:web_admin/generated/l10n.dart';
+import 'package:web_admin/environment.dart';
 import 'package:web_admin/theme/theme_extensions/app_button_theme.dart';
 import 'package:web_admin/utils/app_focus_helper.dart';
 import 'package:web_admin/views/widgets/card_elements.dart';
@@ -33,7 +34,7 @@ class _CrudDetailUserScreenState extends State<CrudDetailUserScreen> {
   Future<bool> _getDataAsync() async {
     if (widget.id.isNotEmpty) {
       try {
-        final response = await Dio().get('http://localhost:8080/users/${widget.id}');
+        final response = await Dio().get('${env.apiBaseUrl}/users/${widget.id}');
         if (response.statusCode == 200) {
           final user = response.data;
           _formData.id = widget.id;
@@ -66,7 +67,7 @@ class _CrudDetailUserScreenState extends State<CrudDetailUserScreen> {
         btnOkOnPress: () async {
           try {
             final response = await Dio().put(
-              'http://localhost:8080/users/${widget.id}',
+              '${env.apiBaseUrl}/users/${widget.id}',
               data: {
                 'Pseudo': _formData.pseudo,
                 'Email': _formData.email,
