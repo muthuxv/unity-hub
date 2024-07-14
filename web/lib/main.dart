@@ -6,7 +6,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   Environment.init(
-    apiBaseUrl: 'http://localhost:8080',
+    apiBaseUrl: 'https://unityhub.fr',
   );
 
   runApp(const RootApp());

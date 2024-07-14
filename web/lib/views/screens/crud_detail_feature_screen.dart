@@ -38,8 +38,11 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
         final response = await Dio().get('${env.apiBaseUrl}/features/${widget.id}');
         if (response.statusCode == 200) {
           final feature = response.data;
-          _formData.id = widget.id;
-          _formData.status = feature['Status'];
+          print(feature);
+          setState(() {
+            _formData.id = widget.id;
+            _formData.status = feature['Status'];
+          });
         }
       } catch (e) {
         print('Error loading feature data: $e');
@@ -180,11 +183,11 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
                 border: OutlineInputBorder(),
                 floatingLabelBehavior: FloatingLabelBehavior.always,
               ),
-              items: [
+              items: const [
                 DropdownMenuItem(value: 'true', child: Text('Activé')),
                 DropdownMenuItem(value: 'false', child: Text('Désactivé')),
               ],
-              initialValue: _formData.status,
+              initialValue: _formData.status.isNotEmpty ? _formData.status : 'false', // Ajoutez cette ligne pour définir une valeur par défaut
               validator: FormBuilderValidators.required(),
               onChanged: (String? value) {
                 setState(() {
@@ -249,5 +252,5 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
 
 class FormData {
   String id = '';
-  String status = '';
+  String status = 'false';
 }
