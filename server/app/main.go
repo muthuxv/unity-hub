@@ -5,6 +5,7 @@ import (
 	"app/db"
 	_ "app/docs"
 	"app/routes"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -39,6 +40,7 @@ func main() {
 
 		c.Next()
 	})
+	fmt.Printf("-------")
 
 	r.Use(controllers.ErrorHandling())
 
