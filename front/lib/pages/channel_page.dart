@@ -75,7 +75,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     });
 
     try {
-      final response = await Dio().get('http://10.0.2.2:8080/channels/${widget.channelId}/messages');
+      final response = await Dio().get('https://unityhub.fr/channels/${widget.channelId}/messages');
       final List<dynamic> messages = response.data;
 
       setState(() {
@@ -350,7 +350,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
 
     try {
       await Dio().post(
-        'http://10.0.2.2:8080/reports',
+        'https://unityhub.fr/reports',
         data: reportData,
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -379,7 +379,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
 
     try {
       await Dio().post(
-        'http://10.0.2.2:8080/reports',
+        'https://unityhub.fr/reports',
         data: reportData,
       );
       ScaffoldMessenger.of(context).showSnackBar(

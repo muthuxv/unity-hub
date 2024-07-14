@@ -93,7 +93,7 @@ class _GithubSignInButtonState extends State<GithubSignInButton> {
         final githubAvatarUrl = githubUserData['avatar_url'];
 
         final serverResponse = await _dio.get(
-          'http://10.0.2.2:8080/auth/github/callback',
+          'https://unityhub.fr/auth/github/callback',
           data: {
             'uid': user.uid,
             'email': user.email,

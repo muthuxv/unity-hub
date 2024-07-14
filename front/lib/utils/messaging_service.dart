@@ -65,7 +65,7 @@ class MessagingService {
       final token = await storage.read(key: 'token');
 
       final response = await Dio().put(
-        'http://10.0.2.2:8080/fcm-token',
+        'https://unityhub.fr/fcm-token',
         data: {
           'fcmToken': fcmToken,
         },
@@ -87,7 +87,7 @@ class MessagingService {
       final token = await storage.read(key: 'token');
       final userId = JwtDecoder.decode(token!)['jti'];
       final response = await Dio().get(
-        'http://10.0.2.2:8080/users/$userId/channels',
+        'https://unityhub.fr/users/$userId/channels',
         options: Options(
           headers: {
             'Content-Type': 'application/json',

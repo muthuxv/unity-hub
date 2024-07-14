@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<List<Map<String, dynamic>>> fetchFeatureStatuses() async {
     try {
-      final response = await Dio().get('http://10.0.2.2:8080/features');
+      final response = await Dio().get('https://unityhub.fr/features');
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
 

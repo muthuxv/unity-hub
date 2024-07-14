@@ -36,7 +36,7 @@ class _ProfilePageState extends State<ProfilePage> {
       final userId = decodedToken['jti'];
 
       final response = await Dio().get(
-        'http://10.0.2.2:8080/users/$userId',
+        'https://unityhub.fr/users/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',

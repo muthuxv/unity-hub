@@ -54,7 +54,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
 
   Future<void> _kickMember(String memberId) async {
     final dio = Dio();
-    final url = 'http://10.0.2.2:8080/groups/${widget.group.id}/members/$memberId';
+    final url = 'https://unityhub.fr/groups/${widget.group.id}/members/$memberId';
 
     try {
       final response = await dio.delete(url);

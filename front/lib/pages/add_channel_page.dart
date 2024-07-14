@@ -20,7 +20,7 @@ class _AddChannelPageState extends State<AddChannelPage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
-    final response = await Dio().post('http://10.0.2.2:8080/channels', data: {
+    final response = await Dio().post('https://unityhub.fr/channels', data: {
       'name': _channelNameController.text,
       'type': _channelType,
       'serverId': widget.serverId,

@@ -38,7 +38,7 @@ class _ServerBanMembersPageState extends State<ServerBanMembersPage> {
     });
 
     try {
-      final response = await _dio.get('http://10.0.2.2:8080/servers/${widget.serverId}/bans');
+      final response = await _dio.get('https://unityhub.fr/servers/${widget.serverId}/bans');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -114,7 +114,7 @@ class _ServerBanMembersPageState extends State<ServerBanMembersPage> {
 
     try {
       final response = await _dio.delete(
-          'http://10.0.2.2:8080/servers/${widget.serverId}/unban/users/$userID',
+          'https://unityhub.fr/servers/${widget.serverId}/unban/users/$userID',
           options: Options(headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',

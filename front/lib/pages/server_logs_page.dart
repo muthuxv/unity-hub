@@ -20,7 +20,7 @@ class _ServerLogsPageState extends State<ServerLogsPage> {
           centerTitle: true,
         ),
         body: FutureBuilder(
-          future: Dio().get('http://10.0.2.2:8080/servers/${widget.serverId}/logs'),
+          future: Dio().get('https://unityhub.fr/servers/${widget.serverId}/logs'),
           builder: (context, AsyncSnapshot<Response> snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(

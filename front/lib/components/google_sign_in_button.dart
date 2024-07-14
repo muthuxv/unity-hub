@@ -51,7 +51,7 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
               await FirebaseAuth.instance.signInWithCredential(credential);
 
               await _dio.get(
-                'http://10.0.2.2:8080/auth/google/callback',
+                'https://unityhub.fr/auth/google/callback',
                 data: {
                   'uid': FirebaseAuth.instance.currentUser!.uid,
                   'email': FirebaseAuth.instance.currentUser!.email,

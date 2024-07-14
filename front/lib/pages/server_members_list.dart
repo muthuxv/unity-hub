@@ -50,7 +50,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
     });
 
     try {
-      final response = await _dio.get('http://10.0.2.2:8080/servers/${widget.serverId}/members');
+      final response = await _dio.get('https://unityhub.fr/servers/${widget.serverId}/members');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -288,7 +288,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
 
     try {
       final response = await dio.post(
-        'http://10.0.2.2:8080/servers/${widget.serverId}/ban/users/${member['ID']}',
+        'https://unityhub.fr/servers/${widget.serverId}/ban/users/${member['ID']}',
         options: Options(headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
