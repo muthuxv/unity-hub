@@ -51,6 +51,7 @@
   "delete_channel_error_title": "Erreur",
   "delete_channel_error_message": "Une erreur s'est produite lors de la suppression du salon.",
   "servers_tab": "Serveurs",
+  "messages_tab": "Messages",
   "community_tab": "Communauté",
   "notifications_tab": "Notifications",
   "profile_tab": "Profil",

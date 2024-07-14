@@ -51,6 +51,7 @@
   "delete_channel_error_title": "Error",
   "delete_channel_error_message": "An error occurred while deleting the channel.",
   "servers_tab": "Servers",
+  "messages_tab": "Messages",
   "community_tab": "Community",
   "notifications_tab": "Notifications",
   "profile_tab": "Profile",

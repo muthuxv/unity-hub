@@ -29,6 +29,9 @@ class GroupProvider with ChangeNotifier {
         if (data == null) {
           _groups = [];
         } else {
+          // Sort the data by 'updated_at' in descending order
+          data.sort((a, b) => DateTime.parse(b['UpdatedAt']).compareTo(DateTime.parse(a['UpdatedAt'])));
+
           _groups = data.map((item) {
             String groupName;
             String groupImage;
@@ -54,6 +57,7 @@ class GroupProvider with ChangeNotifier {
                   image: member['Profile'],
                 );
               }).toList(),
+              ownerId: item['OwnerID'] ?? ''
             );
           }).toList();
         }
@@ -70,6 +74,7 @@ class GroupProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
 
   void reset() {
     _groups = [];
@@ -99,6 +104,24 @@ class GroupProvider with ChangeNotifier {
         data: {'group_id': groupId, 'member_ids': memberIds});
     if (response.statusCode == 200 || response.statusCode == 201) {
       fetchGroups();
+    }
+  }
+
+  Future<void> leaveGroup(String groupId, String userId) async {
+    final dio = Dio();
+    final url = 'http://10.0.2.2:8080/groups/$groupId/members/$userId';
+
+    try {
+      final response = await dio.delete(url);
+
+      if (response.statusCode == 200) {
+        groups.removeWhere((group) => group.id == groupId);
+        notifyListeners();
+      } else {
+        throw Exception('Failed to leave group');
+      }
+    } catch (error) {
+      throw Exception('Failed to leave group: $error');
     }
   }
 }

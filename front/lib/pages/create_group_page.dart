@@ -121,14 +121,14 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
           if (groupData['Type'] == 'dm') {
             List<String> existingMemberIds = List<String>.from(widget.members.map((member) => member.id));
             memberIds.addAll(existingMemberIds);
-            memberIds = memberIds.toSet().toList(); // Remove duplicates
+            memberIds = memberIds.toSet().toList();
           }
         }
       }
       Provider.of<GroupProvider>(context, listen: false).createGroup(memberIds, widget.groupId);
     }
 
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    Navigator.of(context).pop();
   }
 
   @override

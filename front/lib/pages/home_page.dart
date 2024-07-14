@@ -180,7 +180,7 @@ class _HomePageState extends State<HomePage> {
             } else {
               // Process feature statuses and decide which page to show
               bool serversEnabled = snapshot.data![0]['Status'] == 'true';
-              bool communityHubEnabled = snapshot.data![1]['Status'] == 'true';
+              bool messagesEnabled = snapshot.data![1]['Status'] == 'true';
               bool notificationsEnabled = snapshot.data![2]['Status'] == 'true';
               bool profileEnabled = snapshot.data![3]['Status'] == 'true';
 
@@ -191,7 +191,7 @@ class _HomePageState extends State<HomePage> {
                   pageToDisplay = serversEnabled ? const ServerPage() : const MaintenancePage();
                   break;
                 case 1:
-                  pageToDisplay = communityHubEnabled ? const GroupPage() : const MaintenancePage();
+                  pageToDisplay = messagesEnabled ? const GroupPage() : const MaintenancePage();
                   break;
                 case 2:
                   pageToDisplay = notificationsEnabled ? const NotificationPage() : const MaintenancePage();

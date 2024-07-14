@@ -7,8 +7,9 @@ class Group {
   final String name;
   final String image;
   final List<dynamic> members;
+  final String ownerId;
 
-  Group({required this.id, required this.type, required this.channelId, required this.name, this.image = '', required this.members});
+  Group({required this.id, required this.type, required this.channelId, required this.name, this.image = '', required this.members, this.ownerId = ''});
 }
 
 class User {

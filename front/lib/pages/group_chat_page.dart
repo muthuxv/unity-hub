@@ -200,7 +200,7 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(widget.group.name),
+            Text(widget.group.name.length > 20 ? '${widget.group.name.substring(0, 20)}...': widget.group.name),
             IconButton(
               icon: const Icon(Icons.info),
               onPressed: () {
@@ -376,10 +376,8 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
       message['User']['Profile'],
       height: 40,
       width: 40,
-    )
-        : Text(
-      message['User']['Profile'] ?? 'No Profile',
-      style: const TextStyle(fontSize: 20),
+    ) : CircleAvatar(
+      backgroundImage: NetworkImage(message['User']['Profile'])
     );
   }
 }

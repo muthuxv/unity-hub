@@ -26,8 +26,8 @@ class MyBottomNavBar extends StatelessWidget {
             text: AppLocalizations.of(context)!.servers_tab,
           ),
           GButton(
-            icon: Icons.explore,
-            text: AppLocalizations.of(context)!.community_tab,
+            icon: Icons.message_rounded,
+            text: AppLocalizations.of(context)!.messages_tab,
           ),
           GButton(
             icon: Icons.notifications,

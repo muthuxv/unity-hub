@@ -175,7 +175,9 @@ func CreatePublicGroup() gin.HandlerFunc {
 
 			log.Println("New channel created")
 
-			group = models.Group{Type: "group", ChannelID: channel.ID}
+			parsedUUID := uuid.MustParse(userID.String())
+
+			group = models.Group{Type: "group", ChannelID: channel.ID, OwnerID: &parsedUUID}
 			if err := db.GetDB().Create(&group).Error; err != nil {
 				c.Error(err)
 				return
@@ -245,7 +247,9 @@ func CreatePublicGroup() gin.HandlerFunc {
 					return
 				}
 
-				group = models.Group{Type: "group", ChannelID: channel.ID}
+				parseUUID := uuid.MustParse(userID.String())
+
+				group = models.Group{Type: "group", ChannelID: channel.ID, OwnerID: &parseUUID}
 				if err := db.GetDB().Create(&group).Error; err != nil {
 					c.Error(err)
 					return
@@ -329,30 +333,95 @@ func GetGroupMembers() gin.HandlerFunc {
 
 func RemoveGroupMember() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		groupID, err := uuid.Parse(c.Param("groupID"))
+		handleError := func(err error) {
+			if err != nil {
+				c.Error(err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			}
+		}
+
+		groupID, err := uuid.Parse(c.Param("id"))
 		if err != nil {
-			c.Error(err)
+			handleError(err)
 			return
 		}
 
 		userID, err := uuid.Parse(c.Param("userID"))
 		if err != nil {
-			c.Error(err)
+			handleError(err)
 			return
 		}
 
-		result := db.GetDB().Where("group_id = ? AND user_id = ?", groupID, userID).Delete(&models.GroupMember{})
-		if result.Error != nil {
-			c.Error(result.Error)
+		dbConn := db.GetDB()
+
+		var groupMember models.GroupMember
+		err = dbConn.Where("group_id = ? AND user_id = ?", groupID, userID).First(&groupMember).Error
+		if err != nil {
+			handleError(err)
 			return
 		}
 
-		if result.RowsAffected == 0 {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Group member not found"})
+		var group models.Group
+		err = dbConn.Where("id = ?", groupID).First(&group).Error
+		if err != nil {
+			handleError(err)
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Group member removed successfully"})
+		if group.Type == "dm" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot remove member from DM group"})
+			return
+		}
+
+		var groupMembers []models.GroupMember
+		err = dbConn.Where("group_id = ?", groupID).Find(&groupMembers).Error
+		if err != nil {
+			handleError(err)
+			return
+		}
+
+		if len(groupMembers) == 1 {
+			err = dbConn.Unscoped().Delete(&group).Error
+			if err != nil {
+				handleError(err)
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{"message": "Group deleted"})
+			return
+		}
+
+		parsedUUID := uuid.MustParse(userID.String())
+
+		log.Println("Owner:", group.OwnerID)
+
+		if group.OwnerID == nil || *group.OwnerID == parsedUUID {
+
+			log.Println("User is owner")
+			// Trouver un nouveau propriétaire qui n'est pas l'utilisateur supprimé
+			for _, gm := range groupMembers {
+				if gm.UserID != userID {
+					group.OwnerID = &gm.UserID
+					break
+				}
+			}
+
+			log.Println("New owner:", group.OwnerID)
+
+			err = dbConn.Save(&group).Error
+			if err != nil {
+				handleError(err)
+				return
+			}
+		}
+
+		err = dbConn.Unscoped().Delete(&groupMember).Error
+		if err != nil {
+			handleError(err)
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Member removed"})
 	}
 }
 
