@@ -18,7 +18,7 @@ class MessageProvider with ChangeNotifier {
   List<Message> get messages => _messages;
 
   void connect(String channelId) {
-    channel = WebSocketChannel.connect(Uri.parse('ws://unityhub.fr/channels/$channelId/send'));
+    channel = WebSocketChannel.connect(Uri.parse('wss://unityhub.fr/channels/$channelId/send'));
 
     channel.stream.listen((message) {
       final decodedMessage = json.decode(message);

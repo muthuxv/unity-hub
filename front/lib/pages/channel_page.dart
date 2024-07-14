@@ -113,7 +113,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
 
   void _connectToWebSocket() {
     _channel = WebSocketChannel.connect(
-      Uri.parse('ws://unityhub.fr/channels/${widget.channelId}/send'),
+      Uri.parse('wss://unityhub.fr/channels/${widget.channelId}/send'),
     );
 
     _channel.stream.listen((message) async {

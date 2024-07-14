@@ -116,7 +116,7 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
 
   void _connectToWebSocket() {
     _channel = WebSocketChannel.connect(
-      Uri.parse('ws://unityhub.fr/channels/${widget.group.channelId}/send'),
+      Uri.parse('wss://unityhub.fr/channels/${widget.group.channelId}/send'),
     );
 
     _channel.stream.listen((message) async {
