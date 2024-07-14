@@ -80,7 +80,7 @@ class _ProfilePseudoPageState extends State<ProfilePseudoPage> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Ferme la boîte de dialogue
+                Navigator.of(context).pop();
                 Navigator.of(context).pop(true);
               },
               child: const Text('OK'),

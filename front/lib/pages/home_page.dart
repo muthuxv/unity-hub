@@ -34,14 +34,29 @@ class _HomePageState extends State<HomePage> {
       final response = await Dio().get('http://10.0.2.2:8080/features');
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
-        return List<Map<String, dynamic>>.from(data);
+
+        List<Map<String, dynamic>> filteredFeatures = [];
+        data.forEach((feature) {
+          String featureName = feature['Name'];
+          bool isEnabled = feature['Status'] == 'true';
+
+          if (featureName == 'Serveurs') {
+            filteredFeatures.add({'name': featureName, 'enabled': isEnabled});
+          } else if (featureName == 'CommunityHub') {
+            filteredFeatures.add({'name': featureName, 'enabled': isEnabled});
+          } else if (featureName == 'Notifications') {
+            filteredFeatures.add({'name': featureName, 'enabled': isEnabled});
+          } else if (featureName == 'Profil') {
+            filteredFeatures.add({'name': featureName, 'enabled': isEnabled});
+          }
+        });
+
+        return filteredFeatures;
       } else {
-        // Handle unexpected status codes or errors here
         print('Failed to load feature statuses');
         return [];
       }
     } catch (e) {
-      // Handle Dio errors or network errors here
       print('Error fetching feature statuses: $e');
       return [];
     }
@@ -178,11 +193,11 @@ class _HomePageState extends State<HomePage> {
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
               return const Text('No data available');
             } else {
-              // Process feature statuses and decide which page to show
-              bool serversEnabled = snapshot.data![0]['Status'] == 'true';
-              bool messagesEnabled = snapshot.data![1]['Status'] == 'true';
-              bool notificationsEnabled = snapshot.data![2]['Status'] == 'true';
-              bool profileEnabled = snapshot.data![3]['Status'] == 'true';
+              List<Map<String, dynamic>> features = snapshot.data!;
+              bool serversEnabled = features.any((feature) => feature['name'] == 'Serveurs' && feature['enabled']);
+              bool messagesEnabled = features.any((feature) => feature['name'] == 'Messages' && feature['enabled']);
+              bool notificationsEnabled = features.any((feature) => feature['name'] == 'Notifications' && feature['enabled']);
+              bool profileEnabled = features.any((feature) => feature['name'] == 'Profil' && feature['enabled']);
 
               Widget pageToDisplay;
 

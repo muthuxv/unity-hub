@@ -5,7 +5,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-//import 'package:unity_hub/components/members_panel.dart';
 import 'package:unity_hub/components/channels_panel.dart';
 import 'package:unity_hub/pages/add_server_page.dart';
 import 'package:unity_hub/pages/server_members_list.dart';
@@ -15,7 +14,7 @@ import 'add_channel_page.dart';
 import 'invitations/send_invitation_page.dart';
 
 class ServerPage extends StatefulWidget {
-  const ServerPage({Key? key});
+  const ServerPage({Key? key}) : super(key: key);
 
   @override
   State<ServerPage> createState() => _ServerPageState();
@@ -78,6 +77,75 @@ class _ServerPageState extends State<ServerPage> {
         ),
       );
     }
+  }
+
+
+  Future<void> _leaveServer(BuildContext context) async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+    try {
+      final response = await Dio().delete(
+        'http://10.0.2.2:8080/servers/${_selectedServer['ID']}/leave',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Successfully left the server')),
+        );
+        setState(() {
+          _servers.removeWhere((server) => server['ID'] == _selectedServer['ID']);
+          _selectedServer = _servers.isNotEmpty ? _servers[0] : {};
+        });
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to leave the server')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> _showConfirmationDialog(BuildContext context) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirmation'),
+          content: const SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Are you sure you want to leave the server?'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Confirm'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _leaveServer(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -350,6 +418,7 @@ class _ServerPageState extends State<ServerPage> {
                                                           serverName: _selectedServer['Name'],
                                                           serverAvatar: _selectedServer['Media']['FileName'],
                                                           serverVisibility: _selectedServer['Visibility'],
+                                                          servercreatorUserId: _selectedServer['UserID'],
                                                         ),
                                                       ),
                                                     );
@@ -377,6 +446,7 @@ class _ServerPageState extends State<ServerPage> {
                                                         builder: (context) =>
                                                             ServerMembersList(
                                                               serverId: _selectedServer['ID'],
+                                                              serverCreatorId: _selectedServer['UserID'],
                                                             ),
                                                       ),
                                                     );
@@ -393,7 +463,7 @@ class _ServerPageState extends State<ServerPage> {
                                                     ),
                                                   ),
                                                   onTap: () {
-                                                    print('Leave server');
+                                                    _showConfirmationDialog(context);
                                                   },
                                                 ),
                                               ],

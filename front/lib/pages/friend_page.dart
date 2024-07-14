@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:unity_hub/utils/messaging_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -147,7 +148,8 @@ class _FriendPageState extends State<FriendPage> {
           'FriendID': response.data['FriendID'],
           'Status': response.data['Status'],
           'UserPseudo': response.data['UserPseudo'],
-          'Email': response.data['UserMail']
+          'Email': response.data['UserMail'],
+          'Profile': response.data['Profile']
         };
 
         _pendingRequests.removeWhere((item) => item['FriendID'].toString() == friendId);
@@ -289,12 +291,21 @@ class _FriendPageState extends State<FriendPage> {
               decoration: BoxDecoration(
                 color: Colors.blueGrey,
                 borderRadius: BorderRadius.circular(5),
+                image: request['Profile'] != null && !request['Profile'].contains('<svg')
+                    ? DecorationImage(
+                  image: NetworkImage(request['Profile']),
+                  fit: BoxFit.cover,
+                )
+                    : null,
               ),
-              alignment: Alignment.center,
-              child: Text(
-                request['UserPseudo'][0].toUpperCase(),
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
+              child: request['Profile'] != null && request['Profile'].contains('<svg')
+                  ? SvgPicture.string(
+                request['Profile'],
+                height: 60,
+                width: 60,
+                fit: BoxFit.cover,
+              )
+                  : null,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -308,7 +319,7 @@ class _FriendPageState extends State<FriendPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    request['Status'],
+                    AppLocalizations.of(context)!.pending,
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],
@@ -645,6 +656,7 @@ class _FriendPageState extends State<FriendPage> {
             'Status': 'pending',
             'ID': response.data['friend']['ID'],
             'FriendID': response.data['friend']['UserID2'],
+            'Profile': response.data['friend']['User2']['Profile'],
           });
         });
         _getFriends();
@@ -695,7 +707,18 @@ class _FriendPageState extends State<FriendPage> {
       itemBuilder: (context, index) {
         var request = _sentRequests[index];
         return ListTile(
-          leading: const Icon(Icons.person),
+          leading: CircleAvatar(
+            child: request['Profile'] != null && request['Profile'].contains('<svg')
+                ? SvgPicture.string(
+              request['Profile'],
+              height: 40,
+              width: 40,
+            )
+                : CircleAvatar(
+              radius: 50,
+              backgroundImage: NetworkImage(request['Profile']),
+            ),
+          ),
           title: Text(request['UserPseudo']),
           subtitle: Text(AppLocalizations.of(context)!.friendRequestSent),
           trailing: IconButton(
@@ -784,14 +807,22 @@ class _FriendPageState extends State<FriendPage> {
                 elevation: 2,
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: Colors.blueGrey,
-                    child: Text(_filteredFriends[index]['UserPseudo'][0].toUpperCase()),
+                    child: _filteredFriends[index]['Profile'] != null && _filteredFriends[index]['Profile'].contains('<svg')
+                        ? SvgPicture.string(
+                      _filteredFriends[index]['Profile'],
+                      height: 40,
+                      width: 40,
+                    )
+                        : CircleAvatar(
+                      radius: 50,
+                      backgroundImage: NetworkImage(_filteredFriends[index]['Profile']),
+                    ),
                   ),
                   title: Text(
                     _filteredFriends[index]['UserPseudo'],
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  subtitle: Text(_filteredFriends[index]['Status']),
+                  subtitle: Text(AppLocalizations.of(context)!.accept),
                   onTap: () => _showBottomModal(_filteredFriends[index]),
                 ),
               );

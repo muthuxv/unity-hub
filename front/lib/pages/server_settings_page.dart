@@ -2,25 +2,71 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:unity_hub/pages/reports/reports_page.dart';
 import 'package:unity_hub/pages/roles/role_page.dart';
 import 'package:unity_hub/pages/server_logs_page.dart';
+import 'package:unity_hub/pages/server_ban_members_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 import 'server_update_tags_page.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'security/auth_page.dart';
+
+Future<String?> getCurrentUserId() async {
+  try {
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    if (token != null) {
+      final Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      final currentUserId = decodedToken['jti'];
+      return currentUserId;
+    } else {
+      print('Token not found');
+      return null;
+    }
+  } catch (e) {
+    print('Error decoding token: $e');
+    return null;
+  }
+}
 
 class ServerSettingsPage extends StatefulWidget {
   final String serverId;
   final String serverName;
   String serverAvatar;
   final String serverVisibility;
-  ServerSettingsPage({super.key, required this.serverId, required this.serverName, required this.serverAvatar, required this.serverVisibility});
+  final String servercreatorUserId;
+  ServerSettingsPage({
+    super.key,
+    required this.serverId,
+    required this.serverName,
+    required this.serverAvatar,
+    required this.serverVisibility,
+    required this.servercreatorUserId,
+  });
 
   @override
   State<ServerSettingsPage> createState() => _ServerSettingsPageState();
 }
 
 class _ServerSettingsPageState extends State<ServerSettingsPage> {
+  String? currentUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    getCurrentUserId().then((userId) {
+      setState(() {
+        currentUserId = userId;
+      });
+    });
+  }
+
+  bool get showForCreator {
+    return currentUserId == widget.servercreatorUserId;
+  }
 
   void _showInvitationDialog(BuildContext context, String serverId) {
     final url = 'http://10.0.2.2:8080/servers/$serverId/join';
@@ -48,6 +94,109 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
               },
               child: Text(AppLocalizations.of(context)!.close),
             ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteServer(BuildContext context) async {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(AppLocalizations.of(context)!.delete_server),
+          content: Text(AppLocalizations.of(context)!.delete_server_confirmation),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text(AppLocalizations.of(context)!.cancel),
+            ),
+            if (showForCreator)
+              TextButton(
+                onPressed: () async {
+                  try {
+                    final storage = FlutterSecureStorage();
+                    final token = await storage.read(key: 'token');
+
+                    final response = await Dio().delete(
+                      'http://10.0.2.2:8080/servers/${widget.serverId}',
+                      options: Options(
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': 'Bearer $token',
+                        },
+                        validateStatus: (status) {
+                          return status! < 500;
+                        },
+                      ),
+                    );
+
+                    if (response.statusCode == 200) {
+                      Navigator.pop(context); // Ferme la boîte de dialogue
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AuthPage()));
+                    } else if (response.statusCode == 403) {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text(AppLocalizations.of(context)!.error),
+                            content: Text(AppLocalizations.of(context)!.onlyServerCreatorCanDeleteServer),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Text(AppLocalizations.of(context)!.ok),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text(AppLocalizations.of(context)!.error),
+                            content: Text(AppLocalizations.of(context)!.server_deletion_error),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Text(AppLocalizations.of(context)!.ok),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }
+                  } catch (e) {
+                    print('Error: $e');
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text(AppLocalizations.of(context)!.error),
+                          content: Text(AppLocalizations.of(context)!.server_deletion_error),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: Text(AppLocalizations.of(context)!.ok),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                },
+                child: Text(AppLocalizations.of(context)!.delete),
+              ),
           ],
         );
       },
@@ -102,7 +251,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                   child: Column(
                     children: [
                       GestureDetector(
-                        onTap: () async {
+                        onTap: showForCreator ? () async {
                           final image = await ImagePicker().pickImage(source: ImageSource.gallery);
                           if (image != null) {
                             final formData = FormData.fromMap({
@@ -205,7 +354,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                               );
                             }
                           }
-                        },
+                        } : null,
                         child: Stack(
                           children: [
                             CircleAvatar(
@@ -217,36 +366,37 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                                 },
                               ).image,
                             ),
-                            Positioned(
-                              bottom: 1,
-                              right: 1,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    border: Border.all(
-                                      width: 3,
-                                      color: Colors.white,
-                                    ),
-                                    borderRadius: const BorderRadius.all(
-                                      Radius.circular(
-                                        50,
+                            if (showForCreator)
+                              Positioned(
+                                bottom: 1,
+                                right: 1,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      border: Border.all(
+                                        width: 3,
+                                        color: Colors.white,
                                       ),
-                                    ),
-                                    color: Colors.white,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        offset: const Offset(2, 4),
-                                        color: Colors.black.withOpacity(
-                                          0.3,
+                                      borderRadius: const BorderRadius.all(
+                                        Radius.circular(
+                                          50,
                                         ),
-                                        blurRadius: 3,
                                       ),
-                                    ]),
-                                child: const Padding(
-                                  padding: EdgeInsets.all(2.0),
-                                  child: Icon(Icons.add_a_photo, color: Colors.black),
+                                      color: Colors.white,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          offset: const Offset(2, 4),
+                                          color: Colors.black.withOpacity(
+                                            0.3,
+                                          ),
+                                          blurRadius: 3,
+                                        ),
+                                      ]),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(2.0),
+                                    child: Icon(Icons.add_a_photo, color: Colors.black),
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ),
@@ -287,30 +437,31 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => RolePage(serverId: widget.serverId),
+                              builder: (context) => RolePage(serverId: widget.serverId, servercreatorUserId: widget.servercreatorUserId),
                             ),
                           );
                         },
                       ),
-                      ListTile(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ServerLogsPage(serverId: widget.serverId),
+                      if (showForCreator)
+                        ListTile(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ServerLogsPage(serverId: widget.serverId),
+                              ),
+                            );
+                          },
+                          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                          leading: const Icon(Icons.description_outlined, color: Colors.white),
+                          title: Text(
+                            AppLocalizations.of(context)!.server_logs,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
-                          );
-                        },
-                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
-                        leading: const Icon(Icons.description_outlined, color: Colors.white),
-                        title: Text(
-                          AppLocalizations.of(context)!.server_logs,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
                       ListTile(
                         onTap: () {
                           _showInvitationDialog(context, widget.serverId);
@@ -325,24 +476,52 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                           ),
                         ),
                       ),
-                      ListTile(
-                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
-                        leading: const Icon(Icons.block, color: Colors.white),
-                        title: Text(
-                          AppLocalizations.of(context)!.bans,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                      if (showForCreator)
+                        ListTile(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ServerBanMembersPage(serverId: widget.serverId),
+                              ),
+                            );
+                          },
+                          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                          leading: const Icon(Icons.block, color: Colors.white),
+                          title: Text(
+                            AppLocalizations.of(context)!.bans,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
+                        ListTile(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ReportsPage(serverID: widget.serverId),
+                              ),
+                            );
+                          },
+                          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                          leading: const Icon(Icons.warning, color: Colors.white),
+                          title: Text(
+                            AppLocalizations.of(context)!.reports,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       if (widget.serverVisibility == 'public')
                         ListTile(
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ServerUpdateTagsPage(serverId: widget.serverId),
+                                builder: (context) => ServerUpdateTagsPage(serverId: widget.serverId, servercreatorUserId: widget.servercreatorUserId),
                               ),
                             );
                           },
@@ -360,108 +539,30 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: Text(AppLocalizations.of(context)!.delete_server),
-                          content: Text(AppLocalizations.of(context)!.delete_server_confirmation),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              child: Text(AppLocalizations.of(context)!.cancel),
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                try {
-                                  final storage = FlutterSecureStorage();
-                                  final token = await storage.read(key: 'token');
-
-                                  final response = await Dio().delete(
-                                    'http://10.0.2.2:8080/servers/${widget.serverId}',
-                                    options: Options(
-                                      headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': 'Bearer $token',
-                                      },
-                                      validateStatus: (status) {
-                                        return status! < 500;
-                                      },
-                                    ),
-                                  );
-                                  if (response.statusCode == 204) {
-                                    Navigator.pop(context);
-                                    Navigator.pop(context);
-                                  } else {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) {
-                                        return AlertDialog(
-                                          title: Text(AppLocalizations.of(context)!.error),
-                                          content: Text(AppLocalizations.of(context)!.server_deletion_error),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.pop(context);
-                                              },
-                                              child: Text(AppLocalizations.of(context)!.ok),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  }
-                                } catch (e) {
-                                  print('Error: $e');
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) {
-                                      return AlertDialog(
-                                        title: Text(AppLocalizations.of(context)!.error),
-                                        content: Text(AppLocalizations.of(context)!.server_deletion_error),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
-                                            child: Text(AppLocalizations.of(context)!.ok),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                }
-                              },
-                              child: Text(AppLocalizations.of(context)!.delete),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.5),
-                      border: Border.all(color: Colors.white),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: ListTile(
-                      leading: const Icon(Icons.delete_forever, color: Colors.redAccent),
-                      title: Text(
-                        AppLocalizations.of(context)!.delete_server,
-                        style: const TextStyle(
-                          color: Colors.redAccent,
-                          fontWeight: FontWeight.bold,
+                if (showForCreator)
+                  GestureDetector(
+                    onTap: () {
+                      _deleteServer(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.5),
+                        border: Border.all(color: Colors.white),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ListTile(
+                        leading: const Icon(Icons.delete_forever, color: Colors.redAccent),
+                        title: Text(
+                          AppLocalizations.of(context)!.delete_server,
+                          style: const TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

@@ -26,6 +26,11 @@ final sidebarMenuConfigs = [
     title: (context) => 'Tags',
   ),
   SidebarMenuConfig(
+    uri: RouteUri.featuresFlipping,
+    icon: Icons.toggle_on,
+    title: (context) => 'Features Flipping',
+  ),
+  SidebarMenuConfig(
     uri: RouteUri.form,
     icon: Icons.edit_note_rounded,
     title: (context) => Lang.of(context).forms(1),

@@ -59,32 +59,34 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 			return
 		}
 
-		// Check if the UserReceiver is already part of the server
-		var count int64
-		result = db.GetDB().Table("role_users").Joins("JOIN roles ON role_users.role_id = roles.id").Where("role_users.user_id = ? AND roles.server_id = ?", userReceiverID, serverID).Count(&count)
+		// Check if the UserReceiver is already a member of the server
+		var membershipCount int64
+		result = db.GetDB().Table("on_servers").Where("user_id = ? AND server_id = ? AND deleted_at IS NULL", userReceiverID, serverID).Count(&membershipCount)
 		if result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la vérification de l'appartenance du destinataire au serveur"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la vérification de l'appartenance au serveur"})
 			return
 		}
 
-		if count > 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "L'utilisateur est déjà membre du serveur"})
+		if membershipCount > 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "L'utilisateur fait déjà partie du serveur"})
 			return
 		}
 
 		// Check if the UserReceiver has already received an invitation for this server
-		result = db.GetDB().Table("invitations").Where("user_receiver_id = ? AND server_id = ?", userReceiverID, serverID).Count(&count)
+		var count int64
+		result = db.GetDB().Table("invitations").
+			Where("user_receiver_id = ? AND server_id = ? AND deleted_at IS NULL AND expire > ?", userReceiverID, serverID, time.Now()).
+			Count(&count)
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la vérification des invitations existantes"})
 			return
 		}
 
 		if count > 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "L'utilisateur a déjà reçu une invitation pour ce serveur"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "L'utilisateur a déjà reçu une invitation valide pour ce serveur"})
 			return
 		}
 
-		// Create a new invitation with an expiry of 3 days
 		invitation := models.Invitation{
 			UserSenderID:   userID,
 			UserReceiverID: userReceiverID,

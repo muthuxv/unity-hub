@@ -12,19 +12,19 @@ import 'package:web_admin/utils/app_focus_helper.dart';
 import 'package:web_admin/views/widgets/card_elements.dart';
 import 'package:web_admin/views/widgets/portal_master_layout/portal_master_layout.dart';
 
-class CreateTagScreen extends StatefulWidget {
+class CreateFeatureScreen extends StatefulWidget {
   final String id;
 
-  const CreateTagScreen({
+  const CreateFeatureScreen({
     super.key,
     required this.id,
   });
 
   @override
-  State<CreateTagScreen> createState() => _CreateTagScreenState();
+  State<CreateFeatureScreen> createState() => _CreateFeatureScreenState();
 }
 
-class _CreateTagScreenState extends State<CreateTagScreen> {
+class _CreateFeatureScreenState extends State<CreateFeatureScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
   final _formData = {
     'name': ''
@@ -40,7 +40,7 @@ class _CreateTagScreenState extends State<CreateTagScreen> {
 
       try {
         final response = await Dio().post(
-          'http://localhost:8080/tags',
+          'http://localhost:8080/features',
           data: _formData,
         );
 
@@ -50,29 +50,28 @@ class _CreateTagScreenState extends State<CreateTagScreen> {
           final dialog = AwesomeDialog(
             context: context,
             dialogType: DialogType.success,
-            title: 'Tag créé avec succès',
+            title: 'Fonctionnalité créée avec succès',
             width: kDialogWidth,
             btnOkText: 'OK',
             btnOkOnPress: () {
-              GoRouter.of(context).go(RouteUri.tags);
+              GoRouter.of(context).go(RouteUri.featuresFlipping);
             },
           );
 
           dialog.show();
         } else {
-          throw Exception('Failed to create tag');
+          throw Exception('Failed to create feature');
         }
       } catch (e) {
-        print('Error creating tag: $e');
+        print('Error creating feature: $e');
         final lang = Lang.of(context);
 
         if (e is DioError && e.response?.statusCode == 400) {
-          // Check if the error is due to duplicate tag name
           final errorMessage = e.response?.data['error'] ?? 'Erreur inconnue';
           final dialog = AwesomeDialog(
             context: context,
             dialogType: DialogType.error,
-            title: 'Erreur lors de la création du tag',
+            title: 'Erreur lors de la création de la fonctionnalité',
             desc: errorMessage,
             width: kDialogWidth,
             btnOkText: 'OK',
@@ -84,7 +83,7 @@ class _CreateTagScreenState extends State<CreateTagScreen> {
           final dialog = AwesomeDialog(
             context: context,
             dialogType: DialogType.error,
-            title: 'Erreur lors de la création du tag',
+            title: 'Erreur lors de la création de la fonctionnalité',
             desc: 'Veuillez réessayer plus tard',
             width: kDialogWidth,
             btnOkText: 'OK',
@@ -106,10 +105,10 @@ class _CreateTagScreenState extends State<CreateTagScreen> {
     final lang = Lang.of(context);
     final themeData = Theme.of(context);
 
-    final pageTitle = 'Créer un tag';
+    final pageTitle = 'Créer une fonctionnalité';
 
     return PortalMasterLayout(
-      selectedMenuUri: RouteUri.tags,
+      selectedMenuUri: RouteUri.featuresFlipping,
       body: ListView(
         padding: const EdgeInsets.all(kDefaultPadding),
         children: [
@@ -155,7 +154,7 @@ class _CreateTagScreenState extends State<CreateTagScreen> {
                                 height: 40.0,
                                 child: ElevatedButton(
                                   style: themeData.extension<AppButtonTheme>()!.secondaryElevated,
-                                  onPressed: () => GoRouter.of(context).go(RouteUri.tags),
+                                  onPressed: () => GoRouter.of(context).go(RouteUri.featuresFlipping),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     crossAxisAlignment: CrossAxisAlignment.center,
