@@ -6,7 +6,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   Environment.init(
-    apiBaseUrl: 'https://example.com',
+    apiBaseUrl: 'http://localhost:8080',
   );
 
   runApp(const RootApp());

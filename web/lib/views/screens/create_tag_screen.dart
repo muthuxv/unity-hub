@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
 import 'package:web_admin/generated/l10n.dart';
+import 'package:web_admin/environment.dart';
 import 'package:web_admin/theme/theme_extensions/app_button_theme.dart';
 import 'package:web_admin/utils/app_focus_helper.dart';
 import 'package:web_admin/views/widgets/card_elements.dart';
@@ -40,7 +41,7 @@ class _CreateTagScreenState extends State<CreateTagScreen> {
 
       try {
         final response = await Dio().post(
-          'http://localhost:8080/tags',
+          '${env.apiBaseUrl}/tags',
           data: _formData,
         );
 

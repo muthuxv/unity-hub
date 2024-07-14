@@ -5,6 +5,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
 import 'package:web_admin/app_router.dart';
+import 'package:web_admin/environment.dart';
 import 'package:web_admin/constants/dimens.dart';
 import 'package:web_admin/generated/l10n.dart';
 import 'package:web_admin/theme/theme_extensions/app_button_theme.dart';
@@ -44,7 +45,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
 
       try {
         final response = await Dio().post(
-          'http://localhost:8080/users',
+          '${env.apiBaseUrl}/users',
           data: _formData,
         );
 
