@@ -121,22 +121,22 @@ class _ServerPageState extends State<ServerPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirmation'),
-          content: const SingleChildScrollView(
+          content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('Are you sure you want to leave the server?'),
+                Text(AppLocalizations.of(context)!.leaveServerConfirmation),
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel_button),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Confirm'),
+              child: Text(AppLocalizations.of(context)!.confirmButton),
               onPressed: () {
                 Navigator.of(context).pop();
                 _leaveServer(context);

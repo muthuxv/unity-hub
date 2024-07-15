@@ -185,6 +185,90 @@ func BanUser() gin.HandlerFunc {
 	}
 }
 
+func GetServersFriendNotIn() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		claims, exists := c.Get("jwt_claims")
+		if !exists {
+			handleError(c, http.StatusUnauthorized, "JWT claims not found")
+			return
+		}
+
+		jwtClaims, ok := claims.(jwt.MapClaims)
+		if !ok {
+			handleError(c, http.StatusInternalServerError, "Failed to parse JWT claims")
+			return
+		}
+
+		currentUserIDStr, ok := jwtClaims["jti"].(string)
+		if !ok {
+			handleError(c, http.StatusInternalServerError, "Failed to get current user ID")
+			return
+		}
+
+		currentUserID, err := uuid.Parse(currentUserIDStr)
+		if err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to parse current user ID")
+			return
+		}
+
+		friendIDStr := c.Param("friendID")
+		friendID, err := uuid.Parse(friendIDStr)
+		if err != nil {
+			handleError(c, http.StatusBadRequest, "Invalid friend ID")
+			return
+		}
+
+		var currentUserServers []models.Server
+		if err := db.GetDB().
+			Table("servers").
+			Joins("INNER JOIN on_servers ON servers.id = on_servers.server_id AND on_servers.user_id = ? AND on_servers.deleted_at IS NULL", currentUserID).
+			Where("servers.deleted_at IS NULL").
+			Find(&currentUserServers).Error; err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to fetch current user's servers")
+			return
+		}
+
+		var friendServers []models.Server
+		if err := db.GetDB().
+			Table("servers").
+			Joins("INNER JOIN on_servers ON servers.id = on_servers.server_id AND on_servers.user_id = ? AND on_servers.deleted_at IS NULL", friendID).
+			Where("servers.deleted_at IS NULL").
+			Find(&friendServers).Error; err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to fetch friend's servers")
+			return
+		}
+
+		var friendBans []models.Ban
+		if err := db.GetDB().
+			Where("user_id = ? AND deleted_at IS NULL", friendID).
+			Find(&friendBans).Error; err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to fetch friend's bans")
+			return
+		}
+
+		bannedServers := make(map[uuid.UUID]struct{})
+		for _, ban := range friendBans {
+			bannedServers[ban.ServerID] = struct{}{}
+		}
+
+		friendServerMap := make(map[uuid.UUID]struct{})
+		for _, server := range friendServers {
+			friendServerMap[server.ID] = struct{}{}
+		}
+
+		var resultServers []models.Server
+		for _, server := range currentUserServers {
+			if _, exists := friendServerMap[server.ID]; !exists {
+				if _, banned := bannedServers[server.ID]; !banned {
+					resultServers = append(resultServers, server)
+				}
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{"data": resultServers})
+	}
+}
+
 func UnbanUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverID := c.Param("id")
@@ -352,23 +436,35 @@ func NewServer() gin.HandlerFunc {
 			return
 		}
 
-		inputRole := models.Role{
+		adminRole := models.Role{
 			ServerID: inputServer.ID,
-			Label:    "membre",
+			Label:    "admin",
 		}
-		if err := tx.Create(&inputRole).Error; err != nil {
+		if err := tx.Create(&adminRole).Error; err != nil {
 			tx.Rollback()
-			handleError(c, http.StatusInternalServerError, "Erreur lors de la création du rôle")
+			handleError(c, http.StatusInternalServerError, "Erreur lors de la création du rôle admin")
 			return
 		}
 
-		inputRoleUser := models.RoleUser{
-			RoleID: inputRole.ID,
+		// Attribution du rôle "admin" à l'utilisateur créateur
+		adminRoleUser := models.RoleUser{
+			RoleID: adminRole.ID,
 			UserID: userID,
 		}
-		if err := tx.Create(&inputRoleUser).Error; err != nil {
+		if err := tx.Create(&adminRoleUser).Error; err != nil {
 			tx.Rollback()
-			handleError(c, http.StatusInternalServerError, "Erreur lors de la création de l'association rôle-utilisateur")
+			handleError(c, http.StatusInternalServerError, "Erreur lors de l'attribution du rôle admin à l'utilisateur")
+			return
+		}
+
+		// Création du rôle "membre"
+		memberRole := models.Role{
+			ServerID: inputServer.ID,
+			Label:    "membre",
+		}
+		if err := tx.Create(&memberRole).Error; err != nil {
+			tx.Rollback()
+			handleError(c, http.StatusInternalServerError, "Erreur lors de la création du rôle membre")
 			return
 		}
 

@@ -71,7 +71,7 @@ func OAuthCallbackHandler(provider string) gin.HandlerFunc {
 		}
 
 		// Génération du JWT
-		tokenString, err := controllers.GenerateJWT(user.ID, user.Email, user.Role)
+		tokenString, err := controllers.GenerateJWT(user.ID, user.Email, user.Role, user.Pseudo)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Échec de la génération du JWT"})
 			return

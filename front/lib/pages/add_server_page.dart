@@ -133,7 +133,7 @@ class _AddServerPageState extends State<AddServerPage> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text(AppLocalizations.of(context)!.cancel_button),
+              child: Text(AppLocalizations.of(context)!.ok_button),
             ),
           ],
         ),

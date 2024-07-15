@@ -21,6 +21,7 @@ Future<String?> getCurrentUserId() async {
     if (token != null) {
       final Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
       final currentUserId = decodedToken['jti'];
+      print(decodedToken);
       return currentUserId;
     } else {
       print('Token not found');
@@ -135,7 +136,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                     );
 
                     if (response.statusCode == 200) {
-                      Navigator.pop(context); // Ferme la boîte de dialogue
+                      Navigator.pop(context);
                       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AuthPage()));
                     } else if (response.statusCode == 403) {
                       showDialog(
