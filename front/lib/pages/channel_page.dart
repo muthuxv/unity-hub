@@ -121,6 +121,10 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       final DateTime createdAt = DateTime.parse(data['SentAt']);
       final String formattedDate = DateFormat('yyyy-MM-dd').format(createdAt);
 
+      setState(() {
+        _messagesByDate.putIfAbsent(formattedDate, () => []);
+        _messagesByDate[formattedDate]!.add(data);
+      });
 
       try {
         await FirebaseMessaging.instance.unsubscribeFromTopic('channel-${widget.channelId}');
@@ -151,10 +155,6 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
         debugPrint('Error sending notification: $e');
       }
 
-      setState(() {
-        _messagesByDate.putIfAbsent(formattedDate, () => []);
-        _messagesByDate[formattedDate]!.add(data);
-      });
     });
   }
 

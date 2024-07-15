@@ -124,6 +124,10 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
       final DateTime createdAt = DateTime.parse(data['SentAt']);
       final String formattedDate = DateFormat('yyyy-MM-dd').format(createdAt);
 
+      setState(() {
+        _messagesByDate.putIfAbsent(formattedDate, () => []);
+        _messagesByDate[formattedDate]!.add(data);
+      });
 
       try {
         await FirebaseMessaging.instance.unsubscribeFromTopic('channel-${widget.group.channelId}');
@@ -153,11 +157,6 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
       } catch (e) {
         debugPrint('Error sending notification: $e');
       }
-
-      setState(() {
-        _messagesByDate.putIfAbsent(formattedDate, () => []);
-        _messagesByDate[formattedDate]!.add(data);
-      });
     });
   }
 
