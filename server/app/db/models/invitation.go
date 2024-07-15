@@ -10,13 +10,13 @@ type Invitation struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey"`
 	gorm.Model
 	Link           string
-	isAccepted     bool `gorm:"default:false"`
+	IsAccepted     bool      `gorm:"default:false"`
 	Expire         time.Time `gorm:"validate:required"`
-	UserSenderID   uuid.UUID      `gorm:"validate:required"`
+	UserSenderID   uuid.UUID `gorm:"validate:required"`
 	UserSender     User      `gorm:"foreignKey:UserSenderID;references:ID;"`
-	UserReceiverID uuid.UUID      `gorm:"validate:required"`
+	UserReceiverID uuid.UUID `gorm:"validate:required"`
 	UserReceiver   User      `gorm:"foreignKey:UserReceiverID;references:ID;"`
-	ServerID       uuid.UUID      `gorm:"validate:required"`
+	ServerID       uuid.UUID `gorm:"validate:required"`
 	Server         Server    `gorm:"foreignKey:ServerID;references:ID;"`
 }
 
