@@ -101,38 +101,40 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('lib/images/wall1.png'),
-              fit: BoxFit.cover,
-            )),
-        child: Center(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.all(Radius.circular(25)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
-                  blurRadius: 10,
-                  spreadRadius: 5,
-                  offset: const Offset(0, 5),
-                ),
-              ],
+      body: Stack(
+        children: [
+          // Background image
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('lib/images/wall1.png'),
+                fit: BoxFit.cover,
+              ),
             ),
+          ),
+          // Black container with opacity
+          Container(
+            color: Colors.black.withOpacity(0.5),
+          ),
+          // Content
+          SingleChildScrollView(
             child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25.0),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 25.0,
+                  vertical: MediaQuery.of(context).viewInsets.bottom + 16,
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    const SizedBox(height: 100),
                     //logo
                     Image.asset(
                       'lib/images/unitylog.png',
@@ -258,12 +260,13 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 100),
                   ],
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -42,7 +42,7 @@ class _HomePageState extends State<HomePage> {
 
           if (featureName == 'Serveurs') {
             filteredFeatures.add({'name': featureName, 'enabled': isEnabled});
-          } else if (featureName == 'CommunityHub') {
+          } else if (featureName == 'Messages') {
             filteredFeatures.add({'name': featureName, 'enabled': isEnabled});
           } else if (featureName == 'Notifications') {
             filteredFeatures.add({'name': featureName, 'enabled': isEnabled});
