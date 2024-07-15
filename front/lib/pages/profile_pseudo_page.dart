@@ -58,38 +58,55 @@ class _ProfilePseudoPageState extends State<ProfilePseudoPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
-    final response = await Dio().put(
-      'http://10.0.2.2:8080/users/$userId',
-      data: {
-        'Pseudo': _pseudoController.text,
-      },
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
+    try {
+      final response = await Dio().put(
+        'http://10.0.2.2:8080/users/$userId',
+        data: {
+          'Pseudo': _pseudoController.text,
         },
-      ),
-    );
-
-    if (response.statusCode == 200) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(AppLocalizations.of(context)!.pseudoUpdated),
-          content: Text(AppLocalizations.of(context)!.pseudoUpdatedSuccess),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop(true);
-              },
-              child: const Text('OK'),
-            ),
-          ],
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
         ),
       );
-    } else {
-      _showErrorDialog(AppLocalizations.of(context)!.errorUpdatingPseudo);
+
+      if (response.statusCode == 200) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(AppLocalizations.of(context)!.profileUpdated),
+            content: Text(AppLocalizations.of(context)!.pseudoUpdatedSuccessfully),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(true);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        // This block will handle cases where response code is not 200
+        if (response.statusCode == 400 && response.data['error'] == 'Pseudo already exists') {
+          _showErrorDialog(AppLocalizations.of(context)!.pseudoAlreadyExists);
+        } else {
+          _showErrorDialog(AppLocalizations.of(context)!.errorUpdatingProfile);
+        }
+      }
+    } on DioError catch (e) {
+      // This block handles exceptions related to the request
+      if (e.response != null && e.response!.statusCode == 400 && e.response!.data['error'] == 'Pseudo already exists') {
+        _showErrorDialog(AppLocalizations.of(context)!.pseudoAlreadyExists);
+      } else {
+        _showErrorDialog(AppLocalizations.of(context)!.connectionError);
+      }
+    } catch (e) {
+      // This block handles any other exceptions
+      _showErrorDialog(AppLocalizations.of(context)!.connectionError);
     }
   }
 

@@ -72,38 +72,55 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
-    final response = await Dio().put(
-      'http://10.0.2.2:8080/users/$userId',
-      options: Options(
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ),
-      data: {
-        'Pseudo': _pseudo,
-      },
-    );
-
-    if (response.statusCode == 200) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(AppLocalizations.of(context)!.profileUpdated),
-          content: Text(AppLocalizations.of(context)!.pseudoUpdatedSuccessfully),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop(true);
-              },
-              child: const Text('OK'),
-            ),
-          ],
+    try {
+      final response = await Dio().put(
+        'http://10.0.2.2:8080/users/$userId',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
         ),
+        data: {
+          'Pseudo': _pseudo,
+        },
       );
-    } else {
-      _showErrorDialog(AppLocalizations.of(context)!.errorUpdatingProfile);
+
+      if (response.statusCode == 200) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(AppLocalizations.of(context)!.profileUpdated),
+            content: Text(AppLocalizations.of(context)!.pseudoUpdatedSuccessfully),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(true);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        // This block will handle cases where response code is not 200
+        if (response.statusCode == 400 && response.data['error'] == 'Pseudo already exists') {
+          _showErrorDialog(AppLocalizations.of(context)!.pseudoAlreadyExists);
+        } else {
+          _showErrorDialog(AppLocalizations.of(context)!.errorUpdatingProfile);
+        }
+      }
+    } on DioError catch (e) {
+      // This block handles exceptions related to the request
+      if (e.response != null && e.response!.statusCode == 400 && e.response!.data['error'] == 'Pseudo already exists') {
+        _showErrorDialog(AppLocalizations.of(context)!.pseudoAlreadyExists);
+      } else {
+        _showErrorDialog(AppLocalizations.of(context)!.connectionError);
+      }
+    } catch (e) {
+      // This block handles any other exceptions
+      _showErrorDialog(AppLocalizations.of(context)!.connectionError);
     }
   }
 
@@ -133,7 +150,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.profilePictureUpdated),
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     } else {

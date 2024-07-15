@@ -11,10 +11,10 @@ class RolePage extends StatefulWidget {
   final String servercreatorUserId;
 
   const RolePage({
-    super.key,
+    Key? key,
     required this.serverId,
     required this.servercreatorUserId,
-  });
+  }) : super(key: key);
 
   @override
   _RolePageState createState() => _RolePageState();
@@ -133,10 +133,15 @@ class _RolePageState extends State<RolePage> {
               itemCount: _roles.length,
               itemBuilder: (context, index) {
                 final role = _roles[index];
+                final roleId = role['ID'];
+                final roleLabel = role['Label'];
+                final isBaseRole = roleLabel.toLowerCase() == 'membre';
+                final isAdminRole = roleLabel.toLowerCase() == 'admin';
+
                 return ListTile(
-                  title: Text(role['Label']),
+                  title: Text(roleLabel),
                   tileColor: Colors.purple.shade50,
-                  trailing: isEnabled
+                  trailing: isEnabled && !isBaseRole && !isAdminRole
                       ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -147,8 +152,8 @@ class _RolePageState extends State<RolePage> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => RoleUpdatePageForm(
-                                roleId: role['ID'],
-                                roleLabel: role['Label'],
+                                roleId: roleId,
+                                roleLabel: roleLabel,
                               ),
                             ),
                           );
@@ -161,7 +166,7 @@ class _RolePageState extends State<RolePage> {
                         icon: const Icon(Icons.delete),
                         onPressed: () async {
                           final response = await Dio().delete(
-                            'http://10.0.2.2:8080/roles/${role['ID']}',
+                            'http://10.0.2.2:8080/roles/$roleId',
                             options: Options(
                               headers: {
                                 'Content-Type': 'application/json',
@@ -175,7 +180,8 @@ class _RolePageState extends State<RolePage> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                    AppLocalizations.of(context)!.failedDeleteRole),
+                                  AppLocalizations.of(context)!.failedDeleteRole,
+                                ),
                               ),
                             );
                           }

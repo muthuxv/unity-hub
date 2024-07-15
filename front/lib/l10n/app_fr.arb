@@ -213,5 +213,9 @@
   "onlyServerCreator": "Seul le créateur du serveur peut effectuer cette action",
   "pending": "En attente",
   "generateNewAvatar": "Générer un nouvel avatar",
-  "profilePictureUpdated": "Photo de profil mise à jour"
+  "profilePictureUpdated": "Photo de profil mise à jour",
+  "pseudoAlreadyExists": "Ce pseudo existe déjà",
+  "leaveServerConfirmation": "Êtes-vous sûr de vouloir quitter ce serveur ?",
+  "confirmButton": "Confirmer",
+  "selectServer": "Sélectionner un serveur"
 }

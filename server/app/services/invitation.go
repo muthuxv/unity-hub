@@ -21,22 +21,12 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 			return
 		}
 
-		// Fetch the role of the logged-in user
 		result := db.GetDB().Preload("User").Preload("Role").Where("user_id = ?", userID).First(&roleUser)
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la récupération du rôle de l'utilisateur"})
 			return
 		}
 
-		// Check if the user is an admin
-		if roleUser.Role.Label != "admin" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Vous devez être administrateur pour créer une invitation",
-				"role": roleUser,
-			})
-			return
-		}
-
-		// Get the ServerID from the URL parameter
 		serverIDStr := c.Param("id")
 		serverID, err := uuid.Parse(serverIDStr)
 		if err != nil {
@@ -44,7 +34,6 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 			return
 		}
 
-		// Get the UserReceiverID from the request body
 		var receiver struct {
 			UserReceiverID string `json:"userReceiverId"`
 		}
@@ -59,7 +48,6 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 			return
 		}
 
-		// Check if the UserReceiver is already a member of the server
 		var membershipCount int64
 		result = db.GetDB().Table("on_servers").Where("user_id = ? AND server_id = ? AND deleted_at IS NULL", userReceiverID, serverID).Count(&membershipCount)
 		if result.Error != nil {
@@ -72,7 +60,6 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 			return
 		}
 
-		// Check if the UserReceiver has already received an invitation for this server
 		var count int64
 		result = db.GetDB().Table("invitations").
 			Where("user_receiver_id = ? AND server_id = ? AND deleted_at IS NULL AND expire > ?", userReceiverID, serverID, time.Now()).
@@ -112,7 +99,6 @@ func SendInvitation(createLink bool) gin.HandlerFunc {
 
 func GetInvitationsByUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get the user's ID from the URL parameter
 		userIDStr := c.Param("id")
 		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
@@ -120,7 +106,6 @@ func GetInvitationsByUser() gin.HandlerFunc {
 			return
 		}
 
-		// Fetch all invitations where the user is the receiver
 		var invitations []models.Invitation
 		result := db.GetDB().Preload("Server").Preload("UserSender").Where("user_receiver_id = ?", userID).Find(&invitations)
 		if result.Error != nil {
@@ -128,7 +113,6 @@ func GetInvitationsByUser() gin.HandlerFunc {
 			return
 		}
 
-		// Return the invitations
 		c.JSON(http.StatusOK, invitations)
 	}
 }

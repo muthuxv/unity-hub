@@ -49,18 +49,13 @@ func GenerateLogMiddleware(action string) gin.HandlerFunc {
 			return
 		}
 
-		userIDStr, ok := jwtClaims["jti"].(string)
+		userPseudo, ok := jwtClaims["pseudo"].(string)
 		if !ok {
 			return
 		}
 
-		_, err = uuid.Parse(userIDStr)
-		if err != nil {
-			return
-		}
-
 		logEntry := models.Logs{
-			Message:  "User " + userIDStr + " " + action + " server",
+			Message:  "User " + userPseudo + " " + action + " server",
 			ServerID: serverID,
 		}
 
