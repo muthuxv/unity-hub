@@ -8,6 +8,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:web_admin/constants/dimens.dart';
 import 'package:web_admin/generated/l10n.dart';
+import 'package:web_admin/environment.dart';
 import 'package:web_admin/theme/theme_extensions/app_button_theme.dart';
 import 'package:web_admin/theme/theme_extensions/app_color_scheme.dart';
 import 'package:web_admin/theme/theme_extensions/app_data_table_theme.dart';
@@ -38,9 +39,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> fetchData() async {
     try {
       final dio = Dio();
-      final serverResponse = await dio.get('http://localhost:8080/servers');
-      final userResponse = await dio.get('http://localhost:8080/users');
-      final tagResponse = await dio.get('http://localhost:8080/tags');
+      final serverResponse = await dio.get('${env.apiBaseUrl}/servers');
+      final userResponse = await dio.get('${env.apiBaseUrl}/users');
+      final tagResponse = await dio.get('${env.apiBaseUrl}/tags');
 
       if (serverResponse.statusCode == 200 &&
           userResponse.statusCode == 200 &&

@@ -5,6 +5,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:go_router/go_router.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
+import 'package:web_admin/environment.dart';
 import 'package:web_admin/generated/l10n.dart';
 import 'package:web_admin/theme/theme_extensions/app_button_theme.dart';
 import 'package:web_admin/theme/theme_extensions/app_data_table_theme.dart';
@@ -65,7 +66,7 @@ class _TagsScreenState extends State<TagsScreen> {
   void _doDelete(BuildContext context, String tagId) async {
     final lang = Lang.of(context);
     try {
-      final response = await Dio().delete('http://localhost:8080/tags/$tagId');
+      final response = await Dio().delete('${env.apiBaseUrl}/tags/$tagId');
       if (response.statusCode == 204) {
         final dialog = AwesomeDialog(
           context: context,
@@ -112,7 +113,7 @@ class _TagsScreenState extends State<TagsScreen> {
 
     return PortalMasterLayout(
       body: _isLoading
-          ? Center(child: CircularProgressIndicator()) // Afficher un indicateur de chargement
+          ? Center(child: CircularProgressIndicator())
           : ListView(
         padding: const EdgeInsets.all(kDefaultPadding),
         children: [
@@ -233,7 +234,7 @@ class DataSource extends DataTableSource {
   final void Function(Map<String, dynamic> data) onDetailButtonPressed;
   final void Function(Map<String, dynamic> data) onDeleteButtonPressed;
 
-  List<Map<String, dynamic>> _data = []; // Updated to store API data
+  List<Map<String, dynamic>> _data = [];
 
   DataSource({
     required this.onDetailButtonPressed,
@@ -242,7 +243,7 @@ class DataSource extends DataTableSource {
 
   Future<void> loadData() async {
     try {
-      final response = await Dio().get('http://localhost:8080/tags');
+      final response = await Dio().get('${env.apiBaseUrl}/tags');
       if (response.statusCode == 200) {
         List<dynamic> tags = response.data;
         _data = List.generate(tags.length, (index) {
@@ -254,7 +255,7 @@ class DataSource extends DataTableSource {
             'deletedAt': tags[index]['DeletedAt'],
           };
         });
-        notifyListeners(); // Notify DataTable that data has changed
+        notifyListeners();
       } else {
         throw Exception('Failed to load data');
       }

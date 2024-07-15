@@ -4,6 +4,7 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
 import 'package:web_admin/generated/l10n.dart';
+import 'package:web_admin/environment.dart';
 import 'package:web_admin/theme/theme_extensions/app_button_theme.dart';
 import 'package:web_admin/views/widgets/card_elements.dart';
 import 'package:web_admin/views/widgets/portal_master_layout/portal_master_layout.dart';
@@ -34,11 +35,14 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
   Future<bool> _getDataAsync() async {
     if (widget.id.isNotEmpty) {
       try {
-        final response = await Dio().get('http://localhost:8080/features/${widget.id}');
+        final response = await Dio().get('${env.apiBaseUrl}/features/${widget.id}');
         if (response.statusCode == 200) {
           final feature = response.data;
-          _formData.id = widget.id;
-          _formData.status = feature['Status'];
+          print(feature);
+          setState(() {
+            _formData.id = widget.id;
+            _formData.status = feature['Status'];
+          });
         }
       } catch (e) {
         print('Error loading feature data: $e');
@@ -65,7 +69,7 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
         btnOkOnPress: () async {
           try {
             final response = await Dio().put(
-              'http://localhost:8080/features/${widget.id}',
+              '${env.apiBaseUrl}/features/${widget.id}',
               data: {
                 'Status': _formData.status,
               },
@@ -179,11 +183,11 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
                 border: OutlineInputBorder(),
                 floatingLabelBehavior: FloatingLabelBehavior.always,
               ),
-              items: [
+              items: const [
                 DropdownMenuItem(value: 'true', child: Text('Activé')),
                 DropdownMenuItem(value: 'false', child: Text('Désactivé')),
               ],
-              initialValue: _formData.status,
+              initialValue: _formData.status.isNotEmpty ? _formData.status : 'false', // Ajoutez cette ligne pour définir une valeur par défaut
               validator: FormBuilderValidators.required(),
               onChanged: (String? value) {
                 setState(() {
@@ -248,5 +252,5 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
 
 class FormData {
   String id = '';
-  String status = '';
+  String status = 'false';
 }

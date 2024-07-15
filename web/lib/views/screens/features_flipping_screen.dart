@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
 import 'package:web_admin/generated/l10n.dart';
+import 'package:web_admin/environment.dart';
 import 'package:web_admin/theme/theme_extensions/app_button_theme.dart';
 import 'package:web_admin/theme/theme_extensions/app_data_table_theme.dart';
 import 'package:web_admin/views/widgets/card_elements.dart';
@@ -65,7 +66,7 @@ class _FeaturesFlippingScreenState extends State<FeaturesFlippingScreen> {
   void _doDelete(BuildContext context, String featureId) async {
     final lang = Lang.of(context);
     try {
-      final response = await Dio().delete('http://localhost:8080/features/$featureId');
+      final response = await Dio().delete('${env.apiBaseUrl}/features/$featureId');
       if (response.statusCode == 204) {
         final dialog = AwesomeDialog(
           context: context,
@@ -243,7 +244,7 @@ class DataSource extends DataTableSource {
 
   Future<void> loadData() async {
     try {
-      final response = await Dio().get('http://localhost:8080/features');
+      final response = await Dio().get('${env.apiBaseUrl}/features');
       if (response.statusCode == 200) {
         List<dynamic> features = response.data;
         _data = List.generate(features.length, (index) {
