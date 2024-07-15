@@ -26,6 +26,12 @@ class _GroupPageState extends State<GroupPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    Provider.of<GroupProvider>(context, listen: false).fetchGroups();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
