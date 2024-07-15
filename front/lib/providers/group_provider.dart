@@ -21,7 +21,7 @@ class GroupProvider with ChangeNotifier {
     final userId = decodedToken['jti'];
 
     try {
-      final response = await Dio().get('https://unityhub.fr/groups/users/$userId');
+      final response = await Dio().get('http://10.0.2.2:8080/groups/users/$userId');
       if (response.statusCode == 200) {
         List<dynamic>? data = response.data;
 
@@ -87,7 +87,7 @@ class GroupProvider with ChangeNotifier {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId1 = decodedToken['jti'];
 
-    final response = await Dio().post('https://unityhub.fr/groups/private/$userId1',
+    final response = await Dio().post('http://10.0.2.2:8080/groups/private/$userId1',
         data: {'userID': userId2});
     if (response.statusCode == 201 || response.statusCode == 200) {
       fetchGroups();
@@ -100,7 +100,7 @@ class GroupProvider with ChangeNotifier {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
-    final response = await Dio().post('https://unityhub.fr/groups/public/$userId',
+    final response = await Dio().post('http://10.0.2.2:8080/groups/public/$userId',
         data: {'group_id': groupId, 'member_ids': memberIds});
     if (response.statusCode == 200 || response.statusCode == 201) {
       fetchGroups();
@@ -109,7 +109,7 @@ class GroupProvider with ChangeNotifier {
 
   Future<void> leaveGroup(String groupId, String userId) async {
     final dio = Dio();
-    final url = 'https://unityhub.fr/groups/$groupId/members/$userId';
+    final url = 'http://10.0.2.2:8080/groups/$groupId/members/$userId';
 
     try {
       final response = await dio.delete(url);

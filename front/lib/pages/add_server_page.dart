@@ -38,7 +38,7 @@ class _AddServerPageState extends State<AddServerPage> {
     final token = await storage.read(key: 'token');
 
     final response = await Dio().get(
-      'https://unityhub.fr/tags',
+      'http://10.0.2.2:8080/tags',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ class _AddServerPageState extends State<AddServerPage> {
     };
 
     final response = await Dio().post(
-      'https://unityhub.fr/servers/create',
+      'http://10.0.2.2:8080/servers/create',
       data: data,
       options: Options(
         headers: {

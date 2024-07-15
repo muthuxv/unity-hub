@@ -35,7 +35,7 @@ class _FriendPageState extends State<FriendPage> {
     final userId = decodedToken['jti'];
 
     final response = await Dio().get(
-      'https://unityhub.fr/friends/users/$userId',
+      'http://10.0.2.2:8080/friends/users/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ class _FriendPageState extends State<FriendPage> {
     final userId = decodedToken['jti'];
 
     final response = await Dio().get(
-      'https://unityhub.fr/friends/sent/$userId',
+      'http://10.0.2.2:8080/friends/sent/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ class _FriendPageState extends State<FriendPage> {
     final userId = decodedToken['jti'];
 
     final response = await Dio().get(
-      'https://unityhub.fr/friends/pending/$userId',
+      'http://10.0.2.2:8080/friends/pending/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ class _FriendPageState extends State<FriendPage> {
     final userId = decodedToken['jti'];
 
     final response = await Dio().post(
-      'https://unityhub.fr/friends/accept',
+      'http://10.0.2.2:8080/friends/accept',
       data: {
         'ID': friendId,
         'UserID2': userId,
@@ -182,7 +182,7 @@ class _FriendPageState extends State<FriendPage> {
     final userId = decodedToken['jti'];
 
     final response = await Dio().post(
-      'https://unityhub.fr/friends/refuse',
+      'http://10.0.2.2:8080/friends/refuse',
       data: {
         'ID': friendId,
         'UserID2': userId,
@@ -218,7 +218,7 @@ class _FriendPageState extends State<FriendPage> {
 
     try {
       final response = await Dio().delete(
-        'https://unityhub.fr/friends/$friendId',
+        'http://10.0.2.2:8080/friends/$friendId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -475,7 +475,7 @@ class _FriendPageState extends State<FriendPage> {
 
     try {
       final response = await Dio().delete(
-        'https://unityhub.fr/friends/${friend['ID']}',
+        'http://10.0.2.2:8080/friends/${friend['ID']}',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -592,7 +592,7 @@ class _FriendPageState extends State<FriendPage> {
 
     try {
       final response = await Dio().post(
-        'https://unityhub.fr/friends/request',
+        'http://10.0.2.2:8080/friends/request',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -611,7 +611,7 @@ class _FriendPageState extends State<FriendPage> {
           const storage = FlutterSecureStorage();
           final token = await storage.read(key: 'token');
           final response = await Dio().get(
-            'https://unityhub.fr/users/pseudo/$pseudo',
+            'http://10.0.2.2:8080/users/pseudo/$pseudo',
             options: Options(
               headers: {
                 'Content-Type': 'application/json',

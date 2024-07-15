@@ -31,7 +31,7 @@ class _ProfilePseudoPageState extends State<ProfilePseudoPage> {
       final userId = decodedToken['jti'];
 
       final response = await Dio().get(
-        'https://unityhub.fr/users/$userId',
+        'http://10.0.2.2:8080/users/$userId',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -59,7 +59,7 @@ class _ProfilePseudoPageState extends State<ProfilePseudoPage> {
     final userId = decodedToken['jti'];
 
     final response = await Dio().put(
-      'https://unityhub.fr/users/$userId',
+      'http://10.0.2.2:8080/users/$userId',
       data: {
         'Pseudo': _pseudoController.text,
       },

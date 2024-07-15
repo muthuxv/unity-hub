@@ -27,7 +27,7 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
       final userId = decodedToken['jti'];
 
       final response = await Dio().put(
-        'https://unityhub.fr/users/$userId/change-password',
+        'http://10.0.2.2:8080/users/$userId/change-password',
         data: {
           'currentPassword': _currentPasswordController.text,
           'newPassword': _newPasswordController.text,

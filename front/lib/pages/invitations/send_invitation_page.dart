@@ -39,7 +39,7 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
     try {
       // Fetch friends
       final friendsResponse = await Dio().get(
-        'https://unityhub.fr/friends/users/$userId',
+        'http://10.0.2.2:8080/friends/users/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
 
       // Fetch banned users
       final bansResponse = await Dio().get(
-        'https://unityhub.fr/servers/${widget.serverId}/bans',
+        'http://10.0.2.2:8080/servers/${widget.serverId}/bans',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -90,7 +90,7 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
 
     for (String friendId in _selectedFriends.keys) {
       final response = await Dio().post(
-        'https://unityhub.fr/invitations/server/${widget.serverId}',
+        'http://10.0.2.2:8080/invitations/server/${widget.serverId}',
         data: {'userReceiverId': friendId},
         options: Options(
           headers: {

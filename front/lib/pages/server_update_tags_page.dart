@@ -52,7 +52,7 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
   Future<void> fetchServerTags() async {
     try {
       Response response =
-      await Dio().get('https://unityhub.fr/servers/${widget.serverId}');
+      await Dio().get('http://10.0.2.2:8080/servers/${widget.serverId}');
       Map<String, dynamic> serverData = Map<String, dynamic>.from(response.data);
       setState(() {
         _serverTags = serverData['Tags'] ?? [];
@@ -64,7 +64,7 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
 
   Future<void> fetchAllTags() async {
     try {
-      Response response = await Dio().get('https://unityhub.fr/tags');
+      Response response = await Dio().get('http://10.0.2.2:8080/tags');
       setState(() {
         _allTags = response.data;
       });
@@ -76,7 +76,7 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
   Future<void> updateServerTags(List<String> tagIds) async {
     try {
       Response response = await Dio().put(
-        'https://unityhub.fr/servers/${widget.serverId}',
+        'http://10.0.2.2:8080/servers/${widget.serverId}',
         data: {'tag_ids': tagIds},
       );
       if (response.statusCode == 200) {

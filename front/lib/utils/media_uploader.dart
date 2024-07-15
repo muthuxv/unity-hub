@@ -25,7 +25,7 @@ class MediaUploader {
     });
 
     final response = await Dio().post(
-      'https://unityhub.fr/upload',
+      'http://10.0.2.2:8080/upload',
       data: formData,
       options: Options(
         headers: {

@@ -30,7 +30,7 @@ class _NotificationPageState extends State<NotificationPage> {
 
     try {
       final response = await Dio().get(
-        'https://unityhub.fr/invitations/user/$userId',
+        'http://10.0.2.2:8080/invitations/user/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ class _NotificationPageState extends State<NotificationPage> {
 
     try {
       final response = await Dio().get(
-        'https://unityhub.fr/friends/pending/$userId',
+        'http://10.0.2.2:8080/friends/pending/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ class _NotificationPageState extends State<NotificationPage> {
     final userId = decodedToken['jti'];
 
     final response = await Dio().post(
-      'https://unityhub.fr/friends/accept',
+      'http://10.0.2.2:8080/friends/accept',
       data: {
         'ID': friendId,
         'UserID2': userId,
@@ -154,7 +154,7 @@ class _NotificationPageState extends State<NotificationPage> {
     final userId = decodedToken['jti'];
 
     final response = await Dio().post(
-      'https://unityhub.fr/friends/refuse',
+      'http://10.0.2.2:8080/friends/refuse',
       data: {
         'ID': friendId,
         'UserID2': userId,
@@ -208,7 +208,7 @@ class _NotificationPageState extends State<NotificationPage> {
                     icon: const Icon(Icons.check, color: Colors.green),
                     onPressed: () async {
                       final response = await Dio().post(
-                        'https://unityhub.fr/servers/${invitation['Server']['ID']}/join',
+                        'http://10.0.2.2:8080/servers/${invitation['Server']['ID']}/join',
                         options: Options(
                           headers: {
                             'Content-Type': 'application/json',
@@ -218,7 +218,7 @@ class _NotificationPageState extends State<NotificationPage> {
                       );
                       if (response.statusCode == 200) {
                         final response = await Dio().delete(
-                          'https://unityhub.fr/invitations/${invitation['ID']}',
+                          'http://10.0.2.2:8080/invitations/${invitation['ID']}',
                           options: Options(
                             headers: {
                               'Content-Type': 'application/json',
@@ -241,7 +241,7 @@ class _NotificationPageState extends State<NotificationPage> {
                     icon: const Icon(Icons.close, color: Colors.red),
                     onPressed: () async {
                       final response = await Dio().delete(
-                        'https://unityhub.fr/invitations/${invitation['ID']}',
+                        'http://10.0.2.2:8080/invitations/${invitation['ID']}',
                         options: Options(
                           headers: {
                             'Content-Type': 'application/json',

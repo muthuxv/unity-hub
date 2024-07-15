@@ -50,7 +50,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
     try {
       final response = await Dio().get(
-        'https://unityhub.fr/users/${widget.userId}',
+        'http://10.0.2.2:8080/users/${widget.userId}',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -74,7 +74,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     final token = await storage.read(key: 'token');
 
     final response = await Dio().get(
-      'https://unityhub.fr/friends',
+      'http://10.0.2.2:8080/friends',
       options: Options(
         headers: {
           'Authorization': 'Bearer $token',
@@ -103,7 +103,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     final token = await storage.read(key: 'token');
 
     final response = await Dio().get(
-      'https://unityhub.fr/friends/pending/${userInfo['ID']}',
+      'http://10.0.2.2:8080/friends/pending/${userInfo['ID']}',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -142,7 +142,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
     try {
       await Dio().post(
-        'https://unityhub.fr/friends/request',
+        'http://10.0.2.2:8080/friends/request',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -172,7 +172,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
     try {
       await Dio().delete(
-        'https://unityhub.fr/friends/${_friendInfo['ID']}',
+        'http://10.0.2.2:8080/friends/${_friendInfo['ID']}',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -197,7 +197,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
     try {
       await Dio().delete(
-        'https://unityhub.fr/friends/${_friendInfo['ID']}',
+        'http://10.0.2.2:8080/friends/${_friendInfo['ID']}',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -283,7 +283,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
     try {
       await Dio().post(
-        'https://unityhub.fr/reports',
+        'http://10.0.2.2:8080/reports',
         data: reportData,
         options: Options(
           headers: {

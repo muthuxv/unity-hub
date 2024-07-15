@@ -20,7 +20,7 @@ class _MembersPanelState extends State<MembersPanel> {
     });
 
     try {
-      final response = await Dio().get('https://unityhub.fr/servers/${widget.serverId}/members');
+      final response = await Dio().get('http://10.0.2.2:8080/servers/${widget.serverId}/members');
       print('Response: $response');
       setState(() {
         _members = response.data['data'];

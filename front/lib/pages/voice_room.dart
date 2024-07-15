@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:dio/dio.dart';
@@ -18,6 +20,7 @@ class _VoiceRoomState extends State<VoiceRoom> {
   final RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
   RTCPeerConnection? _peerConnection;
   MediaStream? _localStream;
+  final List<RTCIceCandidate> _remoteCandidates = [];
 
   @override
   void initState() {
@@ -31,9 +34,8 @@ class _VoiceRoomState extends State<VoiceRoom> {
       if (await Permission.microphone.request().isGranted) {
         _initialize();
       } else {
-        // Permission denied, show a message to the user
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Le microphone est nécessaire pour les salons vocaux.')),
+          SnackBar(content: Text('Le microphone est nÃ©cessaire pour les salons vocaux.')),
         );
       }
     } else {
@@ -67,6 +69,7 @@ class _VoiceRoomState extends State<VoiceRoom> {
       'iceServers': [
         {'urls': 'stun:stun.l.google.com:19302'},
       ],
+      'sdpSemantics': 'unified-plan',
     };
 
     final pc = await createPeerConnection(config);
@@ -77,12 +80,16 @@ class _VoiceRoomState extends State<VoiceRoom> {
       }
     };
 
-    pc.onAddStream = (stream) {
-      _remoteRenderer.srcObject = stream;
+    pc.onTrack = (event) {
+      if (event.streams.isNotEmpty) {
+        _remoteRenderer.srcObject = event.streams[0];
+      }
     };
 
     _localStream = await _getUserMedia();
-    pc.addStream(_localStream!);
+    _localStream?.getTracks().forEach((track) {
+      pc.addTrack(track, _localStream!);
+    });
 
     return pc;
   }
@@ -101,20 +108,27 @@ class _VoiceRoomState extends State<VoiceRoom> {
     await _peerConnection!.setLocalDescription(offer);
 
     final response = await Dio().post(
-      'https://unityhub.fr/webrtc/sdp',
+      'http://10.0.2.2:8080/webrtc/sdp',
       data: {
         'sdp': offer.sdp,
         'type': offer.type,
       },
     );
 
-    final answer = response.data;
+    final answer = jsonDecode(response.data);
+    print(answer);
+
     await _peerConnection!.setRemoteDescription(RTCSessionDescription(answer['sdp'], answer['type']));
+
+    for (var candidate in _remoteCandidates) {
+      await _peerConnection!.addCandidate(candidate);
+    }
+    _remoteCandidates.clear();
   }
 
   void _sendCandidate(RTCIceCandidate candidate) {
     Dio().post(
-      'https://unityhub.fr/webrtc/ice',
+      'http://10.0.2.2:8080/webrtc/ice',
       data: {
         'candidate': candidate.candidate,
         'sdpMid': candidate.sdpMid,

@@ -79,7 +79,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       final response = await Dio().post(
-        'https://unityhub.fr/register',
+        'http://10.0.2.2:8080/register',
         data: {
           'pseudo': _pseudoController.text,
           'email': _emailController.text,
