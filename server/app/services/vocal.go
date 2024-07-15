@@ -1,44 +1,59 @@
 package services
 
 import (
-	"log"
-	"net/http"
+    "encoding/json"
+    "net/http"
 
-	"github.com/gin-gonic/gin"
-	"github.com/pion/webrtc/v3"
+    "github.com/pion/webrtc/v3"
 )
 
-func ConnectToChannel(c *gin.Context) {
-	channelId := c.Param("id")
+var peerConnection *webrtc.PeerConnection
 
-	peerConnection, err := webrtc.NewPeerConnection(webrtc.Configuration{})
-	if err != nil {
-		log.Println("Failed to create peer connection:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create peer connection"})
-		return
-	}
+func init() {
+    var err error
+    peerConnection, err = webrtc.NewPeerConnection(webrtc.Configuration{})
+    if err != nil {
+        panic(err)
+    }
+}
 
-	peerConnection.OnICECandidate(func(candidate *webrtc.ICECandidate) {
-		if candidate != nil {
-			log.Printf("New ICE candidate: %s\n", candidate.ToJSON().Candidate)
-		}
-	})
+func SDPHandler(w http.ResponseWriter, r *http.Request) {
+    var offer webrtc.SessionDescription
+    if err := json.NewDecoder(r.Body).Decode(&offer); err != nil {
+        http.Error(w, "Failed to parse offer", http.StatusBadRequest)
+        return
+    }
 
-	offer, err := peerConnection.CreateOffer(nil)
-	if err != nil {
-		log.Println("Failed to create offer:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create offer"})
-		return
-	}
+    if err := peerConnection.SetRemoteDescription(offer); err != nil {
+        http.Error(w, "Failed to set remote description", http.StatusInternalServerError)
+        return
+    }
 
-	if err := peerConnection.SetLocalDescription(offer); err != nil {
-		log.Println("Failed to set local description:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to set local description"})
-		return
-	}
+    answer, err := peerConnection.CreateAnswer(nil)
+    if err != nil {
+        http.Error(w, "Failed to create answer", http.StatusInternalServerError)
+        return
+    }
 
-	c.JSON(http.StatusOK, gin.H{
-		"offer":     offer.SDP,
-		"channelId": channelId,
-	})
+    if err := peerConnection.SetLocalDescription(answer); err != nil {
+        http.Error(w, "Failed to set local description", http.StatusInternalServerError)
+        return
+    }
+
+    json.NewEncoder(w).Encode(answer)
+}
+
+func ICECandidateHandler(w http.ResponseWriter, r *http.Request) {
+    var candidate webrtc.ICECandidateInit
+    if err := json.NewDecoder(r.Body).Decode(&candidate); err != nil {
+        http.Error(w, "Failed to parse ICE candidate", http.StatusBadRequest)
+        return
+    }
+
+    if err := peerConnection.AddICECandidate(candidate); err != nil {
+        http.Error(w, "Failed to add ICE candidate", http.StatusInternalServerError)
+        return
+    }
+
+    w.WriteHeader(http.StatusOK)
 }
