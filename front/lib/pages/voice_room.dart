@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:dio/dio.dart';
@@ -16,11 +15,8 @@ class VoiceRoom extends StatefulWidget {
 }
 
 class _VoiceRoomState extends State<VoiceRoom> {
-  final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
-  final RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
   RTCPeerConnection? _peerConnection;
   MediaStream? _localStream;
-  final List<RTCIceCandidate> _remoteCandidates = [];
 
   @override
   void initState() {
@@ -35,7 +31,7 @@ class _VoiceRoomState extends State<VoiceRoom> {
         _initialize();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Le microphone est nÃ©cessaire pour les salons vocaux.')),
+          SnackBar(content: Text('Le microphone est nécessaire pour les salons vocaux.')),
         );
       }
     } else {
@@ -44,7 +40,6 @@ class _VoiceRoomState extends State<VoiceRoom> {
   }
 
   void _initialize() {
-    initRenderers();
     _createPeerConnection().then((pc) {
       _peerConnection = pc;
       _createOffer();
@@ -53,15 +48,9 @@ class _VoiceRoomState extends State<VoiceRoom> {
 
   @override
   void dispose() {
-    _localRenderer.dispose();
-    _remoteRenderer.dispose();
     _peerConnection?.close();
+    _localStream?.dispose();
     super.dispose();
-  }
-
-  Future<void> initRenderers() async {
-    await _localRenderer.initialize();
-    await _remoteRenderer.initialize();
   }
 
   Future<RTCPeerConnection> _createPeerConnection() async {
@@ -81,9 +70,7 @@ class _VoiceRoomState extends State<VoiceRoom> {
     };
 
     pc.onTrack = (event) {
-      if (event.streams.isNotEmpty) {
-        _remoteRenderer.srcObject = event.streams[0];
-      }
+      // Gérer les flux audio entrants
     };
 
     _localStream = await _getUserMedia();
@@ -143,15 +130,8 @@ class _VoiceRoomState extends State<VoiceRoom> {
       appBar: AppBar(
         title: Text(widget.channelName),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: RTCVideoView(_localRenderer),
-          ),
-          Expanded(
-            child: RTCVideoView(_remoteRenderer),
-          ),
-        ],
+      body: Center(
+        child: Text('Salon vocal en cours...'),
       ),
     );
   }

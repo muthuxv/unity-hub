@@ -35,7 +35,8 @@ func SDPHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Broadcast ICE candidate to other connected peers
+		mutex.Lock()
+		defer mutex.Unlock()
 		for _, pc := range peerConnections {
 			if pc != peerConnection {
 				_ = pc.AddICECandidate(candidate.ToJSON())
@@ -69,7 +70,6 @@ func ICECandidateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Add ICE candidate to all peer connections
 	mutex.Lock()
 	defer mutex.Unlock()
 	for _, pc := range peerConnections {
