@@ -84,9 +84,13 @@ class _VoiceRoomState extends State<VoiceRoom> {
     };
 
     _localStream = await _getUserMedia();
-    _localStream?.getTracks().forEach((track) {
-      pc.addTrack(track, _localStream!);
-    });
+    if (_localStream != null) {
+      _localStream!.getTracks().forEach((track) {
+        pc.addTrack(track, _localStream!);
+      });
+    } else {
+      print('Error: localStream is null');
+    }
 
     return pc;
   }
@@ -102,6 +106,9 @@ class _VoiceRoomState extends State<VoiceRoom> {
       return stream;
     } catch (e) {
       print('Error accessing microphone: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to access microphone')),
+      );
       throw e;
     }
   }
