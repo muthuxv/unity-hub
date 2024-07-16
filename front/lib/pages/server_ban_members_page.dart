@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -37,8 +38,11 @@ class _ServerBanMembersPageState extends State<ServerBanMembersPage> {
       _isLoading = true;
     });
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
-      final response = await _dio.get('http://10.0.2.2:8080/servers/${widget.serverId}/bans');
+      final response = await _dio.get('$apiPath/servers/${widget.serverId}/bans');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -112,9 +116,12 @@ class _ServerBanMembersPageState extends State<ServerBanMembersPage> {
       return;
     }
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await _dio.delete(
-          'http://10.0.2.2:8080/servers/${widget.serverId}/unban/users/$userID',
+          '$apiPath/servers/${widget.serverId}/unban/users/$userID',
           options: Options(headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',

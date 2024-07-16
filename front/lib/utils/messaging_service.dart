@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter/services.dart';
@@ -60,12 +61,15 @@ class MessagingService {
       return;
     }
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'token');
 
       final response = await Dio().put(
-        'http://10.0.2.2:8080/fcm-token',
+        '$apiPath/fcm-token',
         data: {
           'fcmToken': fcmToken,
         },
@@ -87,7 +91,7 @@ class MessagingService {
       final token = await storage.read(key: 'token');
       final userId = JwtDecoder.decode(token!)['jti'];
       final response = await Dio().get(
-        'http://10.0.2.2:8080/users/$userId/channels',
+        '$apiPath/users/$userId/channels',
         options: Options(
           headers: {
             'Content-Type': 'application/json',

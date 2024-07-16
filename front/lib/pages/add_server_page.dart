@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -37,8 +38,11 @@ class _AddServerPageState extends State<AddServerPage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().get(
-      'http://10.0.2.2:8080/tags',
+      '$apiPath/tags',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -98,6 +102,9 @@ class _AddServerPageState extends State<AddServerPage> {
     final tagIds = _selectedTags.map((tag) => tag['ID']).toList();
     final tagObjects = tagIds.map((tagId) => {'id': tagId}).toList();
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final data = {
       'name': _serverNameController.text,
       'visibility': _visibility,
@@ -106,7 +113,7 @@ class _AddServerPageState extends State<AddServerPage> {
     };
 
     final response = await Dio().post(
-      'http://10.0.2.2:8080/servers/create',
+      '$apiPath/servers/create',
       data: data,
       options: Options(
         headers: {

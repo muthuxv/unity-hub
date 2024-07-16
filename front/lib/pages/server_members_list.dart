@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -49,8 +50,11 @@ class _ServerMembersListState extends State<ServerMembersList> {
       _isLoading = true;
     });
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
-      final response = await _dio.get('http://10.0.2.2:8080/servers/${widget.serverId}/members');
+      final response = await _dio.get('$apiPath/servers/${widget.serverId}/members');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -284,11 +288,14 @@ class _ServerMembersListState extends State<ServerMembersList> {
       return;
     }
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final Dio dio = Dio();
 
     try {
       final response = await dio.post(
-        'http://10.0.2.2:8080/servers/${widget.serverId}/ban/users/${member['ID']}',
+        '$apiPath/servers/${widget.serverId}/ban/users/${member['ID']}',
         options: Options(headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

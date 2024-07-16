@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:unity_hub/pages/voice_room.dart';
 import '../pages/channel_page.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -24,8 +25,11 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
       _isLoading = true;
     });
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
-      final response = await Dio().get('http://10.0.2.2:8080/servers/${widget.serverId}/channels');
+      final response = await Dio().get('$apiPath/servers/${widget.serverId}/channels');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -43,9 +47,13 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
   }
 
   Future<void> _updateChannel(String channelId, String channelName) async {
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       await Dio().put(
-        'http://10.0.2.2:8080/channels/$channelId',
+        '$apiPath/channels/$channelId',
         data: {
           'name': channelName,
         },
@@ -120,7 +128,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                           onPressed: () async {
                             try {
                               final response = await Dio().delete(
-                                'http://10.0.2.2:8080/channels/${channel['ID']}',
+                                '${dotenv.env['API_PATH']}/channels/${channel['ID']}',
                               );
 
                               if (response.statusCode == 204) {
@@ -215,7 +223,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                         onPressed: () async {
                           try {
                             final response = await Dio().delete(
-                              'http://10.0.2.2:8080/channels/${channel['ID']}',
+                              '${dotenv.env['API_PATH']}/channels/${channel['ID']}',
                             );
 
                             if (response.statusCode == 204) {

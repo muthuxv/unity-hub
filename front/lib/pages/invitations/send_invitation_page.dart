@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -36,10 +37,12 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
-      // Fetch friends
       final friendsResponse = await Dio().get(
-        'http://10.0.2.2:8080/friends/users/$userId',
+        '$apiPath/friends/users/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -53,7 +56,7 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
 
       // Fetch banned users
       final bansResponse = await Dio().get(
-        'http://10.0.2.2:8080/servers/${widget.serverId}/bans',
+        '$apiPath/servers/${widget.serverId}/bans',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -88,9 +91,12 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     for (String friendId in _selectedFriends.keys) {
       final response = await Dio().post(
-        'http://10.0.2.2:8080/invitations/server/${widget.serverId}',
+        '$apiPath/invitations/server/${widget.serverId}',
         data: {'userReceiverId': friendId},
         options: Options(
           headers: {

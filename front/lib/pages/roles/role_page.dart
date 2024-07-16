@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -38,9 +39,12 @@ class _RolePageState extends State<RolePage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().get(
-        'http://10.0.2.2:8080/roles/server/${widget.serverId}',
+        '$apiPath/roles/server/${widget.serverId}',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -82,9 +86,12 @@ class _RolePageState extends State<RolePage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().get(
-        'http://10.0.2.2:8080/users/$userId',
+        '$apiPath/users/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -166,7 +173,7 @@ class _RolePageState extends State<RolePage> {
                         icon: const Icon(Icons.delete),
                         onPressed: () async {
                           final response = await Dio().delete(
-                            'http://10.0.2.2:8080/roles/$roleId',
+                            '${dotenv.env['API_PATH']}/roles/$roleId',
                             options: Options(
                               headers: {
                                 'Content-Type': 'application/json',

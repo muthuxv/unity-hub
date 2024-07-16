@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -38,8 +39,11 @@ class _ServerPageState extends State<ServerPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().get(
-      'http://10.0.2.2:8080/servers/users/$userId',
+      '$apiPath/servers/users/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -83,9 +87,13 @@ class _ServerPageState extends State<ServerPage> {
   Future<void> _leaveServer(BuildContext context) async {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().delete(
-        'http://10.0.2.2:8080/servers/${_selectedServer['ID']}/leave',
+        '$apiPath/servers/${_selectedServer['ID']}/leave',
         options: Options(
           headers: {
             'Content-Type': 'application/json',

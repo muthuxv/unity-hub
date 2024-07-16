@@ -171,7 +171,8 @@ func UpdateUserData() gin.HandlerFunc {
 		}
 
 		var input struct {
-			Pseudo string `json:"pseudo"`
+			Pseudo  string `json:"pseudo"`
+			Profile string `json:"profile"`
 		}
 
 		if err := c.ShouldBindJSON(&input); err != nil {
@@ -201,6 +202,15 @@ func UpdateUserData() gin.HandlerFunc {
 
 			if err := db.GetDB().Model(&user).Updates(models.User{Pseudo: input.Pseudo}).Error; err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update pseudo"})
+				return
+			}
+		}
+
+		if input.Profile != "" {
+			user.Profile = input.Profile
+
+			if err := db.GetDB().Model(&user).Updates(models.User{Profile: input.Profile}).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile"})
 				return
 			}
 		}

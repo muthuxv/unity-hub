@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:unity_hub/pages/security/auth_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -71,6 +72,9 @@ class _GithubSignInButtonState extends State<GithubSignInButton> {
     githubProvider.addScope('read:user');
     githubProvider.addScope('user:email');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final UserCredential userCredential = await _auth.signInWithProvider(githubProvider);
       final User? user = userCredential.user;
@@ -93,7 +97,7 @@ class _GithubSignInButtonState extends State<GithubSignInButton> {
         final githubAvatarUrl = githubUserData['avatar_url'];
 
         final serverResponse = await _dio.get(
-          'http://10.0.2.2:8080/auth/github/callback',
+          '$apiPath/auth/github/callback',
           data: {
             'uid': user.uid,
             'email': user.email,

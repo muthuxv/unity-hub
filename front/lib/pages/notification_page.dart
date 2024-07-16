@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -28,9 +29,12 @@ class _NotificationPageState extends State<NotificationPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().get(
-        'http://10.0.2.2:8080/invitations/user/$userId',
+        '$apiPath/invitations/user/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -93,9 +97,12 @@ class _NotificationPageState extends State<NotificationPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().get(
-        'http://10.0.2.2:8080/friends/pending/$userId',
+        '$apiPath/friends/pending/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -125,8 +132,11 @@ class _NotificationPageState extends State<NotificationPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().post(
-      'http://10.0.2.2:8080/friends/accept',
+      '$apiPath/friends/accept',
       data: {
         'ID': friendId,
         'UserID2': userId,
@@ -153,8 +163,11 @@ class _NotificationPageState extends State<NotificationPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().post(
-      'http://10.0.2.2:8080/friends/refuse',
+      '$apiPath/friends/refuse',
       data: {
         'ID': friendId,
         'UserID2': userId,
@@ -208,7 +221,7 @@ class _NotificationPageState extends State<NotificationPage> {
                     icon: const Icon(Icons.check, color: Colors.green),
                     onPressed: () async {
                       final response = await Dio().post(
-                        'http://10.0.2.2:8080/servers/${invitation['Server']['ID']}/join',
+                        '${dotenv.env['API_PATH']}/servers/${invitation['Server']['ID']}/join',
                         options: Options(
                           headers: {
                             'Content-Type': 'application/json',
@@ -218,7 +231,7 @@ class _NotificationPageState extends State<NotificationPage> {
                       );
                       if (response.statusCode == 200) {
                         final response = await Dio().delete(
-                          'http://10.0.2.2:8080/invitations/${invitation['ID']}',
+                          '${dotenv.env['API_PATH']}/invitations/${invitation['ID']}',
                           options: Options(
                             headers: {
                               'Content-Type': 'application/json',
@@ -241,7 +254,7 @@ class _NotificationPageState extends State<NotificationPage> {
                     icon: const Icon(Icons.close, color: Colors.red),
                     onPressed: () async {
                       final response = await Dio().delete(
-                        'http://10.0.2.2:8080/invitations/${invitation['ID']}',
+                        '${dotenv.env['API_PATH']}/invitations/${invitation['ID']}',
                         options: Options(
                           headers: {
                             'Content-Type': 'application/json',

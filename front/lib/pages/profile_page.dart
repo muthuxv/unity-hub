@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'friend_page.dart';
@@ -29,6 +30,10 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserData() async {
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'token');
@@ -36,7 +41,7 @@ class _ProfilePageState extends State<ProfilePage> {
       final userId = decodedToken['jti'];
 
       final response = await Dio().get(
-        'http://10.0.2.2:8080/users/$userId',
+        '$apiPath/users/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',

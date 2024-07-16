@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -36,9 +37,12 @@ class _RoleUpdatePageFormState extends State<RoleUpdatePageForm> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().put(
-        'http://10.0.2.2:8080/roles/${widget.roleId}',
+        '$apiPath/roles/${widget.roleId}',
         data: {'Label': _nameController.text},
         options: Options(
           headers: {
