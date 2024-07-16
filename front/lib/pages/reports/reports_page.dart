@@ -28,7 +28,7 @@ class _ReportsPageState extends State<ReportsPage> {
 
     try {
       final response = await Dio().get(
-        'http://10.0.2.2:8080/reports/server/${widget.serverID}',
+        'https://unityhub.fr/reports/server/${widget.serverID}',
         queryParameters: {'status': _currentStatus},
       );
       if (response.statusCode == 200) {
@@ -107,7 +107,7 @@ class _ReportsPageState extends State<ReportsPage> {
   Future<void> _deleteMessage(String messageId) async {
     try {
       await Dio().put(
-        'http://10.0.2.2:8080/messages/$messageId',
+        'https://unityhub.fr/messages/$messageId',
         data: {'Content': 'Ce message a été supprimé après signalement'},
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -122,7 +122,7 @@ class _ReportsPageState extends State<ReportsPage> {
 
   Future<void> _deleteReport(String reportId) async {
     try {
-      await Dio().delete('http://10.0.2.2:8080/reports/$reportId');
+      await Dio().delete('https://unityhub.fr/reports/$reportId');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Report deleted successfully')),
       );
@@ -136,7 +136,7 @@ class _ReportsPageState extends State<ReportsPage> {
   Future<void> _updateReportStatus(String reportId, String status) async {
     try {
       await Dio().put(
-        'http://10.0.2.2:8080/reports/$reportId',
+        'https://unityhub.fr/reports/$reportId',
         data: {'status': status},
       );
       ScaffoldMessenger.of(context).showSnackBar(

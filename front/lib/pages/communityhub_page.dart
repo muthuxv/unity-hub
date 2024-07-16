@@ -95,7 +95,7 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
       final token = await storage.read(key: 'token');
 
       final response = await Dio().get(
-        'http://10.0.2.2:8080/servers',
+        'https://unityhub.fr/servers',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -139,7 +139,7 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
       final token = await storage.read(key: 'token');
 
       final response = await Dio().post(
-        'http://10.0.2.2:8080/servers/$serverId/join',
+        'https://unityhub.fr/servers/$serverId/join',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -368,7 +368,7 @@ class CategorySection extends StatelessWidget {
                         ClipRRect(
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                           child: Image.network(
-                            'http://10.0.2.2:8080/uploads/${server.media.fileName}?rand=${DateTime.now().millisecondsSinceEpoch}',
+                            'https://unityhub.fr/uploads/${server.media.fileName}?rand=${DateTime.now().millisecondsSinceEpoch}',
                             height: 120,
                             width: double.infinity,
                             fit: BoxFit.cover,

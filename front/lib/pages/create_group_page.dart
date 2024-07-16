@@ -46,7 +46,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       dio.options.headers['Content-Type'] = 'application/json';
       dio.options.headers['Authorization'] = 'Bearer $token';
 
-      final response = await dio.get('http://10.0.2.2:8080/friends/users/$userId');
+      final response = await dio.get('https://unityhub.fr/friends/users/$userId');
 
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
@@ -115,7 +115,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     } else {
       List<String> memberIds = selectedFriends;
       if (widget.groupId.isNotEmpty) {
-        final response = await dio.get('http://10.0.2.2:8080/groups/${widget.groupId}');
+        final response = await dio.get('https://unityhub.fr/groups/${widget.groupId}');
         if (response.statusCode == 200) {
           final groupData = response.data;
           if (groupData['Type'] == 'dm') {

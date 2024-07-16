@@ -39,7 +39,7 @@ class _ServerPageState extends State<ServerPage> {
     final userId = decodedToken['jti'];
 
     final response = await Dio().get(
-      'http://10.0.2.2:8080/servers/users/$userId',
+      'https://unityhub.fr/servers/users/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ class _ServerPageState extends State<ServerPage> {
     final token = await storage.read(key: 'token');
     try {
       final response = await Dio().delete(
-        'http://10.0.2.2:8080/servers/${_selectedServer['ID']}/leave',
+        'https://unityhub.fr/servers/${_selectedServer['ID']}/leave',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -277,7 +277,7 @@ class _ServerPageState extends State<ServerPage> {
                           itemCount: _servers.length,
                           itemBuilder: (context, index) {
                             String filename = _servers[index]['Media']['FileName'];
-                            String imageUrl = 'http://10.0.2.2:8080/uploads/$filename?rand=${DateTime.now().millisecondsSinceEpoch}';
+                            String imageUrl = 'https://unityhub.fr/uploads/$filename?rand=${DateTime.now().millisecondsSinceEpoch}';
 
                             return Padding(
                               padding: const EdgeInsets.all(5.0),
@@ -377,7 +377,7 @@ class _ServerPageState extends State<ServerPage> {
                                                 ListTile(
                                                   leading: CircleAvatar(
                                                     backgroundImage: NetworkImage(
-                                                      'http://10.0.2.2:8080/uploads/${_selectedServer['Media']['FileName']}?rand=${DateTime.now().millisecondsSinceEpoch}',
+                                                      'https://unityhub.fr/uploads/${_selectedServer['Media']['FileName']}?rand=${DateTime.now().millisecondsSinceEpoch}',
                                                     ),
                                                   ),
                                                   title: Text(

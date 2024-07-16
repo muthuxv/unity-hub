@@ -9,7 +9,7 @@ class MessagePage extends StatefulWidget {
 }
 
 class _MessagePageState extends State<MessagePage> {
-  final _channel = IOWebSocketChannel.connect(Uri.parse('wss://10.0.2.2:8080/ws'));
+  final _channel = IOWebSocketChannel.connect(Uri.parse('wss://unityhub.fr/ws'));
   final TextEditingController _controller = TextEditingController();
 
   void _sendMessage() {

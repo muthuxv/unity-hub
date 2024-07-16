@@ -25,7 +25,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
     });
 
     try {
-      final response = await Dio().get('http://10.0.2.2:8080/servers/${widget.serverId}/channels');
+      final response = await Dio().get('https://unityhub.fr/servers/${widget.serverId}/channels');
 
       if (response.statusCode == 200) {
         setState(() {
@@ -45,7 +45,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
   Future<void> _updateChannel(String channelId, String channelName) async {
     try {
       await Dio().put(
-        'http://10.0.2.2:8080/channels/$channelId',
+        'https://unityhub.fr/channels/$channelId',
         data: {
           'name': channelName,
         },
@@ -120,7 +120,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                           onPressed: () async {
                             try {
                               final response = await Dio().delete(
-                                'http://10.0.2.2:8080/channels/${channel['ID']}',
+                                'https://unityhub.fr/channels/${channel['ID']}',
                               );
 
                               if (response.statusCode == 204) {
@@ -215,7 +215,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                         onPressed: () async {
                           try {
                             final response = await Dio().delete(
-                              'http://10.0.2.2:8080/channels/${channel['ID']}',
+                              'https://unityhub.fr/channels/${channel['ID']}',
                             );
 
                             if (response.statusCode == 204) {

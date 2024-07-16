@@ -40,7 +40,7 @@ class _RolePageState extends State<RolePage> {
 
     try {
       final response = await Dio().get(
-        'http://10.0.2.2:8080/roles/server/${widget.serverId}',
+        'https://unityhub.fr/roles/server/${widget.serverId}',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ class _RolePageState extends State<RolePage> {
 
     try {
       final response = await Dio().get(
-        'http://10.0.2.2:8080/users/$userId',
+        'https://unityhub.fr/users/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -161,7 +161,7 @@ class _RolePageState extends State<RolePage> {
                         icon: const Icon(Icons.delete),
                         onPressed: () async {
                           final response = await Dio().delete(
-                            'http://10.0.2.2:8080/roles/${role['ID']}',
+                            'https://unityhub.fr/roles/${role['ID']}',
                             options: Options(
                               headers: {
                                 'Content-Type': 'application/json',

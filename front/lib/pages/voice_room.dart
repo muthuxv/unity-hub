@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:dio/dio.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:unity_hub/pages/microphone_page.dart';
 
 class VoiceRoom extends StatefulWidget {
   final String channelId;
@@ -17,6 +18,7 @@ class VoiceRoom extends StatefulWidget {
 class _VoiceRoomState extends State<VoiceRoom> {
   RTCPeerConnection? _peerConnection;
   MediaStream? _localStream;
+  final List<RTCIceCandidate> _remoteCandidates = [];
 
   @override
   void initState() {
@@ -26,12 +28,13 @@ class _VoiceRoomState extends State<VoiceRoom> {
 
   Future<void> _requestPermissions() async {
     var status = await Permission.microphone.status;
+    print(status);
     if (status.isDenied) {
       if (await Permission.microphone.request().isGranted) {
         _initialize();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Le microphone est nécessaire pour les salons vocaux.')),
+          SnackBar(content: Text('Microphone permission is required for voice rooms.')),
         );
       }
     } else {
@@ -64,13 +67,10 @@ class _VoiceRoomState extends State<VoiceRoom> {
     final pc = await createPeerConnection(config);
 
     pc.onIceCandidate = (candidate) {
-      if (candidate != null) {
-        _sendCandidate(candidate);
-      }
-    };
+      _sendCandidate(candidate);
+        };
 
     pc.onTrack = (event) {
-      // Gérer les flux audio entrants
     };
 
     _localStream = await _getUserMedia();
@@ -87,15 +87,21 @@ class _VoiceRoomState extends State<VoiceRoom> {
       'video': false,
     };
 
-    return await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    try {
+      return await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    } catch (e) {
+      print('Failed to get user media: $e');
+      return Future.error('Failed to get user media');
+    }
   }
+
 
   Future<void> _createOffer() async {
     final offer = await _peerConnection!.createOffer();
     await _peerConnection!.setLocalDescription(offer);
 
     final response = await Dio().post(
-      'http://10.0.2.2:8080/webrtc/sdp',
+      'https://unityhub.fr/webrtc/sdp',
       data: {
         'sdp': offer.sdp,
         'type': offer.type,
@@ -115,7 +121,7 @@ class _VoiceRoomState extends State<VoiceRoom> {
 
   void _sendCandidate(RTCIceCandidate candidate) {
     Dio().post(
-      'http://10.0.2.2:8080/webrtc/ice',
+      'https://unityhub.fr/webrtc/ice',
       data: {
         'candidate': candidate.candidate,
         'sdpMid': candidate.sdpMid,
@@ -133,6 +139,15 @@ class _VoiceRoomState extends State<VoiceRoom> {
       body: Center(
         child: Text('Salon vocal en cours...'),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MicrophoneFeedbackPage()),
+          );
+        },
+        child: Icon(Icons.mic),
+      )
     );
   }
 }

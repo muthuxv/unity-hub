@@ -69,7 +69,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
   }
 
   void _showInvitationDialog(BuildContext context, String serverId) {
-    final url = 'http://10.0.2.2:8080/servers/$serverId/join';
+    final url = 'https://unityhub.fr/servers/$serverId/join';
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -122,7 +122,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                     final token = await storage.read(key: 'token');
 
                     final response = await Dio().delete(
-                      'http://10.0.2.2:8080/servers/${widget.serverId}',
+                      'https://unityhub.fr/servers/${widget.serverId}',
                       options: Options(
                         headers: {
                           'Content-Type': 'application/json',
@@ -266,7 +266,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                               final token = await storage.read(key: 'token');
 
                               final response = await Dio().post(
-                                'http://10.0.2.2:8080/upload',
+                                'https://unityhub.fr/upload',
                                 data: formData,
                                 options: Options(
                                   headers: {
@@ -277,7 +277,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                               if (response.statusCode == 200) {
                                 print('Uploaded: ${response.data['id']}');
                                 final serverUpdateResponse = await Dio().put(
-                                  'http://10.0.2.2:8080/servers/${widget.serverId}',
+                                  'https://unityhub.fr/servers/${widget.serverId}',
                                   data: {
                                     'MediaID': response.data['id'],
                                   },
@@ -360,7 +360,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                             CircleAvatar(
                               radius: 70,
                               backgroundImage: Image.network(
-                                'http://10.0.2.2:8080/uploads/${widget.serverAvatar}?rand=${DateTime.now().millisecondsSinceEpoch}',
+                                'https://unityhub.fr/uploads/${widget.serverAvatar}?rand=${DateTime.now().millisecondsSinceEpoch}',
                                 errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
                                   return Image.asset('assets/images/air-force.png');
                                 },
