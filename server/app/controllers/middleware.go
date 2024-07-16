@@ -85,7 +85,7 @@ func GenerateLogBanMiddlaware() gin.HandlerFunc {
 			return
 		}
 
-		userIDStr, ok := jwtClaims["jti"].(string)
+		userPseudo, ok := jwtClaims["pseudo"].(string)
 		if !ok {
 			return
 		}
@@ -95,13 +95,16 @@ func GenerateLogBanMiddlaware() gin.HandlerFunc {
 			return
 		}
 
-		_, err = uuid.Parse(userIDStr)
+		_, err = uuid.Parse(userID)
 		if err != nil {
 			return
 		}
 
+		var user models.User
+		db.GetDB().Where("id = ?", userID).First(&user)
+
 		logEntry := models.Logs{
-			Message:  "User " + userIDStr + " banned user " + userID + " from server",
+			Message:  "User " + userPseudo + " banned " + user.Pseudo + " from server",
 			ServerID: serverID,
 		}
 
