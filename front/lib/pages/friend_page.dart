@@ -781,7 +781,7 @@ class _FriendPageState extends State<FriendPage> {
                 'token': fcmToken,
                 'notification': {
                   'title': AppLocalizations.of(context)!.friendRequest,
-                  'body': AppLocalizations.of(context)!.youReceivedFriendRequest + decodedToken['jti'],
+                  'body': AppLocalizations.of(context)!.youReceivedFriendRequest + decodedToken['pseudo'],
                 },
               },
             },
