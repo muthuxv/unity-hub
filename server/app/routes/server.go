@@ -26,6 +26,7 @@ func ServerRoutes(r *gin.Engine) {
 	r.GET("/servers/:id/bans", services.GetServerBans())
 	r.GET("/servers/friend/:friendID", controllers.TokenAuthMiddleware("user"), services.GetServersFriendNotIn())
 	r.POST("/servers/:id/ban/users/:userID", controllers.TokenAuthMiddleware("user"), services.BanUser())
+	r.POST("/servers/:id/ban/users/:userID", controllers.TokenAuthMiddleware("user"), controllers.GenerateLogBanMiddlaware(), services.BanUser())
 	r.DELETE("/servers/:id/unban/users/:userID", controllers.TokenAuthMiddleware("user"), services.UnbanUser())
 	r.DELETE("/servers/:id", controllers.TokenAuthMiddleware("user"), services.DeleteServerByID())
 }
