@@ -117,6 +117,7 @@ class _VoiceRoomState extends State<VoiceRoom> {
 
     await _peerConnection!.setRemoteDescription(RTCSessionDescription(answer['sdp'], answer['type']));
 
+    // Gérer les candidats ICE de la télécommande
     for (var candidate in _remoteCandidates) {
       await _peerConnection!.addCandidate(candidate);
     }
