@@ -69,6 +69,8 @@ func MakeMigrations() {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
+	models.CreateInitialPermissions(db)
+
 	log.Println("database create")
 }
 
