@@ -28,12 +28,13 @@ class _VoiceRoomState extends State<VoiceRoom> {
 
   Future<void> _requestPermissions() async {
     var status = await Permission.microphone.status;
-    if (status.isDenied) {
-      if (await Permission.microphone.request().isGranted) {
+    if (status.isDenied || status.isPermanentlyDenied) {
+      var result = await Permission.microphone.request();
+      if (result.isGranted) {
         _initialize();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Le microphone est nÃ©cessaire pour les salons vocaux.')),
+          SnackBar(content: Text('Le microphone est nécessaire pour les salons vocaux.')),
         );
       }
     } else {
@@ -95,8 +96,14 @@ class _VoiceRoomState extends State<VoiceRoom> {
       'audio': true,
       'video': false,
     };
-
-    return await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    try {
+      var stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      print('Microphone stream initialized');
+      return stream;
+    } catch (e) {
+      print('Error accessing microphone: $e');
+      throw e;
+    }
   }
 
   Future<void> _createOffer() async {
