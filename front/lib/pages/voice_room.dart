@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:dio/dio.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:unity_hub/pages/microphone_page.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 
 class VoiceRoom extends StatefulWidget {
   final String channelId;
@@ -18,7 +18,9 @@ class VoiceRoom extends StatefulWidget {
 class _VoiceRoomState extends State<VoiceRoom> {
   RTCPeerConnection? _peerConnection;
   MediaStream? _localStream;
-  final List<RTCIceCandidate> _remoteCandidates = [];
+  FlutterSoundRecorder _recorder = FlutterSoundRecorder();
+  FlutterSoundPlayer _player = FlutterSoundPlayer();
+  bool _isRecording = false;
 
   @override
   void initState() {
@@ -28,13 +30,12 @@ class _VoiceRoomState extends State<VoiceRoom> {
 
   Future<void> _requestPermissions() async {
     var status = await Permission.microphone.status;
-    print(status);
     if (status.isDenied) {
       if (await Permission.microphone.request().isGranted) {
         _initialize();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Microphone permission is required for voice rooms.')),
+          SnackBar(content: Text('Le microphone est nécessaire pour les salons vocaux.')),
         );
       }
     } else {
@@ -43,14 +44,48 @@ class _VoiceRoomState extends State<VoiceRoom> {
   }
 
   void _initialize() {
+    _initializeRecorder();
     _createPeerConnection().then((pc) {
       _peerConnection = pc;
       _createOffer();
     });
   }
 
+  Future<void> _initializeRecorder() async {
+    await _recorder.openRecorder();
+    await _player.openPlayer();
+    _startRecording();
+  }
+
+  Future<void> _startRecording() async {
+    try {
+      await _recorder.startRecorder(
+        toFile: 'feedback.aac',
+        codec: Codec.aacADTS,
+      );
+      setState(() {
+        _isRecording = true;
+      });
+    } catch (err) {
+      print('Error starting recording: $err');
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    await _recorder.stopRecorder();
+    await _player.startPlayer(
+      fromURI: 'feedback.aac',
+      codec: Codec.aacADTS,
+    );
+    setState(() {
+      _isRecording = false;
+    });
+  }
+
   @override
   void dispose() {
+    _recorder.closeRecorder();
+    _player.closePlayer();
     _peerConnection?.close();
     _localStream?.dispose();
     super.dispose();
@@ -67,10 +102,13 @@ class _VoiceRoomState extends State<VoiceRoom> {
     final pc = await createPeerConnection(config);
 
     pc.onIceCandidate = (candidate) {
-      _sendCandidate(candidate);
-        };
+      if (candidate != null) {
+        _sendCandidate(candidate);
+      }
+    };
 
     pc.onTrack = (event) {
+      // Gérer les flux audio entrants
     };
 
     _localStream = await _getUserMedia();
@@ -87,21 +125,15 @@ class _VoiceRoomState extends State<VoiceRoom> {
       'video': false,
     };
 
-    try {
-      return await navigator.mediaDevices.getUserMedia(mediaConstraints);
-    } catch (e) {
-      print('Failed to get user media: $e');
-      return Future.error('Failed to get user media');
-    }
+    return await navigator.mediaDevices.getUserMedia(mediaConstraints);
   }
-
 
   Future<void> _createOffer() async {
     final offer = await _peerConnection!.createOffer();
     await _peerConnection!.setLocalDescription(offer);
 
     final response = await Dio().post(
-      'https://unityhub.fr/webrtc/sdp',
+      'http://10.0.2.2:8080/webrtc/sdp',
       data: {
         'sdp': offer.sdp,
         'type': offer.type,
@@ -121,7 +153,7 @@ class _VoiceRoomState extends State<VoiceRoom> {
 
   void _sendCandidate(RTCIceCandidate candidate) {
     Dio().post(
-      'https://unityhub.fr/webrtc/ice',
+      'http://10.0.2.2:8080/webrtc/ice',
       data: {
         'candidate': candidate.candidate,
         'sdpMid': candidate.sdpMid,
@@ -139,15 +171,6 @@ class _VoiceRoomState extends State<VoiceRoom> {
       body: Center(
         child: Text('Salon vocal en cours...'),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MicrophoneFeedbackPage()),
-          );
-        },
-        child: Icon(Icons.mic),
-      )
     );
   }
 }
