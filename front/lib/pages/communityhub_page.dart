@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -98,8 +99,11 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
       final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
       final userId = decodedToken['jti'];
 
+      await dotenv.load();
+      final apiPath = dotenv.env['API_PATH']!;
+
       final response = await Dio().get(
-        'http://10.0.2.2:8080/servers/public/available/$userId',
+        '$apiPath/servers/public/available/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -142,8 +146,11 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'token');
 
+      await dotenv.load();
+      final apiPath = dotenv.env['API_PATH']!;
+
       final response = await Dio().post(
-        'http://10.0.2.2:8080/servers/$serverId/join',
+        '$apiPath/servers/$serverId/join',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -373,7 +380,7 @@ class CategorySection extends StatelessWidget {
                         ClipRRect(
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                           child: Image.network(
-                            'http://10.0.2.2:8080/uploads/${server.media.fileName}?rand=${DateTime.now().millisecondsSinceEpoch}',
+                            '${dotenv.env['API_PATH']}/uploads/${server.media.fileName}?rand=${DateTime.now().millisecondsSinceEpoch}',
                             height: 120,
                             width: double.infinity,
                             fit: BoxFit.cover,

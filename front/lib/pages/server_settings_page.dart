@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:unity_hub/pages/reports/reports_page.dart';
@@ -70,7 +71,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
   }
 
   void _showInvitationDialog(BuildContext context, String serverId) {
-    final url = 'http://10.0.2.2:8080/servers/$serverId/join';
+    final url = '${dotenv.env['API_PATH']}/servers/$serverId/join';
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -122,8 +123,11 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                     final storage = FlutterSecureStorage();
                     final token = await storage.read(key: 'token');
 
+                    await dotenv.load();
+                    final apiPath = dotenv.env['API_PATH']!;
+
                     final response = await Dio().delete(
-                      'http://10.0.2.2:8080/servers/${widget.serverId}',
+                      '$apiPath/servers/${widget.serverId}',
                       options: Options(
                         headers: {
                           'Content-Type': 'application/json',
@@ -266,8 +270,11 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                               const storage = FlutterSecureStorage();
                               final token = await storage.read(key: 'token');
 
+                              await dotenv.load();
+                              final apiPath = dotenv.env['API_PATH']!;
+
                               final response = await Dio().post(
-                                'http://10.0.2.2:8080/upload',
+                                '$apiPath/upload',
                                 data: formData,
                                 options: Options(
                                   headers: {
@@ -278,7 +285,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                               if (response.statusCode == 200) {
                                 print('Uploaded: ${response.data['id']}');
                                 final serverUpdateResponse = await Dio().put(
-                                  'http://10.0.2.2:8080/servers/${widget.serverId}',
+                                  '$apiPath/servers/${widget.serverId}',
                                   data: {
                                     'MediaID': response.data['id'],
                                   },
@@ -361,7 +368,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                             CircleAvatar(
                               radius: 70,
                               backgroundImage: Image.network(
-                                'http://10.0.2.2:8080/uploads/${widget.serverAvatar}?rand=${DateTime.now().millisecondsSinceEpoch}',
+                                '${dotenv.env['API_PATH']}/uploads/${widget.serverAvatar}?rand=${DateTime.now().millisecondsSinceEpoch}',
                                 errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
                                   return Image.asset('assets/images/air-force.png');
                                 },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -20,7 +21,10 @@ class _AddChannelPageState extends State<AddChannelPage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
-    final response = await Dio().post('http://10.0.2.2:8080/channels', data: {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    final response = await Dio().post('$apiPath/channels', data: {
       'name': _channelNameController.text,
       'type': _channelType,
       'serverId': widget.serverId,

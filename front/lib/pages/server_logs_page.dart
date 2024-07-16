@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ServerLogsPage extends StatefulWidget {
@@ -20,7 +21,7 @@ class _ServerLogsPageState extends State<ServerLogsPage> {
           centerTitle: true,
         ),
         body: FutureBuilder(
-          future: Dio().get('http://10.0.2.2:8080/servers/${widget.serverId}/logs'),
+          future: Dio().get('${dotenv.env['API_PATH']}/servers/${widget.serverId}/logs'),
           builder: (context, AsyncSnapshot<Response> snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(

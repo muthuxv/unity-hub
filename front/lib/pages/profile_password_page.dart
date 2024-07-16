@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -26,8 +27,11 @@ class _ProfilePasswordPageState extends State<ProfilePasswordPage> {
       final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
       final userId = decodedToken['jti'];
 
+      await dotenv.load();
+      final apiPath = dotenv.env['API_PATH']!;
+
       final response = await Dio().put(
-        'http://10.0.2.2:8080/users/$userId/change-password',
+        '$apiPath/users/$userId/change-password',
         data: {
           'currentPassword': _currentPasswordController.text,
           'newPassword': _newPasswordController.text,

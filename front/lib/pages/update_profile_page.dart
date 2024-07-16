@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dio/dio.dart';
@@ -36,8 +37,11 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
       final userId = decodedToken['jti'];
 
+      await dotenv.load();
+      final apiPath = dotenv.env['API_PATH']!;
+
       final response = await Dio().get(
-        'http://10.0.2.2:8080/users/$userId',
+        '$apiPath/users/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -72,9 +76,12 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().put(
-        'http://10.0.2.2:8080/users/$userId',
+        '$apiPath/users/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -104,7 +111,6 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
           ),
         );
       } else {
-        // This block will handle cases where response code is not 200
         if (response.statusCode == 400 && response.data['error'] == 'Pseudo already exists') {
           _showErrorDialog(AppLocalizations.of(context)!.pseudoAlreadyExists);
         } else {
@@ -112,14 +118,12 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
         }
       }
     } on DioError catch (e) {
-      // This block handles exceptions related to the request
       if (e.response != null && e.response!.statusCode == 400 && e.response!.data['error'] == 'Pseudo already exists') {
         _showErrorDialog(AppLocalizations.of(context)!.pseudoAlreadyExists);
       } else {
         _showErrorDialog(AppLocalizations.of(context)!.connectionError);
       }
     } catch (e) {
-      // This block handles any other exceptions
       _showErrorDialog(AppLocalizations.of(context)!.connectionError);
     }
   }
@@ -130,8 +134,11 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().put(
-      'http://10.0.2.2:8080/users/$userId',
+      '$apiPath/users/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -177,6 +184,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   void _generateRandomAvatar() {
     setState(() {
       _avatar = RandomAvatarString(DateTime.now().millisecondsSinceEpoch.toString());
+      print(_avatar);
     });
   }
 

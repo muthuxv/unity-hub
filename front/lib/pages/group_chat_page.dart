@@ -77,8 +77,11 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
       _isLoading = true;
     });
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
-      final response = await Dio().get('http://10.0.2.2:8080/channels/${widget.group.channelId}/messages');
+      final response = await Dio().get('$apiPath/channels/${widget.group.channelId}/messages');
       final List<dynamic> messages = response.data;
 
       setState(() {
@@ -116,7 +119,7 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
 
   void _connectToWebSocket() {
     _channel = WebSocketChannel.connect(
-      Uri.parse('ws://10.0.2.2:8080/channels/${widget.group.channelId}/send'),
+      Uri.parse('${dotenv.env['WS_PATH']}/channels/${widget.group.channelId}/send'),
     );
 
     _channel.stream.listen((message) async {

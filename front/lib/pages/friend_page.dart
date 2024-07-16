@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -34,8 +35,11 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().get(
-      'http://10.0.2.2:8080/friends/users/$userId',
+      '$apiPath/friends/users/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -68,8 +72,11 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().get(
-      'http://10.0.2.2:8080/friends/sent/$userId',
+      '$apiPath/friends/sent/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -93,8 +100,11 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().get(
-      'http://10.0.2.2:8080/friends/pending/$userId',
+      '$apiPath/friends/pending/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -125,8 +135,11 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().post(
-      'http://10.0.2.2:8080/friends/accept',
+      '$apiPath/friends/accept',
       data: {
         'ID': friendId,
         'UserID2': userId,
@@ -181,8 +194,11 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().post(
-      'http://10.0.2.2:8080/friends/refuse',
+      '$apiPath/friends/refuse',
       data: {
         'ID': friendId,
         'UserID2': userId,
@@ -216,9 +232,12 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().delete(
-        'http://10.0.2.2:8080/friends/$friendId',
+        '$apiPath/friends/$friendId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -452,9 +471,12 @@ class _FriendPageState extends State<FriendPage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().get(
-        'http://10.0.2.2:8080/servers/friend/$friendId', // Endpoint pour récupérer les serveurs de l'ami
+        '$apiPath/servers/friend/$friendId', // Endpoint pour récupérer les serveurs de l'ami
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -514,9 +536,12 @@ class _FriendPageState extends State<FriendPage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().post(
-        'http://10.0.2.2:8080/invitations/server/$serverId',
+        '$apiPath/invitations/server/$serverId',
         data: {'userReceiverId': friendId},
         options: Options(
           headers: {
@@ -583,9 +608,12 @@ class _FriendPageState extends State<FriendPage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().delete(
-        'http://10.0.2.2:8080/friends/${friend['ID']}',
+        '$apiPath/friends/${friend['ID']}',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -700,9 +728,12 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().post(
-        'http://10.0.2.2:8080/friends/request',
+        '$apiPath/friends/request',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -720,8 +751,12 @@ class _FriendPageState extends State<FriendPage> {
         try {
           const storage = FlutterSecureStorage();
           final token = await storage.read(key: 'token');
+
+          await dotenv.load();
+          final apiPath = dotenv.env['API_PATH']!;
+
           final response = await Dio().get(
-            'http://10.0.2.2:8080/users/pseudo/$pseudo',
+            '$apiPath/users/pseudo/$pseudo',
             options: Options(
               headers: {
                 'Content-Type': 'application/json',

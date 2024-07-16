@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
@@ -14,6 +15,9 @@ class MediaUploader {
     File file = File(filePath);
     List<int> bytes = await file.readAsBytes();
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final mimeTypeData = lookupMimeType(filePath, headerBytes: bytes);
 
     FormData formData = FormData.fromMap({
@@ -25,7 +29,7 @@ class MediaUploader {
     });
 
     final response = await Dio().post(
-      'http://10.0.2.2:8080/upload',
+      '$apiPath/upload',
       data: formData,
       options: Options(
         headers: {

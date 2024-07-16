@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../home_page.dart';
 
 import 'package:dio/dio.dart';
@@ -34,13 +35,16 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     setState(() {
       _isLoading = true;
     });
 
     try {
       final response = await Dio().post(
-        'http://10.0.2.2:8080/login',
+        '$apiPath/login',
         data: {
           'email': _emailController.text,
           'password': _passwordController.text,

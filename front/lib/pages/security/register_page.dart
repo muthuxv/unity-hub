@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'login_page.dart';
 import 'package:random_avatar/random_avatar.dart';
 import 'package:dio/dio.dart';
@@ -73,13 +74,16 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     setState(() {
       _isLoading = true;
     });
 
     try {
       final response = await Dio().post(
-        'http://10.0.2.2:8080/register',
+        '$apiPath/register',
         data: {
           'pseudo': _pseudoController.text,
           'email': _emailController.text,
