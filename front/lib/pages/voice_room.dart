@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:dio/dio.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter_sound/flutter_sound.dart';
 
 class VoiceRoom extends StatefulWidget {
   final String channelId;
@@ -18,9 +17,7 @@ class VoiceRoom extends StatefulWidget {
 class _VoiceRoomState extends State<VoiceRoom> {
   RTCPeerConnection? _peerConnection;
   MediaStream? _localStream;
-  FlutterSoundRecorder _recorder = FlutterSoundRecorder();
-  FlutterSoundPlayer _player = FlutterSoundPlayer();
-  bool _isRecording = false;
+  List<RTCIceCandidate> _remoteCandidates = [];
 
   @override
   void initState() {
@@ -44,72 +41,17 @@ class _VoiceRoomState extends State<VoiceRoom> {
   }
 
   void _initialize() {
-    _initializeRecorder().then((_) {
-      _createPeerConnection().then((pc) {
-        _peerConnection = pc;
-        _createOffer();
-      });
+    _createPeerConnection().then((pc) {
+      _peerConnection = pc;
+      _createOffer();
     });
-  }
-
-  Future<void> _initializeRecorder() async {
-    try {
-      await _recorder.openRecorder();
-      await _player.openPlayer();
-      _startRecording();
-    } catch (err) {
-      print('Error initializing recorder or player: $err');
-    }
-  }
-
-  Future<void> _startRecording() async {
-    try {
-      await _recorder.startRecorder(
-        toFile: 'feedback.aac',
-        codec: Codec.aacADTS,
-      );
-      setState(() {
-        _isRecording = true;
-      });
-    } catch (err) {
-      print('Error starting recording: $err');
-    }
-  }
-
-  Future<void> _stopRecording() async {
-    try {
-      await _recorder.stopRecorder();
-      await _player.startPlayer(
-        fromURI: 'feedback.aac',
-        codec: Codec.aacADTS,
-      );
-      setState(() {
-        _isRecording = false;
-      });
-    } catch (err) {
-      print('Error stopping recording or starting playback: $err');
-    }
   }
 
   @override
   void dispose() {
-    _stopRecordingAndClose().then((_) {
-      _peerConnection?.close();
-      _localStream?.dispose();
-      super.dispose();
-    });
-  }
-
-  Future<void> _stopRecordingAndClose() async {
-    if (_isRecording) {
-      await _stopRecording();
-    }
-    try {
-      await _recorder.closeRecorder();
-      await _player.closePlayer();
-    } catch (err) {
-      print('Error closing recorder or player: $err');
-    }
+    _peerConnection?.close();
+    _localStream?.dispose();
+    super.dispose();
   }
 
   Future<RTCPeerConnection> _createPeerConnection() async {
@@ -129,7 +71,9 @@ class _VoiceRoomState extends State<VoiceRoom> {
     };
 
     pc.onTrack = (event) {
-      // Gérer les flux audio entrants
+      if (event.streams.isNotEmpty) {
+        // Ajoutez les flux audio entrants aux éléments de l'interface utilisateur si nécessaire
+      }
     };
 
     _localStream = await _getUserMedia();
@@ -158,6 +102,7 @@ class _VoiceRoomState extends State<VoiceRoom> {
       data: {
         'sdp': offer.sdp,
         'type': offer.type,
+        'channel_id': widget.channelId,
       },
     );
 
@@ -166,6 +111,7 @@ class _VoiceRoomState extends State<VoiceRoom> {
 
     await _peerConnection!.setRemoteDescription(RTCSessionDescription(answer['sdp'], answer['type']));
 
+    // Gérer les candidats ICE de la télécommande
     for (var candidate in _remoteCandidates) {
       await _peerConnection!.addCandidate(candidate);
     }
@@ -179,6 +125,7 @@ class _VoiceRoomState extends State<VoiceRoom> {
         'candidate': candidate.candidate,
         'sdpMid': candidate.sdpMid,
         'sdpMLineIndex': candidate.sdpMLineIndex,
+        'channel_id': widget.channelId,
       },
     );
   }
