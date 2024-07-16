@@ -67,6 +67,7 @@ dependencies:
   audioplayers:
   flutter_localizations:
     sdk: flutter
+  record: ^5.1.2
 
 dev_dependencies:
   flutter_test:

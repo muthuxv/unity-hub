@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:dio/dio.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:unity_hub/pages/microphone_page.dart';
 
 class VoiceRoom extends StatefulWidget {
   final String channelId;
@@ -159,6 +160,17 @@ class _VoiceRoomState extends State<VoiceRoom> {
       body: Center(
         child: Text('Salon vocal en cours...'),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AudioFeedbackPage(),
+            ),
+          );
+        },
+        child: Icon(Icons.call_end),
+      )
     );
   }
 }
