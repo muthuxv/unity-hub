@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:dio/dio.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter_sound/flutter_sound.dart';
 
 class VoiceRoom extends StatefulWidget {
   final String channelId;
@@ -18,9 +17,8 @@ class VoiceRoom extends StatefulWidget {
 class _VoiceRoomState extends State<VoiceRoom> {
   RTCPeerConnection? _peerConnection;
   MediaStream? _localStream;
-  FlutterSoundRecorder _recorder = FlutterSoundRecorder();
-  FlutterSoundPlayer _player = FlutterSoundPlayer();
-  bool _isRecording = false;
+  List<RTCIceCandidate> _remoteCandidates = [];
+  List<MediaStream> _remoteStreams = [];
 
   @override
   void initState() {
@@ -35,7 +33,7 @@ class _VoiceRoomState extends State<VoiceRoom> {
         _initialize();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Le microphone est nécessaire pour les salons vocaux.')),
+          SnackBar(content: Text('Le microphone est nÃ©cessaire pour les salons vocaux.')),
         );
       }
     } else {
@@ -44,50 +42,19 @@ class _VoiceRoomState extends State<VoiceRoom> {
   }
 
   void _initialize() {
-    _initializeRecorder();
     _createPeerConnection().then((pc) {
       _peerConnection = pc;
       _createOffer();
     });
   }
 
-  Future<void> _initializeRecorder() async {
-    await _recorder.openRecorder();
-    await _player.openPlayer();
-    _startRecording();
-  }
-
-  Future<void> _startRecording() async {
-    try {
-      await _recorder.startRecorder(
-        toFile: 'feedback.aac',
-        codec: Codec.aacADTS,
-      );
-      setState(() {
-        _isRecording = true;
-      });
-    } catch (err) {
-      print('Error starting recording: $err');
-    }
-  }
-
-  Future<void> _stopRecording() async {
-    await _recorder.stopRecorder();
-    await _player.startPlayer(
-      fromURI: 'feedback.aac',
-      codec: Codec.aacADTS,
-    );
-    setState(() {
-      _isRecording = false;
-    });
-  }
-
   @override
   void dispose() {
-    _recorder.closeRecorder();
-    _player.closePlayer();
     _peerConnection?.close();
     _localStream?.dispose();
+    for (var stream in _remoteStreams) {
+      stream.dispose();
+    }
     super.dispose();
   }
 
@@ -108,7 +75,11 @@ class _VoiceRoomState extends State<VoiceRoom> {
     };
 
     pc.onTrack = (event) {
-      // Gérer les flux audio entrants
+      if (event.streams.isNotEmpty) {
+        setState(() {
+          _remoteStreams.add(event.streams[0]);
+        });
+      }
     };
 
     _localStream = await _getUserMedia();
@@ -133,10 +104,11 @@ class _VoiceRoomState extends State<VoiceRoom> {
     await _peerConnection!.setLocalDescription(offer);
 
     final response = await Dio().post(
-      'http://10.0.2.2:8080/webrtc/sdp',
+      'https://unityhub.fr/webrtc/sdp',
       data: {
         'sdp': offer.sdp,
         'type': offer.type,
+        'channel_id': widget.channelId,
       },
     );
 
@@ -153,11 +125,12 @@ class _VoiceRoomState extends State<VoiceRoom> {
 
   void _sendCandidate(RTCIceCandidate candidate) {
     Dio().post(
-      'http://10.0.2.2:8080/webrtc/ice',
+      'https://unityhub.fr/webrtc/ice',
       data: {
         'candidate': candidate.candidate,
         'sdpMid': candidate.sdpMid,
         'sdpMLineIndex': candidate.sdpMLineIndex,
+        'channel_id': widget.channelId,
       },
     );
   }
