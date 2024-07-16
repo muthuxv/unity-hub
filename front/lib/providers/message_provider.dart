@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
 
@@ -18,7 +19,7 @@ class MessageProvider with ChangeNotifier {
   List<Message> get messages => _messages;
 
   void connect(String channelId) {
-    channel = WebSocketChannel.connect(Uri.parse('wss://unityhub.fr/channels/$channelId/send'));
+    channel = WebSocketChannel.connect(Uri.parse('${dotenv.env['WS_PATH']}/channels/$channelId/send'));
 
     channel.stream.listen((message) {
       final decodedMessage = json.decode(message);

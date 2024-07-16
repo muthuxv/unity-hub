@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
@@ -20,8 +21,11 @@ class GroupProvider with ChangeNotifier {
     final decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
-      final response = await Dio().get('https://unityhub.fr/groups/users/$userId');
+      final response = await Dio().get('$apiPath/groups/users/$userId');
       if (response.statusCode == 200) {
         List<dynamic>? data = response.data;
 
@@ -87,7 +91,10 @@ class GroupProvider with ChangeNotifier {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId1 = decodedToken['jti'];
 
-    final response = await Dio().post('https://unityhub.fr/groups/private/$userId1',
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    final response = await Dio().post('$apiPath/groups/private/$userId1',
         data: {'userID': userId2});
     if (response.statusCode == 201 || response.statusCode == 200) {
       fetchGroups();
@@ -100,7 +107,10 @@ class GroupProvider with ChangeNotifier {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
-    final response = await Dio().post('https://unityhub.fr/groups/public/$userId',
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    final response = await Dio().post('$apiPath/groups/public/$userId',
         data: {'group_id': groupId, 'member_ids': memberIds});
     if (response.statusCode == 200 || response.statusCode == 201) {
       fetchGroups();
@@ -109,7 +119,11 @@ class GroupProvider with ChangeNotifier {
 
   Future<void> leaveGroup(String groupId, String userId) async {
     final dio = Dio();
-    final url = 'https://unityhub.fr/groups/$groupId/members/$userId';
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    final url = '$apiPath/groups/$groupId/members/$userId';
 
     try {
       final response = await dio.delete(url);

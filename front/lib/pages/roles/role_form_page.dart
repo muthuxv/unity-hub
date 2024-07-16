@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -29,9 +30,12 @@ class _RolePageFormState extends State<RolePageForm> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().post(
-        'https://unityhub.fr/roles/server/${widget.serverId}/add',
+        '$apiPath/roles/server/${widget.serverId}/add',
         data: {'Label': _nameController.text},
         options: Options(
           headers: {

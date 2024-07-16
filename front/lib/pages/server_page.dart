@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -38,8 +39,11 @@ class _ServerPageState extends State<ServerPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().get(
-      'https://unityhub.fr/servers/users/$userId',
+      '$apiPath/servers/users/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -83,9 +87,13 @@ class _ServerPageState extends State<ServerPage> {
   Future<void> _leaveServer(BuildContext context) async {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().delete(
-        'https://unityhub.fr/servers/${_selectedServer['ID']}/leave',
+        '$apiPath/servers/${_selectedServer['ID']}/leave',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -121,22 +129,22 @@ class _ServerPageState extends State<ServerPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirmation'),
-          content: const SingleChildScrollView(
+          content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('Are you sure you want to leave the server?'),
+                Text(AppLocalizations.of(context)!.leaveServerConfirmation),
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel_button),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Confirm'),
+              child: Text(AppLocalizations.of(context)!.confirmButton),
               onPressed: () {
                 Navigator.of(context).pop();
                 _leaveServer(context);
@@ -277,7 +285,7 @@ class _ServerPageState extends State<ServerPage> {
                           itemCount: _servers.length,
                           itemBuilder: (context, index) {
                             String filename = _servers[index]['Media']['FileName'];
-                            String imageUrl = 'https://unityhub.fr/uploads/$filename?rand=${DateTime.now().millisecondsSinceEpoch}';
+                            String imageUrl = 'http://10.0.2.2:8080/uploads/$filename?rand=${DateTime.now().millisecondsSinceEpoch}';
 
                             return Padding(
                               padding: const EdgeInsets.all(5.0),
@@ -377,7 +385,7 @@ class _ServerPageState extends State<ServerPage> {
                                                 ListTile(
                                                   leading: CircleAvatar(
                                                     backgroundImage: NetworkImage(
-                                                      'https://unityhub.fr/uploads/${_selectedServer['Media']['FileName']}?rand=${DateTime.now().millisecondsSinceEpoch}',
+                                                      'http://10.0.2.2:8080/uploads/${_selectedServer['Media']['FileName']}?rand=${DateTime.now().millisecondsSinceEpoch}',
                                                     ),
                                                   ),
                                                   title: Text(

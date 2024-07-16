@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dio/dio.dart';
@@ -36,8 +37,11 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
       final userId = decodedToken['jti'];
 
+      await dotenv.load();
+      final apiPath = dotenv.env['API_PATH']!;
+
       final response = await Dio().get(
-        'https://unityhub.fr/users/$userId',
+        '$apiPath/users/$userId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -72,38 +76,55 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
-    final response = await Dio().put(
-      'https://unityhub.fr/users/$userId',
-      options: Options(
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ),
-      data: {
-        'Pseudo': _pseudo,
-      },
-    );
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
 
-    if (response.statusCode == 200) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(AppLocalizations.of(context)!.profileUpdated),
-          content: Text(AppLocalizations.of(context)!.pseudoUpdatedSuccessfully),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop(true);
-              },
-              child: const Text('OK'),
-            ),
-          ],
+    try {
+      final response = await Dio().put(
+        '$apiPath/users/$userId',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
         ),
+        data: {
+          'Pseudo': _pseudo,
+        },
       );
-    } else {
-      _showErrorDialog(AppLocalizations.of(context)!.errorUpdatingProfile);
+
+      if (response.statusCode == 200) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(AppLocalizations.of(context)!.profileUpdated),
+            content: Text(AppLocalizations.of(context)!.pseudoUpdatedSuccessfully),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(true);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        if (response.statusCode == 400 && response.data['error'] == 'Pseudo already exists') {
+          _showErrorDialog(AppLocalizations.of(context)!.pseudoAlreadyExists);
+        } else {
+          _showErrorDialog(AppLocalizations.of(context)!.errorUpdatingProfile);
+        }
+      }
+    } on DioError catch (e) {
+      if (e.response != null && e.response!.statusCode == 400 && e.response!.data['error'] == 'Pseudo already exists') {
+        _showErrorDialog(AppLocalizations.of(context)!.pseudoAlreadyExists);
+      } else {
+        _showErrorDialog(AppLocalizations.of(context)!.connectionError);
+      }
+    } catch (e) {
+      _showErrorDialog(AppLocalizations.of(context)!.connectionError);
     }
   }
 
@@ -113,8 +134,11 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().put(
-      'https://unityhub.fr/users/$userId',
+      '$apiPath/users/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +157,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.profilePictureUpdated),
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     } else {
@@ -160,6 +184,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   void _generateRandomAvatar() {
     setState(() {
       _avatar = RandomAvatarString(DateTime.now().millisecondsSinceEpoch.toString());
+      print(_avatar);
     });
   }
 

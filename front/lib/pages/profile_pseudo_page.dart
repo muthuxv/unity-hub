@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -30,8 +31,11 @@ class _ProfilePseudoPageState extends State<ProfilePseudoPage> {
       final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
       final userId = decodedToken['jti'];
 
+      await dotenv.load();
+      final apiPath = dotenv.env['API_PATH']!;
+
       final response = await Dio().get(
-        'https://unityhub.fr/users/$userId',
+        '$apiPath/users/$userId',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -58,38 +62,58 @@ class _ProfilePseudoPageState extends State<ProfilePseudoPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
-    final response = await Dio().put(
-      'https://unityhub.fr/users/$userId',
-      data: {
-        'Pseudo': _pseudoController.text,
-      },
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ),
-    );
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
 
-    if (response.statusCode == 200) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(AppLocalizations.of(context)!.pseudoUpdated),
-          content: Text(AppLocalizations.of(context)!.pseudoUpdatedSuccess),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop(true);
-              },
-              child: const Text('OK'),
-            ),
-          ],
+    try {
+      final response = await Dio().put(
+        '$apiPath/users/$userId',
+        data: {
+          'Pseudo': _pseudoController.text,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
         ),
       );
-    } else {
-      _showErrorDialog(AppLocalizations.of(context)!.errorUpdatingPseudo);
+
+      if (response.statusCode == 200) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(AppLocalizations.of(context)!.profileUpdated),
+            content: Text(AppLocalizations.of(context)!.pseudoUpdatedSuccessfully),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(true);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        // This block will handle cases where response code is not 200
+        if (response.statusCode == 400 && response.data['error'] == 'Pseudo already exists') {
+          _showErrorDialog(AppLocalizations.of(context)!.pseudoAlreadyExists);
+        } else {
+          _showErrorDialog(AppLocalizations.of(context)!.errorUpdatingProfile);
+        }
+      }
+    } on DioError catch (e) {
+      // This block handles exceptions related to the request
+      if (e.response != null && e.response!.statusCode == 400 && e.response!.data['error'] == 'Pseudo already exists') {
+        _showErrorDialog(AppLocalizations.of(context)!.pseudoAlreadyExists);
+      } else {
+        _showErrorDialog(AppLocalizations.of(context)!.connectionError);
+      }
+    } catch (e) {
+      // This block handles any other exceptions
+      _showErrorDialog(AppLocalizations.of(context)!.connectionError);
     }
   }
 

@@ -74,8 +74,11 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       _isLoading = true;
     });
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
-      final response = await Dio().get('https://unityhub.fr/channels/${widget.channelId}/messages');
+      final response = await Dio().get('$apiPath/channels/${widget.channelId}/messages');
       final List<dynamic> messages = response.data;
 
       setState(() {
@@ -113,7 +116,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
 
   void _connectToWebSocket() {
     _channel = WebSocketChannel.connect(
-      Uri.parse('wss://unityhub.fr/channels/${widget.channelId}/send'),
+      Uri.parse('${dotenv.env['WS_PATH']}/channels/${widget.channelId}/send'),
     );
 
     _channel.stream.listen((message) async {
@@ -121,6 +124,10 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       final DateTime createdAt = DateTime.parse(data['SentAt']);
       final String formattedDate = DateFormat('yyyy-MM-dd').format(createdAt);
 
+      setState(() {
+        _messagesByDate.putIfAbsent(formattedDate, () => []);
+        _messagesByDate[formattedDate]!.add(data);
+      });
 
       try {
         await FirebaseMessaging.instance.unsubscribeFromTopic('channel-${widget.channelId}');
@@ -151,10 +158,6 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
         debugPrint('Error sending notification: $e');
       }
 
-      setState(() {
-        _messagesByDate.putIfAbsent(formattedDate, () => []);
-        _messagesByDate[formattedDate]!.add(data);
-      });
     });
   }
 
@@ -340,6 +343,9 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     final decodedToken = JwtDecoder.decode(jwtToken!);
     final userID = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final reportData = {
       "message": reportMessage,
       "status": "pending",
@@ -350,7 +356,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
 
     try {
       await Dio().post(
-        'https://unityhub.fr/reports',
+        '$apiPath/reports',
         data: reportData,
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -369,6 +375,9 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     final decodedToken = JwtDecoder.decode(jwtToken!);
     final userID = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final reportData = {
       "message": reportMessage,
       "status": "pending",
@@ -379,7 +388,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
 
     try {
       await Dio().post(
-        'https://unityhub.fr/reports',
+        '$apiPath/reports',
         data: reportData,
       );
       ScaffoldMessenger.of(context).showSnackBar(

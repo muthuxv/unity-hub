@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:unity_hub/models/group_model.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dio/dio.dart';
@@ -54,7 +55,11 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
 
   Future<void> _kickMember(String memberId) async {
     final dio = Dio();
-    final url = 'https://unityhub.fr/groups/${widget.group.id}/members/$memberId';
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    final url = '$apiPath/groups/${widget.group.id}/members/$memberId';
 
     try {
       final response = await dio.delete(url);

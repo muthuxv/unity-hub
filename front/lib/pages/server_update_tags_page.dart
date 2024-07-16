@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -50,9 +51,12 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
   }
 
   Future<void> fetchServerTags() async {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       Response response =
-      await Dio().get('https://unityhub.fr/servers/${widget.serverId}');
+      await Dio().get('$apiPath/servers/${widget.serverId}');
       Map<String, dynamic> serverData = Map<String, dynamic>.from(response.data);
       setState(() {
         _serverTags = serverData['Tags'] ?? [];
@@ -63,8 +67,11 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
   }
 
   Future<void> fetchAllTags() async {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
-      Response response = await Dio().get('https://unityhub.fr/tags');
+      Response response = await Dio().get('$apiPath/tags');
       setState(() {
         _allTags = response.data;
       });
@@ -74,9 +81,12 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
   }
 
   Future<void> updateServerTags(List<String> tagIds) async {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       Response response = await Dio().put(
-        'https://unityhub.fr/servers/${widget.serverId}',
+        '$apiPath/servers/${widget.serverId}',
         data: {'tag_ids': tagIds},
       );
       if (response.statusCode == 200) {

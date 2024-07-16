@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:dio/dio.dart';
@@ -51,7 +52,7 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
               await FirebaseAuth.instance.signInWithCredential(credential);
 
               await _dio.get(
-                'https://unityhub.fr/auth/google/callback',
+                '${dotenv.env['API_PATH']}/auth/google/callback',
                 data: {
                   'uid': FirebaseAuth.instance.currentUser!.uid,
                   'email': FirebaseAuth.instance.currentUser!.email,

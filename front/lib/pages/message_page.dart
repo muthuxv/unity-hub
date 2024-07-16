@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/io.dart';
 
 class MessagePage extends StatefulWidget {
@@ -9,7 +10,7 @@ class MessagePage extends StatefulWidget {
 }
 
 class _MessagePageState extends State<MessagePage> {
-  final _channel = IOWebSocketChannel.connect(Uri.parse('wss://unityhub.fr/ws'));
+  final _channel = IOWebSocketChannel.connect(Uri.parse('${dotenv.env['WS_PATH']}/ws'));
   final TextEditingController _controller = TextEditingController();
 
   void _sendMessage() {

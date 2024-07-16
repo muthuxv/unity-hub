@@ -19,13 +19,21 @@ import (
 
 var jwtKey = []byte(os.Getenv("JWT_KEY"))
 
-func GenerateJWT(userID uuid.UUID, email, role string) (string, error) {
+type CustomClaims struct {
+	jwt.RegisteredClaims
+	Pseudo string `json:"pseudo"`
+}
+
+func GenerateJWT(userID uuid.UUID, email, role, pseudo string) (string, error) {
 	expirationTime := time.Now().Add(10000 * time.Hour)
-	claims := &jwt.RegisteredClaims{
-		ID:        fmt.Sprintf("%v", userID),
-		Subject:   email,
-		ExpiresAt: jwt.NewNumericDate(expirationTime),
-		Audience:  []string{role},
+	claims := CustomClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        fmt.Sprintf("%v", userID),
+			Subject:   email,
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			Audience:  []string{role},
+		},
+		Pseudo: pseudo,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

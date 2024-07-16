@@ -6,7 +6,6 @@ import (
 	"app/db/models"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -29,10 +28,6 @@ func OAuthCallbackHandler(provider string) gin.HandlerFunc {
 			return
 		}
 
-		// Logs pour débogage
-		fmt.Println(data)
-
-		// Vérification des clés et des types
 		email, okEmail := data["email"].(string)
 		displayName, okDisplayName := data["displayName"].(string)
 		avatar, okAvatar := data["photoURL"].(string)
@@ -71,7 +66,7 @@ func OAuthCallbackHandler(provider string) gin.HandlerFunc {
 		}
 
 		// Génération du JWT
-		tokenString, err := controllers.GenerateJWT(user.ID, user.Email, user.Role)
+		tokenString, err := controllers.GenerateJWT(user.ID, user.Email, user.Role, user.Pseudo)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Échec de la génération du JWT"})
 			return

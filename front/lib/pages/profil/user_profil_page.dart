@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -48,9 +49,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().get(
-        'https://unityhub.fr/users/${widget.userId}',
+        '$apiPath/users/${widget.userId}',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -73,8 +77,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().get(
-      'https://unityhub.fr/friends',
+      '$apiPath/friends',
       options: Options(
         headers: {
           'Authorization': 'Bearer $token',
@@ -102,8 +109,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().get(
-      'https://unityhub.fr/friends/pending/${userInfo['ID']}',
+      '$apiPath/friends/pending/${userInfo['ID']}',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -140,9 +150,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       await Dio().post(
-        'https://unityhub.fr/friends/request',
+        '$apiPath/friends/request',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -170,9 +183,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       await Dio().delete(
-        'https://unityhub.fr/friends/${_friendInfo['ID']}',
+        '$apiPath/friends/${_friendInfo['ID']}',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -195,9 +211,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       await Dio().delete(
-        'https://unityhub.fr/friends/${_friendInfo['ID']}',
+        '$apiPath/friends/${_friendInfo['ID']}',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -273,6 +292,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
     final decodedToken = JwtDecoder.decode(jwtToken!);
     final userID = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final reportData = {
       "message": reportMessage,
       "status": "pending",
@@ -283,7 +305,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
     try {
       await Dio().post(
-        'https://unityhub.fr/reports',
+        '$apiPath/reports',
         data: reportData,
         options: Options(
           headers: {

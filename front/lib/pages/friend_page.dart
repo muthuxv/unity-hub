@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -34,8 +35,11 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().get(
-      'https://unityhub.fr/friends/users/$userId',
+      '$apiPath/friends/users/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -68,8 +72,11 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().get(
-      'https://unityhub.fr/friends/sent/$userId',
+      '$apiPath/friends/sent/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -93,8 +100,11 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().get(
-      'https://unityhub.fr/friends/pending/$userId',
+      '$apiPath/friends/pending/$userId',
       options: Options(
         headers: {
           'Content-Type': 'application/json',
@@ -125,8 +135,11 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().post(
-      'https://unityhub.fr/friends/accept',
+      '$apiPath/friends/accept',
       data: {
         'ID': friendId,
         'UserID2': userId,
@@ -181,8 +194,11 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     final response = await Dio().post(
-      'https://unityhub.fr/friends/refuse',
+      '$apiPath/friends/refuse',
       data: {
         'ID': friendId,
         'UserID2': userId,
@@ -216,9 +232,12 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().delete(
-        'https://unityhub.fr/friends/$friendId',
+        '$apiPath/friends/$friendId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -418,6 +437,7 @@ class _FriendPageState extends State<FriendPage> {
                         title: Text(AppLocalizations.of(context)!.inviteToServer),
                         onTap: () {
                           Navigator.pop(context);
+                          _getFriendServers(friend['FriendID'].toString()); // Appel pour récupérer les serveurs de l'ami
                         },
                       ),
                       Container(
@@ -441,6 +461,121 @@ class _FriendPageState extends State<FriendPage> {
         );
       },
     );
+  }
+
+  void _getFriendServers(String friendId) async {
+    setState(() {
+      _showLoading = true;
+    });
+
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    try {
+      final response = await Dio().get(
+        '$apiPath/servers/friend/$friendId', // Endpoint pour récupérer les serveurs de l'ami
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          validateStatus: (status) => status! < 500,
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        _showServerListDialog(response.data['data'], friendId);
+      } else {
+        _showErrorDialog(response.data['message'] ?? 'Failed to fetch friend servers');
+      }
+    } catch (e) {
+      _showErrorDialog('Failed to connect to server. Please check your network connection.');
+    }
+
+    setState(() {
+      _showLoading = false;
+    });
+  }
+
+  void _showServerListDialog(List<dynamic> servers, String friendId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(AppLocalizations.of(context)!.selectServer),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: servers.map((server) {
+                return ListTile(
+                  title: Text(server['Name']),
+                  onTap: () {
+                    _sendInvitation(server['ID'], friendId);
+                    Navigator.of(context).pop();
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(AppLocalizations.of(context)!.cancel),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _sendInvitation(String serverId, String friendId) async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    try {
+      final response = await Dio().post(
+        '$apiPath/invitations/server/$serverId',
+        data: {'userReceiverId': friendId},
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          validateStatus: (status) => status! < 501,
+        ),
+      );
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.invitationSentSuccess),
+          ),
+        );
+      } else {
+        String errorMessage = AppLocalizations.of(context)!.invitationSendFailure;
+        if (response.data != null && response.data['error'] != null) {
+          errorMessage = response.data['error'];
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to send invitation. Please check your network connection.'),
+        ),
+      );
+    }
   }
 
   void _showDeleteConfirmationDialog(Map friend) {
@@ -473,9 +608,12 @@ class _FriendPageState extends State<FriendPage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().delete(
-        'https://unityhub.fr/friends/${friend['ID']}',
+        '$apiPath/friends/${friend['ID']}',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -590,9 +728,12 @@ class _FriendPageState extends State<FriendPage> {
     final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
     final userId = decodedToken['jti'];
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().post(
-        'https://unityhub.fr/friends/request',
+        '$apiPath/friends/request',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -610,8 +751,12 @@ class _FriendPageState extends State<FriendPage> {
         try {
           const storage = FlutterSecureStorage();
           final token = await storage.read(key: 'token');
+
+          await dotenv.load();
+          final apiPath = dotenv.env['API_PATH']!;
+
           final response = await Dio().get(
-            'https://unityhub.fr/users/pseudo/$pseudo',
+            '$apiPath/users/pseudo/$pseudo',
             options: Options(
               headers: {
                 'Content-Type': 'application/json',

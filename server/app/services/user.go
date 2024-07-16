@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -100,7 +101,7 @@ func Login() gin.HandlerFunc {
 			return
 		}
 
-		tokenString, err := controllers.GenerateJWT(user.ID, user.Email, user.Role)
+		tokenString, err := controllers.GenerateJWT(user.ID, user.Email, user.Role, user.Pseudo)
 		if err != nil {
 			c.Error(err)
 			return
@@ -156,6 +157,65 @@ func ChangePassword() gin.HandlerFunc {
 		db.GetDB().Save(&user)
 
 		c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
+	}
+}
+
+func UpdateUserData() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userIDStr := c.Param("id")
+
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+
+		var input struct {
+			Pseudo  string `json:"pseudo"`
+			Profile string `json:"profile"`
+		}
+
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+			return
+		}
+
+		var user models.User
+		result := db.GetDB().Where("id = ?", userID).First(&user)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			} else {
+				c.Error(result.Error)
+			}
+			return
+		}
+
+		if input.Pseudo != "" && input.Pseudo != user.Pseudo {
+			var existingUser models.User
+			if err := db.GetDB().Where("pseudo = ?", input.Pseudo).First(&existingUser).Error; err == nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Pseudo already exists"})
+				return
+			}
+
+			user.Pseudo = input.Pseudo
+
+			if err := db.GetDB().Model(&user).Updates(models.User{Pseudo: input.Pseudo}).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update pseudo"})
+				return
+			}
+		}
+
+		if input.Profile != "" {
+			user.Profile = input.Profile
+
+			if err := db.GetDB().Model(&user).Updates(models.User{Profile: input.Profile}).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update profile"})
+				return
+			}
+		}
+
+		c.JSON(http.StatusOK, user)
 	}
 }
 

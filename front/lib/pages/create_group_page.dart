@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -42,11 +43,14 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       final Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
       final userId = decodedToken['jti'];
 
+      await dotenv.load();
+      final apiPath = dotenv.env['API_PATH']!;
+
       final dio = Dio();
       dio.options.headers['Content-Type'] = 'application/json';
       dio.options.headers['Authorization'] = 'Bearer $token';
 
-      final response = await dio.get('https://unityhub.fr/friends/users/$userId');
+      final response = await dio.get('$apiPath/friends/users/$userId');
 
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
@@ -102,6 +106,9 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     if (token == null) {
       throw Exception("Token not found");
     }
@@ -115,7 +122,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     } else {
       List<String> memberIds = selectedFriends;
       if (widget.groupId.isNotEmpty) {
-        final response = await dio.get('https://unityhub.fr/groups/${widget.groupId}');
+        final response = await dio.get('$apiPath/groups/${widget.groupId}');
         if (response.statusCode == 200) {
           final groupData = response.data;
           if (groupData['Type'] == 'dm') {

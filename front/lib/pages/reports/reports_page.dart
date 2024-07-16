@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ReportsPage extends StatefulWidget {
   final String serverID;
@@ -26,9 +27,12 @@ class _ReportsPageState extends State<ReportsPage> {
       _isLoading = true;
     });
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       final response = await Dio().get(
-        'https://unityhub.fr/reports/server/${widget.serverID}',
+        '$apiPath/reports/server/${widget.serverID}',
         queryParameters: {'status': _currentStatus},
       );
       if (response.statusCode == 200) {
@@ -105,9 +109,13 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Future<void> _deleteMessage(String messageId) async {
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       await Dio().put(
-        'https://unityhub.fr/messages/$messageId',
+        '$apiPath/messages/$messageId',
         data: {'Content': 'Ce message a été supprimé après signalement'},
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -121,8 +129,12 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Future<void> _deleteReport(String reportId) async {
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
-      await Dio().delete('https://unityhub.fr/reports/$reportId');
+      await Dio().delete('$apiPath/reports/$reportId');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Report deleted successfully')),
       );
@@ -134,9 +146,13 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Future<void> _updateReportStatus(String reportId, String status) async {
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
       await Dio().put(
-        'https://unityhub.fr/reports/$reportId',
+        '$apiPath/reports/$reportId',
         data: {'status': status},
       );
       ScaffoldMessenger.of(context).showSnackBar(

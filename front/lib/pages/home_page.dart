@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:unity_hub/pages/intro_page.dart';
 import 'package:unity_hub/pages/group_page.dart';
@@ -30,8 +31,11 @@ class _HomePageState extends State<HomePage> {
   String email = '';
 
   Future<List<Map<String, dynamic>>> fetchFeatureStatuses() async {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
-      final response = await Dio().get('https://unityhub.fr/features');
+      final response = await Dio().get('$apiPath/features');
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
 
@@ -70,7 +74,7 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> _pages = [
     const ServerPage(),
-    const GroupPage(),
+    GroupPage(),
     const NotificationPage(),
     const ProfilePage(),
   ];

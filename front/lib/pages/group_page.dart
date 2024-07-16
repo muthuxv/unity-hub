@@ -15,14 +15,19 @@ class GroupPage extends StatefulWidget {
 }
 
 class _GroupPageState extends State<GroupPage> {
-  String _filter = 'all'; // State to hold the current filter selection
+  String _filter = 'all';
 
-  //get the user id
   Future<String> getUserId() async {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
     final decodedToken = JwtDecoder.decode(token!);
     return decodedToken['jti'];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Provider.of<GroupProvider>(context, listen: false).fetchGroups();
   }
 
   @override

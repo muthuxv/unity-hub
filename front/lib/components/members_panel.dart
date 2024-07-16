@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class MembersPanel extends StatefulWidget {
   final int serverId;
@@ -19,8 +20,11 @@ class _MembersPanelState extends State<MembersPanel> {
       _isLoading = true;
     });
 
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
     try {
-      final response = await Dio().get('https://unityhub.fr/servers/${widget.serverId}/members');
+      final response = await Dio().get('$apiPath/servers/${widget.serverId}/members');
       print('Response: $response');
       setState(() {
         _members = response.data['data'];
