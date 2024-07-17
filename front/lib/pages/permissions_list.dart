@@ -25,7 +25,7 @@ class _PermissionsPageState extends State<PermissionsPage> {
 
     try {
       final response = await Dio().get(
-        '$apiPath/permissions',
+        '$apiPath/roles/${widget.roleId}/permissions',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -36,7 +36,9 @@ class _PermissionsPageState extends State<PermissionsPage> {
 
       if (response.statusCode == 200) {
         setState(() {
-          permissions = response.data;
+          if (response.data != null) {
+            permissions = response.data;
+          }
           _isLoading = false;
         });
       }
@@ -44,8 +46,6 @@ class _PermissionsPageState extends State<PermissionsPage> {
       print(e);
     }
   }
-
-
 
   @override
   void initState() {
@@ -64,17 +64,20 @@ class _PermissionsPageState extends State<PermissionsPage> {
           : ListView.builder(
         itemCount: permissions.length,
         itemBuilder: (context, index) {
+          print(permissions[index]);
           return ListTile(
-            title: Text(permissions[index].name),
-            trailing: Switch(
-              value: permissions[index].isEnabled,
-              onChanged: (bool value) {
-                // Mettre à jour l'état de la permission (local ou via API)
-                setState(() {
-                  permissions[index].isEnabled = value;
-                });
-              },
-            ),
+            title: Text(permissions[index]['label']),
+            trailing: (permissions[index]['label'] != 'sendMessage' &&
+                      permissions[index]['label'] != 'editChannel' &&
+                      permissions[index]['label'] != 'accessChannel') ?
+              Switch(
+                value: permissions[index]['power'] == '1',
+                onChanged: (value) {
+                  setState(() {
+                    permissions[index]['power'] = value;
+                  });
+                },
+              ) : null,
           );
         },
       ),
