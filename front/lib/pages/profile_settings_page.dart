@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'profile_account_page.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'confidentiality_page.dart';
 
 class ProfileSettingsPage extends StatelessWidget {
   const ProfileSettingsPage({super.key});
@@ -67,7 +68,10 @@ class ProfileSettingsPage extends StatelessWidget {
                     ),
                     trailing: const Icon(Icons.arrow_forward),
                     onTap: () {
-                      // Navigation logic for Confidentiality & Security Page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ConfidentialityPage()),
+                      );
                     },
                   ),
                 ],

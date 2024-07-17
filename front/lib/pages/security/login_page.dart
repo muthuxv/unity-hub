@@ -170,6 +170,7 @@ class _LoginPageState extends State<LoginPage> {
 
                     //form
                     TextField(
+                      textInputAction: TextInputAction.next,
                       style: const TextStyle(color: Colors.white),
                       controller: _emailController,
                       decoration: const InputDecoration(
@@ -187,6 +188,7 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 16),
 
                     TextField(
+                      textInputAction: TextInputAction.done,
                       style: const TextStyle(color: Colors.white),
                       controller: _passwordController,
                       obscureText: _isObscure,

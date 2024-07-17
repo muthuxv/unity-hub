@@ -16,13 +16,12 @@ import 'security/auth_page.dart';
 
 Future<String?> getCurrentUserId() async {
   try {
-    final storage = FlutterSecureStorage();
+    const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 
     if (token != null) {
       final Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
       final currentUserId = decodedToken['jti'];
-      print(decodedToken);
       return currentUserId;
     } else {
       print('Token not found');
@@ -283,11 +282,10 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                                 ),
                               );
                               if (response.statusCode == 200) {
-                                print('Uploaded: ${response.data['id']}');
                                 final serverUpdateResponse = await Dio().put(
                                   '$apiPath/servers/${widget.serverId}',
                                   data: {
-                                    'MediaID': response.data['id'],
+                                    'media_id': response.data['id'],
                                   },
                                   options: Options(
                                     headers: {

@@ -48,6 +48,26 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
 
   Future<void> _updateChannel(String channelId, String channelName) async {
 
+    if (channelName.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(AppLocalizations.of(context)!.channel_creation_error_title),
+            content: Text(AppLocalizations.of(context)!.channel_creation_error_message),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
 
@@ -58,6 +78,8 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
           'name': channelName,
         },
       );
+
+      _fetchChannels();
     } catch (error) {
       print('Error updating channel: $error');
     }

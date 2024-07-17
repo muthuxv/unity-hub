@@ -781,12 +781,11 @@ class _FriendPageState extends State<FriendPage> {
                 'token': fcmToken,
                 'notification': {
                   'title': AppLocalizations.of(context)!.friendRequest,
-                  'body': AppLocalizations.of(context)!.youReceivedFriendRequest + decodedToken['pseudo'],
+                  'body': "${AppLocalizations.of(context)!.youReceivedFriendRequest} ${decodedToken['pseudo']}",
                 },
               },
             },
           );
-          print('Friend request notification sent successfully');
         } catch (e) {
           print('Failed to get user by pseudo: $e');
         }

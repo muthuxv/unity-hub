@@ -133,6 +133,7 @@ class MessagingService {
           playSound: true,
           enableVibration: true,
           styleInformation: BigTextStyleInformation(''),
+          ticker: 'ticker',
         );
 
         const platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
