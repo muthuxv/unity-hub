@@ -29,5 +29,5 @@ func ServerRoutes(r *gin.Engine) {
 	r.POST("/servers/:id/ban/users/:userID", controllers.TokenAuthMiddleware("user"), controllers.GenerateLogBanMiddlaware(), services.BanUser())
 	r.DELETE("/servers/:id/unban/users/:userID", controllers.TokenAuthMiddleware("user"), services.UnbanUser())
 	r.DELETE("/servers/:id", controllers.TokenAuthMiddleware("user"), services.DeleteServerByID())
-	r.POST("/servers/:serverID/setRole/:roleID", services.SetRoleToUser)
+	r.POST("/server/:serverID/setRole/:roleID", services.SetRoleToUser)
 }

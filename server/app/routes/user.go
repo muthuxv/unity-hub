@@ -22,4 +22,5 @@ func UserRoutes(r *gin.Engine) {
 	r.PUT("/users/:id/change-password", controllers.TokenAuthMiddleware("user"), controllers.IsOwner(), services.ChangePassword())
 	r.PUT("/fcm-token", controllers.TokenAuthMiddleware("user"), services.RegisterFcmToken())
 	r.GET("/users/pseudo/:pseudo", controllers.TokenAuthMiddleware("user"), services.GetUserByPseudo())
+	r.GET("/user/:userID/servers/:serverID/roles", controllers.TokenAuthMiddleware("user"), services.GetUserServerRole())
 }

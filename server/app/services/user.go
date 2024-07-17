@@ -305,3 +305,36 @@ func isValidPseudo(pseudo string) bool {
 	re := regexp.MustCompile("^[a-zA-Z0-9_]+$")
 	return re.MatchString(pseudo)
 }
+
+func GetUserServerRole() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.Param("userID")
+		serverID := c.Param("serverID")
+
+		if _, err := uuid.Parse(userID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+
+		if _, err := uuid.Parse(serverID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid server ID"})
+			return
+		}
+
+		var role models.Role
+
+		result := db.GetDB().Table("role_users").Select("roles.id, roles.label").Joins("JOIN roles ON role_users.role_id = roles.id").Where("role_users.user_id = ? AND roles.server_id = ?", userID, serverID).First(&role)
+
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			}
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"id": role.ID, "label": role.Label})
+
+	}
+}
