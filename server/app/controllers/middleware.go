@@ -62,3 +62,93 @@ func GenerateLogMiddleware(action string) gin.HandlerFunc {
 		db.GetDB().Create(&logEntry)
 	}
 }
+
+func GenerateLogBanMiddlaware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+
+		serverIDStr := c.Param("id")
+		_, err := uuid.Parse(serverIDStr)
+		if err != nil {
+			return
+		}
+
+		serverID := uuid.MustParse(serverIDStr)
+
+		claims, exists := c.Get("jwt_claims")
+		if !exists {
+			return
+		}
+
+		jwtClaims, ok := claims.(jwt.MapClaims)
+		if !ok {
+			return
+		}
+
+		userPseudo, ok := jwtClaims["pseudo"].(string)
+		if !ok {
+			return
+		}
+
+		userID := c.Param("userID")
+		if userID == "" {
+			return
+		}
+
+		_, err = uuid.Parse(userID)
+		if err != nil {
+			return
+		}
+
+		var user models.User
+		db.GetDB().Where("id = ?", userID).First(&user)
+
+		logEntry := models.Logs{
+			Message:  "User " + userPseudo + " banned " + user.Pseudo + " from server",
+			ServerID: serverID,
+		}
+
+		db.GetDB().Create(&logEntry)
+	}
+}
+
+func GenerateLogChannelMiddlaware(action string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+
+		serverIDStr := c.Param("id")
+		_, err := uuid.Parse(serverIDStr)
+		if err != nil {
+			return
+		}
+
+		serverID := uuid.MustParse(serverIDStr)
+
+		claims, exists := c.Get("jwt_claims")
+		if !exists {
+			return
+		}
+
+		jwtClaims, ok := claims.(jwt.MapClaims)
+		if !ok {
+			return
+		}
+
+		userIDStr, ok := jwtClaims["jti"].(string)
+		if !ok {
+			return
+		}
+
+		_, err = uuid.Parse(userIDStr)
+		if err != nil {
+			return
+		}
+
+		logEntry := models.Logs{
+			Message:  "User " + userIDStr + " " + action + " a channel",
+			ServerID: serverID,
+		}
+
+		db.GetDB().Create(&logEntry)
+	}
+}

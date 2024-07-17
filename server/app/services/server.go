@@ -364,8 +364,8 @@ func NewServer() gin.HandlerFunc {
 
 		if inputServer.MediaID == uuid.Nil {
 			var media models.Media
-			if err := db.GetDB().Where("file_name = ?", "default.png").First(&media).Error; err != nil {
-				handleError(c, http.StatusInternalServerError, "Erreur lors de la recherche du média par défaut")
+			if err := db.GetDB().First(&media).Error; err != nil {
+				handleError(c, http.StatusBadRequest, "Le média est requis")
 				return
 			}
 			inputServer.MediaID = media.ID

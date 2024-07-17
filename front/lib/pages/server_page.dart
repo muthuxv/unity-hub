@@ -190,7 +190,8 @@ class _ServerPageState extends State<ServerPage> {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.only(top: 70.0),
+            //responsive
+            padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.10),
             child: _servers.isEmpty
                 ? Center(
               child: Column(
@@ -232,7 +233,7 @@ class _ServerPageState extends State<ServerPage> {
                 Row(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(left: 20.0),
+                      padding: const EdgeInsets.only(left: 20.0, right: 10.0),
                       child: GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -288,10 +289,9 @@ class _ServerPageState extends State<ServerPage> {
                             String imageUrl = 'http://10.0.2.2:8080/uploads/$filename?rand=${DateTime.now().millisecondsSinceEpoch}';
 
                             return Padding(
-                              padding: const EdgeInsets.all(5.0),
+                              padding: const EdgeInsets.all(2.5),
                               child: GestureDetector(
                                 onTap: () {
-                                  print(_servers[index]);
                                   setState(() {
                                     _selectedServer =
                                     _servers[index];
@@ -311,7 +311,7 @@ class _ServerPageState extends State<ServerPage> {
                                     color: _selectedServer['ID'] ==
                                         _servers[index]['ID']
                                         ? Colors.white
-                                        : Colors.white.withOpacity(0.5),
+                                        : Colors.white.withOpacity(0.1),
                                   ),
                                   child: CircleAvatar(
                                     backgroundImage: NetworkImage(

@@ -318,17 +318,17 @@ class _AddServerPageState extends State<AddServerPage> {
                                 children: [
                                   Radio(
                                     fillColor: MaterialStateProperty.all(Colors.white),
-                                    value: 'public',
+                                    value: 'private',
                                     groupValue: _visibility,
                                     onChanged: (value) {
                                       setState(() {
-                                        _visibility = 'public';
-                                        _toggleTagsField(true);
+                                        _visibility = 'private';
+                                        _toggleTagsField(false);
                                       });
                                     },
                                   ),
                                   Text(
-                                    AppLocalizations.of(context)!.create_public_server,
+                                    AppLocalizations.of(context)!.create_private_server,
                                     style: const TextStyle(color: Colors.white),
                                   ),
                                 ],
@@ -345,17 +345,17 @@ class _AddServerPageState extends State<AddServerPage> {
                                 children: [
                                   Radio(
                                     fillColor: MaterialStateProperty.all(Colors.white),
-                                    value: 'private',
+                                    value: 'public',
                                     groupValue: _visibility,
                                     onChanged: (value) {
                                       setState(() {
-                                        _visibility = 'private';
-                                        _toggleTagsField(false);
+                                        _visibility = 'public';
+                                        _toggleTagsField(true);
                                       });
                                     },
                                   ),
                                   Text(
-                                    AppLocalizations.of(context)!.create_private_server,
+                                    AppLocalizations.of(context)!.create_public_server,
                                     style: const TextStyle(color: Colors.white),
                                   ),
                                 ],

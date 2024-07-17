@@ -6,7 +6,6 @@ import (
 	"app/db/models"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -29,10 +28,6 @@ func OAuthCallbackHandler(provider string) gin.HandlerFunc {
 			return
 		}
 
-		// Logs pour débogage
-		fmt.Println(data)
-
-		// Vérification des clés et des types
 		email, okEmail := data["email"].(string)
 		displayName, okDisplayName := data["displayName"].(string)
 		avatar, okAvatar := data["photoURL"].(string)

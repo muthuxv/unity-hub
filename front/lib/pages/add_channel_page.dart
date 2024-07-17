@@ -17,7 +17,27 @@ class _AddChannelPageState extends State<AddChannelPage> {
   var _channelType = 'text';
 
   Future<void> _addChannel() async {
-    // Get the token from the secure storage
+    if (_channelNameController.text.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(AppLocalizations.of(context)!.channel_name_error_title),
+            content: Text(AppLocalizations.of(context)!.channel_name_error_message),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text(AppLocalizations.of(context)!.ok_button),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
 

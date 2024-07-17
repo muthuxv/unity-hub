@@ -206,6 +206,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   const SizedBox(height: 48),
                   // Form
                   TextField(
+                    textInputAction: TextInputAction.next,
                     style: const TextStyle(color: Colors.white),
                     controller: _pseudoController,
                     decoration: const InputDecoration(
@@ -221,6 +222,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 16),
                   TextField(
+                    textInputAction: TextInputAction.next,
                     style: const TextStyle(color: Colors.white),
                     controller: _emailController,
                     decoration: const InputDecoration(
@@ -237,6 +239,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 16),
                   TextField(
+                    textInputAction: TextInputAction.next,
                     style: const TextStyle(color: Colors.white),
                     controller: _passwordController,
                     decoration: const InputDecoration(
@@ -253,6 +256,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 16),
                   TextField(
+                    textInputAction: TextInputAction.done,
                     style: const TextStyle(color: Colors.white),
                     controller: _confirmPasswordController,
                     decoration: const InputDecoration(
