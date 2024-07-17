@@ -59,7 +59,6 @@ func GetRolePermissions(c *gin.Context) {
 	}
 
 	var permissions []PermissionResponse
-	// Effectuer la jointure interne et sélectionner les champs nécessaires
 	if err := db.GetDB().Table("role_permissions").
 		Select("permissions.label, role_permissions.power").
 		Joins("inner join permissions on permissions.id = role_permissions.permissions_id").
@@ -70,4 +69,75 @@ func GetRolePermissions(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, permissions)
+}
+
+func UpdateRolePermissions(c *gin.Context) {
+	roleID := c.Param("id")
+	roleUUID, err := uuid.Parse(roleID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+		return
+	}
+
+	availablePermissions := map[string]struct{}{
+		"createChannel":  {},
+		"sendMessage":    {},
+		"accessChannel":  {},
+		"banUser":        {},
+		"kickUser":       {},
+		"createRole":     {},
+		"accessLog":      {},
+		"accessReport":   {},
+		"profileServer":  {},
+		"editChannel":    {},
+	}
+
+	var requestBody map[string]int
+	if err := c.BindJSON(&requestBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	for key := range availablePermissions {
+		power, exists := requestBody[key]
+		if !exists || power < 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing parameters"})
+			return
+		}
+	}
+
+	tx := db.GetDB().Begin()
+
+	var updatedPermissions []PermissionResponse
+
+	for label, power := range requestBody {
+		var permission models.Permissions
+		if err := tx.Where("label = ?", label).First(&permission).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching permission"})
+			return
+		}
+
+		var rolePermission models.RolePermissions
+		if err := tx.Where("role_id = ? AND permissions_id = ?", roleUUID, permission.ID).First(&rolePermission).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching role permission"})
+			return
+		}
+
+		rolePermission.Power = power
+		if err := tx.Save(&rolePermission).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating role permission"})
+			return
+		}
+
+		updatedPermissions = append(updatedPermissions, PermissionResponse{
+			Label: label,
+			Power: power,
+		})
+	}
+
+	tx.Commit()
+	c.JSON(http.StatusOK, updatedPermissions)
 }
