@@ -63,11 +63,16 @@ func MakeMigrations() {
 		&models.Ban{},
 		&models.Group{},
 		&models.GroupMember{},
+		&models.ChannelChannelPermissions{},
+		&models.ChannelPermissions{},
 	)
 
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
+
+	models.CreateInitialPermissions(db)
+	models.CreateInitialChannelPermissions(db)
 
 	log.Println("database create")
 }

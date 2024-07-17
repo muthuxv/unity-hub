@@ -142,7 +142,6 @@ type Channel struct {
 	ID         int    `json:"ID,omitempty"`
 	Name       string `json:"Name"`
 	Type       string `json:"Type"`
-	Permission string `json:"Permission"`
 	ServerID   uint   `json:"ServerID"`
 }
 
@@ -239,7 +238,6 @@ func AddChannelHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 	newChannel := models.Channel{
 		Name:       channel.Name,
 		Type:       channel.Type,
-		Permission: channel.Permission,
 		ServerID:   serverIDU,
 	}
 
@@ -249,7 +247,6 @@ func AddChannelHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 			"ID":         newChannel.ID,
 			"Name":       newChannel.Name,
 			"Type":       newChannel.Type,
-			"Permission": newChannel.Permission,
 			"ServerID":   newChannel.ServerID,
 		},
 	}

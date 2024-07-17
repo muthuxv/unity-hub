@@ -11,6 +11,9 @@ import (
 	"os"
 	"strings"
 	"time"
+	"app/db"
+	"app/db/models"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
@@ -158,5 +161,95 @@ func FilterBodyMiddleware(fieldsToFilter ...string) gin.HandlerFunc {
 			c.Request.ContentLength = int64(len(modifiedBodyBytes))
 		}
 		c.Next()
+	}
+}
+
+func PermissionMiddleware(requiredPermission string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reqToken, err := getJwt(c)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.Abort()
+			return
+		}
+
+		token, err := jwt.Parse(reqToken, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, http.ErrNotSupported
+			}
+			return jwtKey, nil
+		})
+
+		if err != nil || !token.Valid {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
+
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			userIDStr, ok := claims["jti"].(string)
+			if !ok {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+				c.Abort()
+				return
+			}
+
+			userID, err := uuid.Parse(userIDStr)
+			if err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID"})
+				c.Abort()
+				return
+			}
+
+			// Extraire serverID de l'URL
+			serverIDStr := c.Param("id")
+			serverID, err := uuid.Parse(serverIDStr)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid server ID"})
+				c.Abort()
+				return
+			}
+
+			var roleUser models.RoleUser
+			// Joindre avec la table Role pour filtrer par server_id
+			if err := db.GetDB().Joins("JOIN roles ON roles.id = role_users.role_id").Where("role_users.user_id = ? AND roles.server_id = ?", userID, serverID).First(&roleUser).Error; err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "User role not found"})
+				c.Abort()
+				return
+			}
+
+			var rolePermissions []models.RolePermissions
+			if err := db.GetDB().Where("role_id = ?", roleUser.RoleID).Preload("Permissions").Find(&rolePermissions).Error; err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Role permissions not found"})
+				c.Abort()
+				return
+			}
+
+			
+			isAuthorized := false
+			for _, rp := range rolePermissions {
+				log.Println(rp.ID)
+				if rp.Permissions.Label == requiredPermission {
+					if requiredPermission == "admin" && roleUser.Role.Label == "admin" {
+						isAuthorized = true
+					} else if rp.Power == 1 {
+						isAuthorized = true
+					}
+					break
+				}
+			}
+
+			if !isAuthorized {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Insufficient permissions"})
+				c.Abort()
+				return
+			}
+
+			c.Set("jwt_claims", token.Claims)
+			c.Next()
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+		}
 	}
 }

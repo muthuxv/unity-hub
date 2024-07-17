@@ -436,6 +436,7 @@ func NewServer() gin.HandlerFunc {
 			return
 		}
 
+		// Création du rôle "admin"
 		adminRole := models.Role{
 			ServerID: inputServer.ID,
 			Label:    "admin",
@@ -468,11 +469,46 @@ func NewServer() gin.HandlerFunc {
 			return
 		}
 
+		// Récupérer toutes les permissions existantes
+		var permissions []models.Permissions
+		if err := tx.Find(&permissions).Error; err != nil {
+			tx.Rollback()
+			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des permissions")
+			return
+		}
+
+		// Attribuer toutes les permissions au rôle admin avec une puissance de 1
+		for _, perm := range permissions {
+			rolePerm := models.RolePermissions{
+				RoleID:        adminRole.ID,
+				PermissionsID: perm.ID,
+				Power:         1,
+			}
+			if err := tx.Create(&rolePerm).Error; err != nil {
+				tx.Rollback()
+				handleError(c, http.StatusInternalServerError, "Erreur lors de l'attribution des permissions au rôle admin")
+				return
+			}
+		}
+
+		// Attribuer toutes les permissions au rôle membre avec une puissance de 0
+		for _, perm := range permissions {
+			rolePerm := models.RolePermissions{
+				RoleID:        memberRole.ID,
+				PermissionsID: perm.ID,
+				Power:         0,
+			}
+			if err := tx.Create(&rolePerm).Error; err != nil {
+				tx.Rollback()
+				handleError(c, http.StatusInternalServerError, "Erreur lors de l'attribution des permissions au rôle membre")
+				return
+			}
+		}
+
 		inputChannel := models.Channel{
-			ServerID:   inputServer.ID,
-			Name:       "général",
-			Type:       "text",
-			Permission: "all",
+			ServerID: inputServer.ID,
+			Name:     "général",
+			Type:     "text",
 		}
 		if err := tx.Create(&inputChannel).Error; err != nil {
 			tx.Rollback()
