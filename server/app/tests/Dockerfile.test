@@ -1,0 +1,9 @@
+# Dockerfile.test
+
+FROM golang:1.22
+
+WORKDIR /go/src/app
+
+COPY . .
+
+RUN go test ./...
