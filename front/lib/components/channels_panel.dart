@@ -8,8 +8,10 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class ChannelsPanel extends StatefulWidget {
   final String serverId;
   static final GlobalKey<_ChannelsPanelState> globalKey = GlobalKey<_ChannelsPanelState>();
+  final Function(String) getPermissionPower;
 
-  const ChannelsPanel({super.key, required this.serverId});
+
+  const ChannelsPanel({super.key, required this.serverId, required this.getPermissionPower});
 
   @override
   State<ChannelsPanel> createState() => _ChannelsPanelState();
@@ -112,17 +114,35 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
             child: ListTile(
               trailing: const Icon(Icons.arrow_forward_ios),
               title: Text(channel['Name']),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ChannelPage(
-                    channelId: channel['ID'],
-                    channelName: channel['Name'],
-                    serverId: widget.serverId,
+              onTap: () => widget.getPermissionPower('accessChannel') > 0 ?
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChannelPage(
+                        channelId: channel['ID'],
+                        channelName: channel['Name'],
+                        serverId: widget.serverId,
+                      ),
+                    ),
+                  ) : showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text("Accès refusé"),
+                        content: Text("Vous n'avez pas la permission d'accéder à ce salon."),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                ),
-              ),
               onLongPress: () {
+                widget.getPermissionPower('editChannel') > 0 ?
                 showDialog(
                   context: context,
                   builder: (context) {
@@ -200,7 +220,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                       ],
                     );
                   },
-                );
+                ) : null;
               },
             ),
           ),
@@ -208,16 +228,34 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
         for (final channel in _vocalChannels)
           ListTile(
             title: Text(channel['Name']),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => VoiceRoom(
-                  channelId: channel['ID'],
-                  channelName: channel['Name'],
+            onTap: () => widget.getPermissionPower('accessChannel') > 0 ?
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => VoiceRoom(
+                      channelId: channel['ID'],
+                      channelName: channel['Name'],
+                    ),
+                  ),
+                ) : showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: Text("Accès refusé"),
+                      content: Text("Vous n'avez pas la permission d'accéder à ce salon."),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-              ),
-            ),
             onLongPress: () {
+              widget.getPermissionPower('editChannel') > 0 ?
               showDialog(
                 context: context,
                 builder: (context) {
@@ -295,7 +333,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                     ],
                   );
                 },
-              );
+              ) : null;
             },
           ),
       ],

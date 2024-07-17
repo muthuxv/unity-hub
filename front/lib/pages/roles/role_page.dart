@@ -13,10 +13,10 @@ class RolePage extends StatefulWidget {
   final String servercreatorUserId;
 
   const RolePage({
-    Key? key,
+    super.key,
     required this.serverId,
     required this.servercreatorUserId,
-  }) : super(key: key);
+  });
 
   @override
   _RolePageState createState() => _RolePageState();
@@ -152,7 +152,7 @@ class _RolePageState extends State<RolePage> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      !isAdminRole ? IconButton(
+                      !isAdminRole && isEnabled ? IconButton(
                         icon: const Icon(Icons.admin_panel_settings),
                         onPressed: (
                             () async {

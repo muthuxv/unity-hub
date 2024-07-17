@@ -36,9 +36,11 @@ Future<String?> getCurrentUserId() async {
 class ServerSettingsPage extends StatefulWidget {
   final String serverId;
   final String serverName;
-  String serverAvatar;
+  late String serverAvatar;
   final String serverVisibility;
   final String servercreatorUserId;
+  final Function(String) getPermissionPower;
+
   ServerSettingsPage({
     super.key,
     required this.serverId,
@@ -46,6 +48,7 @@ class ServerSettingsPage extends StatefulWidget {
     required this.serverAvatar,
     required this.serverVisibility,
     required this.servercreatorUserId,
+    required this.getPermissionPower,
   });
 
   @override
@@ -255,7 +258,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                   child: Column(
                     children: [
                       GestureDetector(
-                        onTap: showForCreator ? () async {
+                        onTap: widget.getPermissionPower('profileServer') > 0 ? () async {
                           final image = await ImagePicker().pickImage(source: ImageSource.gallery);
                           if (image != null) {
                             final formData = FormData.fromMap({
@@ -372,7 +375,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                                 },
                               ).image,
                             ),
-                            if (showForCreator)
+                            if (widget.getPermissionPower('profileServer') > 0)
                               Positioned(
                                 bottom: 1,
                                 right: 1,
@@ -448,7 +451,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                           );
                         },
                       ),
-                      if (showForCreator)
+                      if (widget.getPermissionPower('accessLog') > 0)
                         ListTile(
                           onTap: () {
                             Navigator.push(
@@ -482,7 +485,6 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                           ),
                         ),
                       ),
-                      if (showForCreator)
                         ListTile(
                           onTap: () {
                             Navigator.push(
@@ -502,6 +504,7 @@ class _ServerSettingsPageState extends State<ServerSettingsPage> {
                             ),
                           ),
                         ),
+                      if (widget.getPermissionPower('accessReport') > 0)
                         ListTile(
                           onTap: () {
                             Navigator.push(

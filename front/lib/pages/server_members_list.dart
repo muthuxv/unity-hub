@@ -10,8 +10,10 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class ServerMembersList extends StatefulWidget {
   final String serverId;
   final String serverCreatorId;
+  final Function(String) getPermissionPower;
+  final String userRole;
 
-  const ServerMembersList({Key? key, required this.serverId, required this.serverCreatorId}) : super(key: key);
+  const ServerMembersList({super.key, required this.serverId, required this.serverCreatorId, required this.getPermissionPower, required this.userRole});
 
   @override
   State<ServerMembersList> createState() => _ServerMembersListState();
@@ -106,7 +108,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
       ),
       builder: (BuildContext context) {
         bool isCurrentUser = member['ID'] == currentUserId;
-        bool isServerCreator = currentUserId == widget.serverCreatorId;
+        bool isServerCreator = member['ID'] == widget.serverCreatorId;
         bool isAdmin = member['Role'] == 'admin';
 
         return Container(
@@ -148,15 +150,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      if (isServerCreator)
-                        const ListTile(
-                          title: Text("Créateur du serveur"),
-                        ),
-                      if (isCurrentUser)
-                        ListTile(
-                          title: Text(AppLocalizations.of(context)!.youAreCurrentUser),
-                        ),
-                      if (isServerCreator && !isCurrentUser)
+                      widget.getPermissionPower('banUser') > 0 && !isCurrentUser ?
                         ListTile(
                           leading: const Icon(Icons.delete),
                           title: Text(AppLocalizations.of(context)!.banMember),
@@ -164,8 +158,8 @@ class _ServerMembersListState extends State<ServerMembersList> {
                             Navigator.pop(context);
                             _showBanConfirmationDialog(member);
                           },
-                        ),
-                      if (isServerCreator && !isCurrentUser)
+                        ) : const SizedBox.shrink(),
+                      widget.getPermissionPower('kickUser') > 0 && !isCurrentUser ?
                         ListTile(
                           leading: const Icon(Icons.remove_circle),
                           title: Text(AppLocalizations.of(context)!.kickMember),
@@ -173,20 +167,16 @@ class _ServerMembersListState extends State<ServerMembersList> {
                             Navigator.pop(context);
                             _kickMember(member);
                           },
-                        ),
-                      if (!isServerCreator && !isCurrentUser)
-                        ListTile(
-                          title: Text(AppLocalizations.of(context)!.onlyServerCreator),
-                        ),
-                      if (isServerCreator && !isCurrentUser)
+                        ) : const SizedBox.shrink(),
+                      widget.userRole == 'admin' && !isServerCreator ?
                         ListTile(
                           leading: const Icon(Icons.edit),
-                          title: Text("Update role"),
+                          title: const Text("Update role"),
                           onTap: () {
                             Navigator.pop(context);
                             _showUpdateMemberRoleDialog(member);
                           },
-                        ),
+                        ) : const SizedBox.shrink(),
                     ],
                   ),
                 ),
