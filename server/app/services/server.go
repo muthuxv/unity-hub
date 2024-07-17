@@ -972,3 +972,53 @@ func DeleteServerByID() gin.HandlerFunc {
 func handleError(c *gin.Context, statusCode int, message string) {
 	c.JSON(statusCode, gin.H{"error": message})
 }
+
+func SetRoleToUser(c *gin.Context) {
+	serverID := c.Param("serverID")
+	roleID := c.Param("roleID")
+
+	serverUUID, err := uuid.Parse(serverID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid server ID"})
+		return
+	}
+
+	roleUUID, err := uuid.Parse(roleID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+		return
+	}
+
+	var requestBody struct {
+		UserID uuid.UUID `json:"user-id"`
+	}
+
+	if err := c.BindJSON(&requestBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	userUUID := requestBody.UserID
+
+	tx := db.GetDB().Begin()
+
+	if err := tx.Where("user_id = ? AND role_id IN (SELECT id FROM roles WHERE server_id = ?)", userUUID, serverUUID).Delete(&models.RoleUser{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error deleting old role"})
+		return
+	}
+
+	newRoleUser := models.RoleUser{
+		UserID: userUUID,
+		RoleID: roleUUID,
+	}
+
+	if err := tx.Create(&newRoleUser).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error assigning new role"})
+		return
+	}
+
+	tx.Commit()
+	c.JSON(http.StatusOK, gin.H{"message": "Role assigned successfully"})
+}
