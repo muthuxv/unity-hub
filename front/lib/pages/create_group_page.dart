@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -54,7 +55,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
 
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
-        friends = data.map((item) => User(id: item['FriendID'], name: item['UserPseudo'])).toList();
+        friends = data.map((item) => User(id: item['FriendID'], name: item['UserPseudo'], image: item['Profile'])).toList();
         if (widget.members.isNotEmpty) {
           friends = friends.where((friend) => !widget.members.any((member) => member.id == friend.id)).toList();
         }
@@ -77,21 +78,38 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       itemCount: friends.length,
       itemBuilder: (context, index) {
         final friend = friends[index];
-        return CheckboxListTile(
-          title: Text(friend.name, style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          )),
-          value: selectedFriends.contains(friend.id),
-          onChanged: (bool? value) {
-            setState(() {
-              if (value == true) {
-                selectedFriends.add(friend.id);
-              } else {
-                selectedFriends.remove(friend.id);
-              }
-            });
-          },
+        return ListTile(
+          leading: CircleAvatar(
+            child: friend.image != null && friend.image.contains('<svg')
+                ? SvgPicture.string(
+              friend.image,
+              height: 40,
+              width: 40,
+            )
+                : CircleAvatar(
+              radius: 50,
+              backgroundImage: NetworkImage(friend.image),
+            ),
+          ),
+          title: Text(
+            friend.name,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          trailing: Checkbox(
+            value: selectedFriends.contains(friend.id),
+            onChanged: (bool? value) {
+              setState(() {
+                if (value == true) {
+                  selectedFriends.add(friend.id);
+                } else {
+                  selectedFriends.remove(friend.id);
+                }
+              });
+            },
+          ),
         );
       },
     );
