@@ -99,6 +99,19 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     }
   }
 
+  Future<List<dynamic>> getMessageReactions(String messageId) async {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    try {
+      final response = await Dio().get('$apiPath/messages/$messageId/reactions');
+      return response.data['data'];
+    } catch (error) {
+      print('Erreur lors de la récupération des réactions : $error');
+      return [];
+    }
+  }
+
   void _showErrorSnack(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -202,7 +215,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
             TextButton(
               child: Text('Oui'),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the confirmation dialog
+                Navigator.of(context).pop();
                 _deleteMessage(messageId);
               },
             ),
@@ -216,6 +229,130 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
         );
       },
     );
+  }
+
+  Future<void> _removeReaction(String reactionId) async {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+    try {
+      await Dio().delete('$apiPath/reactMessages/$reactionId');
+
+      setState(() {
+
+      });
+    } catch (error) {
+      print('Erreur lors de la suppression de la réaction : $error');
+    }
+  }
+
+
+  Future<void> _showReactionPopup(BuildContext context, String messageId) async {
+    List<dynamic> reactions = await _fetchReactions();
+
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Choisissez une réaction',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 16.0),
+              Wrap(
+                spacing: 16.0,
+                runSpacing: 12.0,
+                children: reactions.map((reaction) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _reactToMessage(messageId, reaction['ID']);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8.0),
+                        border: Border.all(
+                          color: Colors.grey[400]!,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SvgPicture.string(
+                            reaction['Name'],
+                            height: 24,
+                            width: 24,
+                          ),
+                          SizedBox(width: 8.0),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+
+  Future<List<dynamic>> _fetchReactions() async {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+    try {
+      final response = await Dio().get('$apiPath/reacts');
+      print(response);
+      return response.data;
+    } catch (error) {
+      print('Erreur lors de la récupération des réactions : $error');
+      return [];
+    }
+  }
+
+  Future<void> _reactToMessage(String messageId, String reactionId) async {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+    final decodedToken = JwtDecoder.decode(jwtToken!);
+    final userID = decodedToken['jti'];
+
+    try {
+      List<dynamic> currentReactions = await getMessageReactions(messageId);
+
+      bool userAlreadyReacted = currentReactions.any((reaction) =>
+      reaction['UserID'] == userID && reaction['React']['ID'] == reactionId);
+
+      if (!userAlreadyReacted) {
+        await Dio().post(
+          '$apiPath/reactMessages',
+          data: {
+            'UserID': userID,
+            'ReactID': reactionId,
+            'MessageID': messageId,
+          },
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $jwtToken',
+              'Content-Type': 'application/json',
+            },
+          ),
+        );
+        setState(() {
+        });
+      } else {
+        print('L\'utilisateur a déjà réagi avec cette réaction.');
+      }
+    } catch (error) {
+      print('Erreur lors de la réaction au message : $error');
+    }
   }
 
 
@@ -323,6 +460,20 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     );
   }
 
+  Future<List<dynamic>> getReactionReactions(String reactionId) async {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    try {
+      final response = await Dio().get('$apiPath/reactions/$reactionId/reactions');
+      return response.data['data'];
+    } catch (error) {
+      print('Erreur lors de la récupération des réactions de la réaction : $error');
+      return [];
+    }
+  }
+
+
   void _showReportUserDialog(BuildContext context, dynamic message) {
     TextEditingController _reportController = TextEditingController();
 
@@ -423,7 +574,6 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
         '$apiPath/messages/$messageId',
         data: {'Content': 'Ce message a été supprimé par l\'utilisateur'},
       );
-      // Update the local state to reflect the message deletion
       setState(() {
         _messagesByDate.forEach((date, messages) {
           final messageIndex = messages.indexWhere((message) => message['ID'] == messageId);
@@ -544,6 +694,12 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                             padding: const EdgeInsets.all(8.0),
                             child: Row(
                               children: [
+                                IconButton(
+                                  icon: Icon(Icons.emoji_emotions),
+                                  onPressed: () {
+                                    _showReactionPopup(context, message['ID']);
+                                  },
+                                ),
                                 if (!isCurrentUser)
                                   GestureDetector(
                                     onTap: () {
@@ -607,6 +763,76 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                                             width: 200,
                                             height: 200,
                                           ),
+                                        FutureBuilder<List<dynamic>>(
+                                          future: getMessageReactions(message['ID']),
+                                          builder: (context, snapshot) {
+                                            if (snapshot.connectionState == ConnectionState.waiting) {
+                                              return CircularProgressIndicator();
+                                            } else if (snapshot.hasError) {
+                                              return Text('Erreur : ${snapshot.error}');
+                                            } else if (snapshot.hasData) {
+                                              Map<String, int> reactionCounts = {};
+                                              snapshot.data!.forEach((reaction) {
+                                                String reactId = reaction['React']['ID'];
+                                                if (reactionCounts.containsKey(reactId)) {
+                                                  reactionCounts[reactId] = reactionCounts[reactId]! + 1;
+                                                } else {
+                                                  reactionCounts[reactId] = 1;
+                                                }
+                                              });
+
+                                              List<Widget> reactionIcons = [];
+                                              Set<String> uniqueReactions = {};
+
+                                              reactionCounts.forEach((reactId, count) {
+                                                if (!uniqueReactions.contains(reactId)) {
+                                                  uniqueReactions.add(reactId);
+                                                  Widget reactionWidget = Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      SvgPicture.string(
+                                                        snapshot.data!.firstWhere((element) => element['React']['ID'] == reactId)['React']['Name'],
+                                                        height: 24,
+                                                        width: 24,
+                                                      ),
+                                                      SizedBox(width: 4),
+                                                      Text('$count'),
+                                                    ],
+                                                  );
+
+                                                  bool currentUserReacted = snapshot.data!.any((reaction) => reaction['UserID'] == currentUserID && reaction['React']['ID'] == reactId);
+
+                                                  if (currentUserReacted) {
+                                                    reactionWidget = GestureDetector(
+                                                      onTap: () async {
+                                                        await _removeReaction(snapshot.data!.firstWhere((reaction) => reaction['UserID'] == currentUserID && reaction['React']['ID'] == reactId)['ID']);
+                                                      },
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                          borderRadius: BorderRadius.circular(8.0),
+                                                          color: Colors.yellow[200],
+                                                        ),
+                                                        padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                                                        child: reactionWidget,
+                                                      ),
+                                                    );
+                                                  }
+
+                                                  reactionIcons.add(reactionWidget);
+                                                  reactionIcons.add(SizedBox(width: 8.0));
+                                                }
+                                              });
+
+                                              return Row(
+                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                children: reactionIcons,
+                                              );
+                                            } else {
+                                              return SizedBox.shrink();
+                                            }
+                                          },
+                                        ),
+
                                       ],
                                     ),
                                   ),

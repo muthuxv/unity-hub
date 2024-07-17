@@ -95,6 +95,10 @@ func ChannelWsHandler(w http.ResponseWriter, r *http.Request, channelId string) 
 			"Profile": user.Profile,
 		}
 
+		var message models.Message
+		db.GetDB().Where("content = ? AND user_id = ? AND channel_id = ?", messageContent, userID, channelID).First(&message)
+		receivedMessage["ID"] = message.ID
+
 		msgBytes, err = json.Marshal(receivedMessage)
 		if err != nil {
 			log.Println("Error encoding JSON:", err)
