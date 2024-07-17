@@ -137,71 +137,11 @@ GoRouter appRouter(UserDataProvider userDataProvider) {
         ),
       ),
       GoRoute(
-        path: RouteUri.form,
-        pageBuilder: (context, state) => NoTransitionPage<void>(
-          key: state.pageKey,
-          child: const FormScreen(),
-        ),
-      ),
-      GoRoute(
-        path: RouteUri.generalUi,
-        pageBuilder: (context, state) => NoTransitionPage<void>(
-          key: state.pageKey,
-          child: const GeneralUiScreen(),
-        ),
-      ),
-      GoRoute(
-        path: RouteUri.colors,
-        pageBuilder: (context, state) => NoTransitionPage<void>(
-          key: state.pageKey,
-          child: const ColorsScreen(),
-        ),
-      ),
-      GoRoute(
-        path: RouteUri.text,
-        pageBuilder: (context, state) => NoTransitionPage<void>(
-          key: state.pageKey,
-          child: const TextScreen(),
-        ),
-      ),
-      GoRoute(
-        path: RouteUri.buttons,
-        pageBuilder: (context, state) => NoTransitionPage<void>(
-          key: state.pageKey,
-          child: const ButtonsScreen(),
-        ),
-      ),
-      GoRoute(
-        path: RouteUri.dialogs,
-        pageBuilder: (context, state) => NoTransitionPage<void>(
-          key: state.pageKey,
-          child: const DialogsScreen(),
-        ),
-      ),
-      GoRoute(
         path: RouteUri.login,
         pageBuilder: (context, state) => NoTransitionPage<void>(
           key: state.pageKey,
           child: const LoginScreen(),
         ),
-      ),
-      GoRoute(
-        path: RouteUri.register,
-        pageBuilder: (context, state) {
-          return NoTransitionPage<void>(
-            key: state.pageKey,
-            child: const RegisterScreen(),
-          );
-        },
-      ),
-      GoRoute(
-        path: RouteUri.crud,
-        pageBuilder: (context, state) {
-          return NoTransitionPage<void>(
-            key: state.pageKey,
-            child: const CrudScreen(),
-          );
-        },
       ),
       GoRoute(
         path: RouteUri.createUser,
@@ -256,22 +196,6 @@ GoRouter appRouter(UserDataProvider userDataProvider) {
             child: CrudDetailFeatureScreen(id: state.uri.queryParameters['id'] ?? ''),
           );
         },
-      ),
-      GoRoute(
-        path: RouteUri.crudDetail,
-        pageBuilder: (context, state) {
-          return NoTransitionPage<void>(
-            key: state.pageKey,
-            child: CrudDetailScreen(id: state.uri.queryParameters['id'] ?? ''),
-          );
-        },
-      ),
-      GoRoute(
-        path: RouteUri.iframe,
-        pageBuilder: (context, state) => NoTransitionPage<void>(
-          key: state.pageKey,
-          child: const IFrameDemoScreen(),
-        ),
       ),
     ],
     redirect: (context, state) {

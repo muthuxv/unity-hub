@@ -5,7 +5,7 @@ import 'package:web_admin/theme/theme_extensions/app_color_scheme.dart';
 import 'package:web_admin/theme/theme_extensions/app_data_table_theme.dart';
 import 'package:web_admin/theme/theme_extensions/app_sidebar_theme.dart';
 
-const Color kPrimaryColor = Color(0xFF347BDE);
+const Color kPrimaryColor = Color(0xFF9342D9);
 const Color kSecondaryColor = Color(0xFF6C757D);
 const Color kErrorColor = Color(0xFFDC3545);
 const Color kSuccessColor = Color(0xFF08A158);
