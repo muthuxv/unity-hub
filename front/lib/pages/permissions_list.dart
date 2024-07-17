@@ -51,6 +51,45 @@ class _PermissionsPageState extends State<PermissionsPage> {
     }
   }
 
+  void _savePermissions() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    Map<String, int> updatedPermissions = {};
+
+    for (var permission in permissions) {
+      if (permission['label'] != 'sendMessage' &&
+          permission['label'] != 'editChannel' &&
+          permission['label'] != 'accessChannel') {
+        updatedPermissions[permission['label']] = permission['power'].toString() == '1' ? 1 : 0;
+      } else {
+        updatedPermissions[permission['label']] = int.parse(_controllers[permission['label']]!.text);
+      }
+    }
+
+    try {
+      final response = await Dio().put(
+        '$apiPath/roles/${widget.roleId}/permissions',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+        data: updatedPermissions,
+      );
+
+      if (response.statusCode == 200) {
+        print("Permissions updated successfully");
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -68,6 +107,12 @@ class _PermissionsPageState extends State<PermissionsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Permissions'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.save),
+            onPressed: _savePermissions,
+          ),
+        ],
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator())
@@ -82,9 +127,9 @@ class _PermissionsPageState extends State<PermissionsPage> {
 
     // Group permissions by categories
     Map<String, List<dynamic>> categorizedPermissions = {
-      'Permissions Gestion serveur': [],
-      'Permissions Modération': [],
-      'Permissions Salons': [],
+      'Gestion serveur': [],
+      'Modération': [],
+      'Salons': [],
     };
 
     for (var permission in permissions) {
@@ -94,15 +139,15 @@ class _PermissionsPageState extends State<PermissionsPage> {
           label == 'createRole' ||
           label == 'accessLog' ||
           label == 'profileServer') {
-        categorizedPermissions['Permissions Gestion serveur']!.add(permission);
+        categorizedPermissions['Gestion serveur']!.add(permission);
       } else if (label == 'kickUser' ||
           label == 'banUser' ||
           label == 'accessReport') {
-        categorizedPermissions['Permissions Modération']!.add(permission);
+        categorizedPermissions['Modération']!.add(permission);
       } else if (label == 'editChannel' ||
           label == 'sendMessage' ||
           label == 'accessChannel') {
-        categorizedPermissions['Permissions Salons']!.add(permission);
+        categorizedPermissions['Salons']!.add(permission);
       }
     }
 
@@ -111,6 +156,7 @@ class _PermissionsPageState extends State<PermissionsPage> {
       List<Widget> permissionTiles = [];
 
       for (var permission in permissionsList) {
+        print(permission);
         permissionTiles.add(ListTile(
           title: Text(permission['label']),
           trailing: (permission['label'] != 'sendMessage' &&
@@ -121,8 +167,8 @@ class _PermissionsPageState extends State<PermissionsPage> {
             activeTrackColor: Colors.deepPurple.shade100,
             inactiveThumbColor: Colors.red.shade200,
             inactiveTrackColor: Colors.red.shade100,
-            trackOutlineColor: MaterialStateColor.resolveWith((states) => Colors.red.shade100),
-            value: permission['power'] == '1',
+            trackOutlineColor: MaterialStateColor.resolveWith((states) => Colors.deepPurpleAccent),
+            value: permission['power'].toString() == '1',
             onChanged: (value) {
               setState(() {
                 permission['power'] = value ? '1' : '0';
@@ -131,6 +177,9 @@ class _PermissionsPageState extends State<PermissionsPage> {
           ) : SizedBox(
             width: 50,
             child: TextField(
+              decoration: InputDecoration(
+                hintText: permission['power'].toString(),
+              ),
               keyboardType: TextInputType.number,
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
@@ -148,7 +197,11 @@ class _PermissionsPageState extends State<PermissionsPage> {
       }
 
       categories.add(ExpansionTile(
-        title: Text(category, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+        title: Text(category, style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.deepPurple,
+            fontSize: 18
+        )),
         children: permissionTiles,
       ));
     });
