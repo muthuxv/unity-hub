@@ -163,6 +163,35 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
     });
   }
 
+  List<TextSpan> formatMessage(String content) {
+    List<TextSpan> spans = [];
+    RegExp bold = RegExp(r'\*\*(.*?)\*\*');
+    RegExp italic = RegExp(r'\*(.*?)\*');
+    RegExp underline = RegExp(r'__(.*?)__');
+
+    while (content.isNotEmpty) {
+      if (bold.hasMatch(content)) {
+        var match = bold.firstMatch(content)!;
+        spans.add(TextSpan(text: match.group(1), style: TextStyle(fontWeight: FontWeight.bold)));
+        content = content.substring(match.end);
+      } else if (italic.hasMatch(content)) {
+        var match = italic.firstMatch(content)!;
+        spans.add(TextSpan(text: match.group(1), style: TextStyle(fontStyle: FontStyle.italic)));
+        content = content.substring(match.end);
+      } else if (underline.hasMatch(content)) {
+        var match = underline.firstMatch(content)!;
+        spans.add(TextSpan(text: match.group(1), style: TextStyle(decoration: TextDecoration.underline)));
+        content = content.substring(match.end);
+      } else {
+        spans.add(TextSpan(text: content));
+        content = '';
+      }
+    }
+
+    return spans;
+  }
+
+
   Future<void> _sendMessage(String message) async {
     if (message.trim().isNotEmpty) {
       _channel.sink.add(jsonEncode({
@@ -173,7 +202,6 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
       }));
       _messageController.clear();
 
-      // Delay the scrolling slightly to ensure the new message is added to the list
       Future.delayed(const Duration(milliseconds: 100), () {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -291,11 +319,14 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
                                         ],
                                       ),
                                       const SizedBox(height: 4.0),
-                                      if (message['Type'] == 'Text')
-                                        Text(
-                                          message['Content'],
-                                          style: TextStyle(color: isCurrentUser ? Colors.white : Colors.black),
+                                      if (message['Type'] == 'Text') ...[
+                                        Text.rich(
+                                          TextSpan(
+                                            children: formatMessage(message['Content']),
+                                            style: TextStyle(color: isCurrentUser ? Colors.white : Colors.black),
+                                          ),
                                         ),
+                                      ],
                                       if (message['Type'] == 'Image')
                                         Image.network(
                                           message['Content'],
@@ -378,8 +409,10 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
       message['User']['Profile'],
       height: 40,
       width: 40,
-    ) : CircleAvatar(
-      backgroundImage: NetworkImage(message['User']['Profile'])
+    )
+        : Text(
+      message['User']['Profile'] ?? 'No Profile',
+      style: const TextStyle(fontSize: 20),
     );
   }
 }

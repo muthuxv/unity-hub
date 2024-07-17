@@ -85,6 +85,9 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
   TextEditingController searchController = TextEditingController();
   List<Server> allServers = [];
   List<Server> displayedServers = [];
+  List<Tag> availableTags = [];
+  String selectedTag = "";
+  String filteredTagName = ""; // Nouvelle variable pour le tag filtré
 
   @override
   void initState() {
@@ -115,6 +118,16 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
       if (response.statusCode == 200) {
         List jsonResponse = response.data['data'];
         List<Server> servers = jsonResponse.map((server) => Server.fromJson(server)).toList();
+
+        Set<String> tagSet = Set();
+        servers.forEach((server) {
+          server.tags.forEach((tag) {
+            tagSet.add(tag.name);
+          });
+        });
+
+        availableTags = tagSet.map((tagName) => Tag(id: '', name: tagName)).toList();
+
         setState(() {
           allServers = servers;
           displayedServers = servers;
@@ -128,6 +141,23 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
     }
   }
 
+  void filterServersByTag(String tag) {
+    setState(() {
+      selectedTag = tag;
+      if (tag.isEmpty || tag.toLowerCase() == "tous") {
+        displayedServers = allServers;
+          filteredTagName = ""; // Réinitialiser le filtre
+      } else {
+        displayedServers = allServers
+            .where((server) =>
+            server.tags.any((serverTag) =>
+            serverTag.name.toLowerCase() == tag.toLowerCase()))
+            .toList();
+        filteredTagName = tag; // Mettre à jour le tag filtré
+      }
+    });
+  }
+
   void searchServers(String searchTerm) {
     if (searchTerm.isEmpty) {
       setState(() {
@@ -137,7 +167,10 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
     }
 
     setState(() {
-      displayedServers = allServers.where((server) => server.name.toLowerCase().contains(searchTerm.toLowerCase())).toList();
+      displayedServers = allServers
+          .where((server) =>
+          server.name.toLowerCase().contains(searchTerm.toLowerCase()))
+          .toList();
     });
   }
 
@@ -279,15 +312,31 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
                       ],
                     );
                   } else {
-                    List<Server> servers = displayedServers.isNotEmpty ? displayedServers : snapshot.data!;
-                    Map<String, List<Server>> serversByTag = {};
+                    List<Server> servers =
+                    displayedServers.isNotEmpty ? displayedServers : snapshot.data!;
 
+                    if (selectedTag.isNotEmpty && selectedTag.toLowerCase() != "tous") {
+                      servers = servers
+                          .where((server) =>
+                          server.tags.any((serverTag) => serverTag.name.toLowerCase() == selectedTag.toLowerCase()))
+                          .toList();
+                    }
+
+                    Map<String, List<Server>> serversByTag = {};
                     for (var server in servers) {
                       for (var tag in server.tags) {
-                        if (!serversByTag.containsKey(tag.name)) {
-                          serversByTag[tag.name] = [];
+                        if (filteredTagName.isNotEmpty) {
+                          if (!serversByTag.containsKey(tag.name)) {
+                            serversByTag[tag.name] = [];
+                          }
+                          serversByTag[tag.name]!.add(server);
+                          break;
+                        } else {
+                          if (!serversByTag.containsKey(tag.name)) {
+                            serversByTag[tag.name] = [];
+                          }
+                          serversByTag[tag.name]!.add(server);
                         }
-                        serversByTag[tag.name]!.add(server);
                       }
                     }
 
@@ -296,7 +345,11 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
                         String tagName = entry.key;
                         List<Server> servers = entry.value;
 
-                        return CategorySection(tagName: tagName, servers: servers, onJoinServer: _showJoinConfirmationDialog);
+                        return CategorySection(
+                          tagName: tagName,
+                          servers: servers,
+                          onJoinServer: _showJoinConfirmationDialog,
+                        );
                       }).toList(),
                     );
                   }
@@ -307,6 +360,39 @@ class _CommunityHubPageState extends State<CommunityHubPage> {
           SearchBar(
             onSearch: searchServers,
             searchController: searchController,
+            onFilterTap: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(AppLocalizations.of(context)!.filterByTag),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                            title: Text(AppLocalizations.of(context)!.all),
+                            onTap: () {
+                              filterServersByTag(AppLocalizations.of(context)!.all);
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          ...availableTags.map((tag) {
+                            return ListTile(
+                              title: Text(tag.name),
+                              onTap: () {
+                                filterServersByTag(tag.name);
+                                Navigator.of(context).pop();
+                              },
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
           ),
         ],
       ),
@@ -319,7 +405,12 @@ class CategorySection extends StatelessWidget {
   final List<Server> servers;
   final Function(Server) onJoinServer;
 
-  const CategorySection({super.key, required this.tagName, required this.servers, required this.onJoinServer});
+  const CategorySection({
+    Key? key,
+    required this.tagName,
+    required this.servers,
+    required this.onJoinServer,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -341,8 +432,13 @@ class CategorySection extends StatelessWidget {
                     Colors.pink,
                   ],
                 ).createShader(
-                    const Rect.fromLTWH(
-                        0.0, 0.0, 200.0, 70.0)),
+                  const Rect.fromLTWH(
+                    0.0,
+                    0.0,
+                    200.0,
+                    70.0,
+                  ),
+                ),
             ),
           ),
         ),
@@ -378,7 +474,9 @@ class CategorySection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ClipRRect(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
                           child: Image.network(
                             '${dotenv.env['API_PATH']}/uploads/${server.media.fileName}?rand=${DateTime.now().millisecondsSinceEpoch}',
                             height: 120,
@@ -393,9 +491,13 @@ class CategorySection extends StatelessWidget {
                             children: [
                               Text(
                                 server.name,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Text(
                                 server.tags.map((tag) => tag.name).join(', '),
                                 style: const TextStyle(color: Colors.white),
@@ -419,8 +521,14 @@ class CategorySection extends StatelessWidget {
 class SearchBar extends StatelessWidget {
   final Function(String) onSearch;
   final TextEditingController searchController;
+  final VoidCallback onFilterTap;
 
-  const SearchBar({super.key, required this.onSearch, required this.searchController});
+  const SearchBar({
+    Key? key,
+    required this.onSearch,
+    required this.searchController,
+    required this.onFilterTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -453,7 +561,10 @@ class SearchBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          const Icon(Icons.filter_list, color: Colors.white),
+          IconButton(
+            icon: const Icon(Icons.filter_list, color: Colors.white),
+            onPressed: onFilterTap,
+          ),
         ],
       ),
     );

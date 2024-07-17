@@ -217,5 +217,10 @@
   "pseudoAlreadyExists": "Ce pseudo existe déjà",
   "leaveServerConfirmation": "Êtes-vous sûr de vouloir quitter ce serveur ?",
   "confirmButton": "Confirmer",
-  "selectServer": "Sélectionner un serveur"
+  "selectServer": "Sélectionner un serveur",
+  "memberKickedSuccessfully": "Membre expulsé avec succès",
+  "failedKickMember": "Échec de l'expulsion du membre",
+  "kickMember": "Expulser le membre",
+  "filterByTag": "Filtrer par tag",
+  "all": "Tous"
 }

@@ -486,6 +486,46 @@ func NewServer() gin.HandlerFunc {
 	}
 }
 
+func KickUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		serverID := c.Param("id")
+		userID := c.Param("userID")
+
+		serverUUID, err := uuid.Parse(serverID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid server ID"})
+			return
+		}
+
+		userUUID, err := uuid.Parse(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+
+		var onServer models.OnServer
+		if err := db.GetDB().Where("server_id = ? AND user_id = ?", serverUUID, userUUID).First(&onServer).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User is not a member of this server"})
+			return
+		}
+
+		tx := db.GetDB().Begin()
+
+		if err := tx.Where("server_id = ? AND user_id = ?", serverUUID, userUUID).Delete(&models.OnServer{}).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if err := tx.Commit().Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "User kicked from server"})
+	}
+}
+
 func JoinServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")

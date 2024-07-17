@@ -217,5 +217,10 @@
   "pseudoAlreadyExists": "This pseudo already exists",
   "leaveServerConfirmation": "Are you sure you want to leave the server?",
   "confirmButton": "Confirm",
-  "selectServer": "Select a Server"
+  "selectServer": "Select a Server",
+  "memberKickedSuccessfully": "Member kicked successfully",
+  "failedKickMember": "Failed to kick member",
+  "kickMember": "Kick Member",
+  "filterByTag": "Filter by tag",
+  "all": "All"
 }

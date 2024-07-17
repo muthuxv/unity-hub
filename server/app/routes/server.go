@@ -23,6 +23,7 @@ func ServerRoutes(r *gin.Engine) {
 	r.GET("/servers/:id/members", services.GetServerMembers())
 	r.GET("/servers/:id/channels", services.GetServerChannels())
 	r.GET("/servers/:id/logs", services.GetServerLogs())
+	r.DELETE("/servers/:id/kick/users/:userID", controllers.TokenAuthMiddleware("user"), services.KickUser())
 	r.GET("/servers/:id/bans", services.GetServerBans())
 	r.GET("/servers/friend/:friendID", controllers.TokenAuthMiddleware("user"), services.GetServersFriendNotIn())
 	r.POST("/servers/:id/ban/users/:userID", controllers.TokenAuthMiddleware("user"), services.BanUser())
