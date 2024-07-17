@@ -44,3 +44,30 @@ func AddRoleToServer(factory ModelFactory) gin.HandlerFunc {
 		c.JSON(http.StatusCreated, role)
 	}
 }
+
+type PermissionResponse struct {
+	Label string `json:"label"`
+	Power int    `json:"power"`
+}
+
+func GetRolePermissions(c *gin.Context) {
+	roleID := c.Param("id")
+	roleUUID, err := uuid.Parse(roleID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+		return
+	}
+
+	var permissions []PermissionResponse
+	// Effectuer la jointure interne et sélectionner les champs nécessaires
+	if err := db.GetDB().Table("role_permissions").
+		Select("permissions.label, role_permissions.power").
+		Joins("inner join permissions on permissions.id = role_permissions.permissions_id").
+		Where("role_permissions.role_id = ?", roleUUID).
+		Scan(&permissions).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching role permissions"})
+		return
+	}
+
+	c.JSON(http.StatusOK, permissions)
+}

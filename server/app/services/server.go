@@ -436,6 +436,7 @@ func NewServer() gin.HandlerFunc {
 			return
 		}
 
+		// Création du rôle "admin"
 		adminRole := models.Role{
 			ServerID: inputServer.ID,
 			Label:    "admin",
@@ -505,10 +506,9 @@ func NewServer() gin.HandlerFunc {
 		}
 
 		inputChannel := models.Channel{
-			ServerID:   inputServer.ID,
-			Name:       "général",
-			Type:       "text",
-			Permission: "all",
+			ServerID: inputServer.ID,
+			Name:     "général",
+			Type:     "text",
 		}
 		if err := tx.Create(&inputChannel).Error; err != nil {
 			tx.Rollback()

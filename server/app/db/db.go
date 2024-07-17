@@ -63,6 +63,8 @@ func MakeMigrations() {
 		&models.Ban{},
 		&models.Group{},
 		&models.GroupMember{},
+		&models.ChannelChannelPermissions{},
+		&models.ChannelPermissions{},
 	)
 
 	if err != nil {
@@ -70,6 +72,7 @@ func MakeMigrations() {
 	}
 
 	models.CreateInitialPermissions(db)
+	models.CreateInitialChannelPermissions(db)
 
 	log.Println("database create")
 }

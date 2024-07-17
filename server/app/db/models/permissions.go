@@ -6,10 +6,9 @@ import (
 )
 
 type Permissions struct {
-	ID uuid.UUID `gorm:"type:uuid;primaryKey"`
+	ID    uuid.UUID `gorm:"type:uuid;primaryKey"`
     gorm.Model
     Label string `gorm:"validate:required"`
-    IsBool bool `gorm:"default:false"`
 }
 
 func (p *Permissions) BeforeCreate(tx *gorm.DB) (err error) {
@@ -19,7 +18,16 @@ func (p *Permissions) BeforeCreate(tx *gorm.DB) (err error) {
 
 func CreateInitialPermissions(db *gorm.DB) {
 	initialPermissions := []Permissions{
-		{Label: "createChannel", IsBool: true},
+		{Label: "createChannel"},
+		{Label: "sendMessage"},
+		{Label: "accessChannel"},
+		{Label: "banUser"},
+		{Label: "kickUser"},
+		{Label: "createRole"},
+		{Label: "accessLog"},
+		{Label: "accessReport"},
+		{Label: "profileServer"},
+		{Label: "editChannel"},
 	}
 
 	for _, perm := range initialPermissions {

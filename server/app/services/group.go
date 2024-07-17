@@ -51,7 +51,6 @@ func CreateOrGetDM() gin.HandlerFunc {
 		channel := models.Channel{
 			Name:       "Direct Message",
 			Type:       "dm",
-			Permission: "private",
 			ServerID:   uuid.Nil,
 		}
 		if err := db.GetDB().Create(&channel).Error; err != nil {
@@ -164,7 +163,6 @@ func CreatePublicGroup() gin.HandlerFunc {
 			channel = models.Channel{
 				Name:       channelName,
 				Type:       "group",
-				Permission: "public",
 				ServerID:   uuid.Nil,
 			}
 
@@ -238,7 +236,6 @@ func CreatePublicGroup() gin.HandlerFunc {
 				channel = models.Channel{
 					Name:       channelName,
 					Type:       "group",
-					Permission: "public",
 					ServerID:   uuid.Nil,
 				}
 
