@@ -35,11 +35,6 @@ final sidebarMenuConfigs = [
     icon: Icons.remove_red_eye,
     title: (context) => 'Logs',
   ),
-  SidebarMenuConfig(
-    uri: RouteUri.form,
-    icon: Icons.edit_note_rounded,
-    title: (context) => Lang.of(context).forms(1),
-  ),
 ];
 
 const localeMenuConfigs = [
