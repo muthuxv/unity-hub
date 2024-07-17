@@ -266,5 +266,8 @@
   "contact_details": "If you have any questions or concerns regarding this privacy and security policy, please contact us at:",
   "email": "Email: support@unityhub.com",
   "address": "Address: UnityHub, 242 rue du Faubourg Saint-Antoine, 75012 Paris, France",
-  "acceptance": "By using UnityHub, you agree to the practices described in this privacy and security policy."
+  "acceptance": "By using UnityHub, you agree to the practices described in this privacy and security policy.",
+  "create_new_tag": "Create New Tag",
+  "select_tags": "Select Tags",
+  "enter_tag_name": "Enter tag name"
 }
