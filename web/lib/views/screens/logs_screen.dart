@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:go_router/go_router.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
@@ -22,7 +21,6 @@ class LogsScreen extends StatefulWidget {
 
 class LogsScreenState extends State<LogsScreen> {
   final _scrollController = ScrollController();
-  final _formKey = GlobalKey<FormBuilderState>();
 
   late LogDataSource _dataSource;
   bool _isLoading = true;
@@ -39,7 +37,6 @@ class LogsScreenState extends State<LogsScreen> {
         _isLoading = false;
       });
     }).catchError((error) {
-      print('Error loading data: $error');
       setState(() {
         _isLoading = false;
       });
@@ -107,7 +104,6 @@ class LogsScreenState extends State<LogsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final lang = Lang.of(context);
     final themeData = Theme.of(context);
     final appDataTableTheme = themeData.extension<AppDataTableTheme>()!;
 
@@ -160,8 +156,7 @@ class LogsScreenState extends State<LogsScreen> {
                                         columns: const [
                                           DataColumn(label: Text('Date')),
                                           DataColumn(label: Text('Message')),
-                                          DataColumn(label: Text('Server ID')),
-                                          DataColumn(label: Text('Actions')),
+                                          DataColumn(label: Text('Server name')),
                                         ],
                                       ),
                                     ),
@@ -184,11 +179,25 @@ class LogsScreenState extends State<LogsScreen> {
   }
 }
 
+Future<String> getServerName(String serverId) async {
+  try {
+    final response = await Dio().get('${env.apiBaseUrl}/servers/$serverId');
+    if (response.statusCode == 200) {
+      return response.data['Name'] as String;
+    } else {
+      throw Exception('Failed to load server name');
+    }
+  } catch (e) {
+    print('Error loading server name: $e');
+    return 'Unknown';
+  }
+}
+
 class LogDataSource extends DataTableSource {
   final void Function(Map<String, dynamic> data) onDetailButtonPressed;
   final void Function(Map<String, dynamic> data) onDeleteButtonPressed;
 
-  List<Map<String, dynamic>> _data = []; // Updated to store API data
+  List<Map<String, dynamic>> _data = [];
 
   LogDataSource({
     required this.onDetailButtonPressed,
@@ -200,14 +209,15 @@ class LogDataSource extends DataTableSource {
       final response = await Dio().get('${env.apiBaseUrl}/logs');
       if (response.statusCode == 200) {
         List<dynamic> logs = response.data;
-        _data = List.generate(logs.length, (index) {
+        _data = await Future.wait(logs.map((log) async {
+          final serverName = await getServerName(log['ServerID']);
           return {
-            'id': logs[index]['ID'],
-            'message': logs[index]['Message'],
-            'createdAt': logs[index]['CreatedAt'],
-            'serverId': logs[index]['ServerID'],
+            'id': log['ID'],
+            'message': log['Message'],
+            'createdAt': log['CreatedAt'],
+            'serverName': serverName,
           };
-        });
+        }).toList());
         notifyListeners();
       } else {
         throw Exception('Failed to load data');
@@ -224,29 +234,7 @@ class LogDataSource extends DataTableSource {
     return DataRow.byIndex(index: index, cells: [
       DataCell(Text(formatDateTime(data['createdAt']))),
       DataCell(Text(data['message'].toString())),
-      DataCell(Text(data['serverId'].toString())),
-      DataCell(Builder(
-        builder: (context) {
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(right: kDefaultPadding),
-                child: OutlinedButton(
-                  onPressed: () => onDetailButtonPressed.call(data),
-                  style: Theme.of(context).extension<AppButtonTheme>()!.infoOutlined,
-                  child: Text('Détails'),
-                ),
-              ),
-              OutlinedButton(
-                onPressed: () => onDeleteButtonPressed.call(data),
-                style: Theme.of(context).extension<AppButtonTheme>()!.errorOutlined,
-                child: Text('Supprimer'),
-              ),
-            ],
-          );
-        },
-      )),
+      DataCell(Text(data['serverName'].toString())), // Utilisez serverName ici
     ]);
   }
 
