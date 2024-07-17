@@ -191,6 +191,34 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     }
   }
 
+  void _showConfirmationDialog(String messageId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmation'),
+          content: Text('Êtes-vous sûr de vouloir supprimer ce message ?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Oui'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the confirmation dialog
+                _deleteMessage(messageId);
+              },
+            ),
+            TextButton(
+              child: Text('Non'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   void _showModalBottomSheet(BuildContext context, dynamic message) {
     showModalBottomSheet(
       context: context,
@@ -217,7 +245,8 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                   _showReportDialog(context, message);
                 },
               ),
-            ListTile(
+            if (message['UserID'].toString() != currentUserID)
+              ListTile(
               leading: Icon(Icons.report),
               title: Text("Signaler l'utilisateur"),
               onTap: () {
@@ -225,6 +254,17 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                 _showReportUserDialog(context, message);
               },
             ),
+            if (message['UserID'].toString() == currentUserID)
+              ListTile(
+                leading: Icon(Icons.delete),
+                iconColor: Colors.red,
+                title: Text('Supprimer le message'),
+                textColor: Colors.red,
+                onTap: () {
+                  Navigator.pop(context);
+                  _showConfirmationDialog(message['ID']);
+                },
+              ),
           ],
         );
       },
@@ -336,6 +376,8 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
   }
 
 
+
+
   Future<void> _sendReport(String messageID, String reportMessage) async {
     const storage = FlutterSecureStorage();
     final jwtToken = await storage.read(key: 'token');
@@ -367,6 +409,38 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       );
     }
   }
+
+  Future<void> _deleteMessage(String messageId) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    try {
+      await Dio().put(
+        '$apiPath/messages/$messageId',
+        data: {'Content': 'Ce message a été supprimé par l\'utilisateur'},
+      );
+      // Update the local state to reflect the message deletion
+      setState(() {
+        _messagesByDate.forEach((date, messages) {
+          final messageIndex = messages.indexWhere((message) => message['ID'] == messageId);
+          if (messageIndex != -1) {
+            messages[messageIndex]['Content'] = 'Ce message a été supprimé par l\'utilisateur';
+          }
+        });
+      });
+    } catch (error) {
+      _showErrorSnack('Une erreur s\'est produite lors de la suppression du message.');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
 
   List<TextSpan> formatMessage(String content) {
     List<TextSpan> spans = [];

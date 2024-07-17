@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -222,6 +223,97 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
     }
   }
 
+  Future<void> _deleteMessage(String messageId) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    try {
+      await Dio().put(
+        '$apiPath/messages/$messageId',
+        data: {'Content': 'Ce message a été supprimé par l\'utilisateur'},
+      );
+      // Update the local state to reflect the message deletion
+      setState(() {
+        _messagesByDate.forEach((date, messages) {
+          final messageIndex = messages.indexWhere((message) => message['ID'] == messageId);
+          if (messageIndex != -1) {
+            messages[messageIndex]['Content'] = 'Ce message a été supprimé par l\'utilisateur';
+          }
+        });
+      });
+    } catch (error) {
+      _showErrorSnack('Une erreur s\'est produite lors de la suppression du message.');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _showConfirmationDialog(String messageId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmation'),
+          content: Text('Êtes-vous sûr de vouloir supprimer ce message ?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Oui'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the confirmation dialog
+                _deleteMessage(messageId);
+              },
+            ),
+            TextButton(
+              child: Text('Non'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  void _showModalBottomSheet(BuildContext context, dynamic message) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: Icon(Icons.copy),
+              title: Text('Copier'),
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: message['Content']));
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Message copié')),
+                );
+              },
+            ),
+            if (message['UserID'].toString() == currentUserID)
+              ListTile(
+                leading: Icon(Icons.delete),
+                title: Text('Supprimer le message'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showConfirmationDialog(message['ID']);
+                },
+              ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -230,7 +322,9 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(widget.group.name.length > 20 ? '${widget.group.name.substring(0, 20)}...': widget.group.name),
+            Text(widget.group.name.length > 20
+                ? '${widget.group.name.substring(0, 20)}...'
+                : widget.group.name),
             IconButton(
               icon: const Icon(Icons.info),
               onPressed: () {
@@ -276,75 +370,80 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
                         final dynamic message = messagesForDate[index];
                         final bool isCurrentUser = message['UserID'].toString() == currentUserID;
 
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: [
-                              if (!isCurrentUser)
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: CircleAvatar(
-                                    child: _buildProfileWidget(message),
+                        return GestureDetector(
+                          onLongPress: () {
+                            _showModalBottomSheet(context, message);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                if (!isCurrentUser)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8.0),
+                                    child: CircleAvatar(
+                                      child: _buildProfileWidget(message),
+                                    ),
                                   ),
-                                ),
-                              Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.all(8.0),
-                                  decoration: BoxDecoration(
-                                    color: isCurrentUser
-                                        ? Theme.of(context).primaryColor
-                                        : Theme.of(context).cardColor,
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            message['User']['Pseudo'],
-                                            style: TextStyle(
-                                              color: isCurrentUser ? Colors.white : Colors.black,
-                                              fontWeight: FontWeight.bold,
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8.0),
+                                    decoration: BoxDecoration(
+                                      color: isCurrentUser
+                                          ? Theme.of(context).primaryColor
+                                          : Theme.of(context).cardColor,
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              message['User']['Pseudo'],
+                                              style: TextStyle(
+                                                color: isCurrentUser ? Colors.white : Colors.black,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 8.0),
-                                          Text(
-                                            DateFormat('HH:mm').format(DateTime.parse(message['SentAt'])),
-                                            style: TextStyle(
-                                              color: isCurrentUser ? Colors.white : Colors.black,
-                                              fontSize: 12.0,
+                                            const SizedBox(width: 8.0),
+                                            Text(
+                                              DateFormat('HH:mm').format(DateTime.parse(message['SentAt'])),
+                                              style: TextStyle(
+                                                color: isCurrentUser ? Colors.white : Colors.black,
+                                                fontSize: 12.0,
+                                              ),
                                             ),
-                                          ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4.0),
+                                        if (message['Type'] == 'Text') ...[
+                                            Text.rich(
+                                                TextSpan(
+                                                children: formatMessage(message['Content']),
+                                                style: TextStyle(color: isCurrentUser ? Colors.white : Colors.black),
+                                            ),
+                                            ),
                                         ],
-                                      ),
-                                      const SizedBox(height: 4.0),
-                                      if (message['Type'] == 'Text') ...[
-                                        Text.rich(
-                                          TextSpan(
-                                            children: formatMessage(message['Content']),
-                                            style: TextStyle(color: isCurrentUser ? Colors.white : Colors.black),
+                                        if (message['Type'] == 'Image')
+                                          Image.network(
+                                            message['Content'],
+                                            width: 200,
+                                            height: 200,
                                           ),
-                                        ),
                                       ],
-                                      if (message['Type'] == 'Image')
-                                        Image.network(
-                                          message['Content'],
-                                          width: 200,
-                                          height: 200,
-                                        ),
-                                    ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                              if (isCurrentUser)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 8.0),
-                                  child: CircleAvatar(
-                                    child: _buildProfileWidget(message),
+                                if (isCurrentUser)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: CircleAvatar(
+                                      child: _buildProfileWidget(message),
+                                    ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
                         );
                       },

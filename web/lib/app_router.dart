@@ -18,6 +18,7 @@ import 'package:web_admin/views/screens/general_ui_screen.dart';
 import 'package:web_admin/views/screens/iframe_demo_screen.dart';
 import 'package:web_admin/views/screens/login_screen.dart';
 import 'package:web_admin/views/screens/logout_screen.dart';
+import 'package:web_admin/views/screens/logs_screen.dart';
 import 'package:web_admin/views/screens/my_profile_screen.dart';
 import 'package:web_admin/views/screens/register_screen.dart';
 import 'package:web_admin/views/screens/text_screen.dart';
@@ -33,6 +34,7 @@ class RouteUri {
   static const String servers = '/servers';
   static const String tags = '/tags';
   static const String featuresFlipping = '/features-flipping';
+  static const String logs = '/logs';
   static const String myProfile = '/my-profile';
   static const String logout = '/logout';
   static const String form = '/form';
@@ -112,6 +114,12 @@ GoRouter appRouter(UserDataProvider userDataProvider) {
         pageBuilder: (context, state) => NoTransitionPage<void>(
           key: state.pageKey,
           child: const FeaturesFlippingScreen(),
+        ),
+      ),GoRoute(
+        path: RouteUri.logs,
+        pageBuilder: (context, state) => NoTransitionPage<void>(
+          key: state.pageKey,
+          child: const LogsScreen(),
         ),
       ),
       GoRoute(
