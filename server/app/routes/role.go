@@ -17,4 +17,5 @@ func RoleRoutes(r *gin.Engine) {
 	r.POST("/roles/server/:id/add", controllers.TokenAuthMiddleware("user"), services.AddRoleToServer(func() interface{} { return &models.Role{} }))
 	
 	r.GET("/roles/:id/permissions", services.GetRolePermissions)
+	r.PUT("/roles/:id/permissions", services.UpdateRolePermissions)
 }
