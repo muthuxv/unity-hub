@@ -22,6 +22,7 @@ var jwtKey = []byte(os.Getenv("JWT_KEY"))
 type CustomClaims struct {
 	jwt.RegisteredClaims
 	Pseudo string `json:"pseudo"`
+	Role   string `json:"role"`
 }
 
 func GenerateJWT(userID uuid.UUID, email, role, pseudo string) (string, error) {
@@ -34,6 +35,7 @@ func GenerateJWT(userID uuid.UUID, email, role, pseudo string) (string, error) {
 			Audience:  []string{role},
 		},
 		Pseudo: pseudo,
+		Role:   role,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

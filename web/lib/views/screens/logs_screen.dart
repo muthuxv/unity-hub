@@ -1,12 +1,12 @@
 import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
 import 'package:web_admin/generated/l10n.dart';
 import 'package:web_admin/environment.dart';
-import 'package:web_admin/theme/theme_extensions/app_button_theme.dart';
 import 'package:web_admin/theme/theme_extensions/app_data_table_theme.dart';
 import 'package:web_admin/views/widgets/card_elements.dart';
 import 'package:web_admin/views/widgets/portal_master_layout/portal_master_layout.dart';
@@ -61,9 +61,17 @@ class LogsScreenState extends State<LogsScreen> {
   }
 
   void _doDelete(BuildContext context, String logId) async {
-    final lang = Lang.of(context);
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
     try {
-      final response = await Dio().delete('${env.apiBaseUrl}/logs/$logId');
+      final response = await Dio().delete('${env.apiBaseUrl}/logs/$logId',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
       if (response.statusCode == 204) {
         final dialog = AwesomeDialog(
           context: context,

@@ -150,13 +150,18 @@ class _ServerMembersListState extends State<ServerMembersList> {
                     children: <Widget>[
                       if (isServerCreator)
                         ListTile(
-                          title: Text('AppLocalizations.of(context)!.youAreServerCreator'),
+                          title: Text(AppLocalizations.of(context)!.youAreServerCreator),
                         ),
                       if (isCurrentUser)
                         ListTile(
                           title: Text(AppLocalizations.of(context)!.youAreCurrentUser),
+                          onTap: (){
+                            print("--------------");
+                            print(isServerCreator);
+                            print(isCurrentUser);
+                          },
                         ),
-                      if (!isServerCreator && !isCurrentUser)
+                      if (!isCurrentUser)
                         ListTile(
                           leading: const Icon(Icons.delete),
                           title: Text(AppLocalizations.of(context)!.banMember),
