@@ -3,12 +3,13 @@ package testutils
 import (
 	"app/db/models"
 	"fmt"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 	"log"
 	"os"
 	"strings"
 	"sync"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var db *gorm.DB
@@ -64,8 +65,6 @@ func MakeTestMigrations() {
 		&models.Role{},
 		&models.RolePermissions{},
 		&models.RoleUser{},
-		&models.Theme{},
-		&models.ThemeServer{},
 		&models.Ban{},
 		&models.Group{},
 		&models.GroupMember{},

@@ -58,8 +58,6 @@ func MakeMigrations() {
 		&models.Role{},
 		&models.RolePermissions{},
 		&models.RoleUser{},
-		&models.Theme{},
-		&models.ThemeServer{},
 		&models.Ban{},
 		&models.Group{},
 		&models.GroupMember{},
