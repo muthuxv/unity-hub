@@ -232,47 +232,54 @@ class _AddServerPageState extends State<AddServerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       extendBodyBehindAppBar: true,
       extendBody: true,
-      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height,
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xff4776e6), Color(0xff8e54e9)],
-                stops: [0, 1],
-                begin: Alignment.centerRight,
-                end: Alignment.centerLeft,
-              ),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              margin: const EdgeInsets.only(top: 100),
-              child: Column(
-                children: [
-                  Expanded(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xff4776e6), Color(0xff8e54e9)],
+            stops: [0, 1],
+            begin: Alignment.centerRight,
+            end: Alignment.centerLeft,
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top + 100,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          AppLocalizations.of(context)!.create_server,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
+                        Center(
+                          child: Text(
+                            AppLocalizations.of(context)!.create_server,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Image.asset(
-                          'lib/images/unitylog.png',
-                          width: 100,
-                          color: Colors.white,
+                        Center(
+                          child: Image.asset(
+                            'lib/images/unitylog.png',
+                            width: 100,
+                            color: Colors.white,
+                          ),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(16.0),
@@ -417,9 +424,9 @@ class _AddServerPageState extends State<AddServerPage> {
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
