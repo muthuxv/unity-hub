@@ -782,20 +782,75 @@ func GetServerChannels() gin.HandlerFunc {
 			return
 		}
 
-		var server models.Server
-		if err := db.GetDB().First(&server, serverID).Error; err != nil {
-			handleError(c, http.StatusBadRequest, "Le serveur n'existe pas.")
+		// Extraire l'ID utilisateur à partir des revendications JWT
+		claims, exists := c.Get("jwt_claims")
+		if !exists {
+			handleError(c, http.StatusUnauthorized, "JWT claims not found")
 			return
 		}
 
+		jwtClaims, ok := claims.(jwt.MapClaims)
+		if !ok {
+			handleError(c, http.StatusInternalServerError, "Failed to parse JWT claims")
+			return
+		}
+
+		userIDStr, ok := jwtClaims["jti"].(string)
+		if !ok {
+			handleError(c, http.StatusInternalServerError, "Failed to get user ID from JWT claims")
+			return
+		}
+
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			handleError(c, http.StatusInternalServerError, "Invalid user ID")
+			return
+		}
+
+		// Récupérer le rôle utilisateur et vérifier les permissions
+		var roleUser models.RoleUser
+		if err := db.GetDB().Joins("JOIN roles ON roles.id = role_users.role_id").
+			Where("role_users.user_id = ? AND roles.server_id = ?", userID, serverID).
+			First(&roleUser).Error; err != nil {
+			handleError(c, http.StatusUnauthorized, "User role not found")
+			return
+		}
+
+		var rolePermissions []models.RolePermissions
+		if err := db.GetDB().Where("role_id = ?", roleUser.RoleID).Preload("Permissions").Find(&rolePermissions).Error; err != nil {
+			handleError(c, http.StatusUnauthorized, "Role permissions not found")
+			return
+		}
+
+		// Obtenir le niveau de pouvoir pour accessChannel
+		accessChannelPower := -1
+		for _, rp := range rolePermissions {
+			if rp.Permissions.Label == "accessChannel" {
+				accessChannelPower = rp.Power
+				break
+			}
+		}
+
+		if accessChannelPower == -1 {
+			handleError(c, http.StatusUnauthorized, "Insufficient permissions")
+			return
+		}
+
+		// Récupérer les channels en fonction des permissions
 		var textChannels []models.Channel
-		if err := db.GetDB().Where("server_id = ? AND type = ?", serverID, "text").Find(&textChannels).Error; err != nil {
+		if err := db.GetDB().Joins("JOIN channel_channel_permissions ccp ON channels.id = ccp.channel_id").
+			Joins("JOIN channel_permissions cp ON ccp.channel_permission_id = cp.id").
+			Where("channels.server_id = ? AND channels.type = ? AND cp.label = ? AND ccp.power <= ?", serverID, "text", "accessChannel", accessChannelPower).
+			Find(&textChannels).Error; err != nil {
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des canaux de texte du serveur.")
 			return
 		}
 
 		var voiceChannels []models.Channel
-		if err := db.GetDB().Where("server_id = ? AND type = ?", serverID, "vocal").Find(&voiceChannels).Error; err != nil {
+		if err := db.GetDB().Joins("JOIN channel_channel_permissions ccp ON channels.id = ccp.channel_id").
+			Joins("JOIN channel_permissions cp ON ccp.channel_permission_id = cp.id").
+			Where("channels.server_id = ? AND channels.type = ? AND cp.label = ? AND ccp.power <= ?", serverID, "vocal", "accessChannel", accessChannelPower).
+			Find(&voiceChannels).Error; err != nil {
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des canaux vocaux du serveur.")
 			return
 		}
