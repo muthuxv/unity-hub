@@ -225,7 +225,7 @@
   "failedKickMember": "Failed to kick member",
   "kickMember": "Kick Member",
   "filterByTag": "Filter by tag",
-  "all": "All"
+  "all": "All",
   "privacy_and_security_policy": "UnityHub Privacy and Security Policy",
   "welcome_message": "Welcome to UnityHub. We place great importance on the privacy and security of your data. This policy explains how we collect, use, protect, and share your information when you use our application.",
   "information_collection": "1. Information Collection",
