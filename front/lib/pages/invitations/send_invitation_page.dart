@@ -9,7 +9,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class SendInvitationPage extends StatefulWidget {
   final String serverId;
 
-  const SendInvitationPage({super.key, required this.serverId});
+  const SendInvitationPage({Key? key, required this.serverId}) : super(key: key);
 
   @override
   _SendInvitationPageState createState() => _SendInvitationPageState();
@@ -19,12 +19,14 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
   bool _isLoading = false;
   List _friends = [];
   List _bannedUsers = [];
+  List _serverMembers = [];
   final Map<String, bool> _selectedFriends = {};
 
   @override
   void initState() {
     super.initState();
     _getFriendsAndBans();
+    _getServerMembers();
   }
 
   Future<void> _getFriendsAndBans() async {
@@ -54,7 +56,6 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
         ),
       );
 
-      // Fetch banned users
       final bansResponse = await Dio().get(
         '$apiPath/servers/${widget.serverId}/bans',
         options: Options(
@@ -84,6 +85,39 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
         _isLoading = false;
       });
       print('An error occurred: $e');
+    }
+  }
+
+  Future<void> _getServerMembers() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    try {
+      final response = await Dio().get(
+        '$apiPath/servers/${widget.serverId}/members',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          validateStatus: (status) {
+            return status! < 500;
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _serverMembers = response.data['data'];
+        });
+      } else {
+        print('Failed to fetch server members');
+      }
+    } catch (e) {
+      print('An error occurred while fetching server members: $e');
     }
   }
 
@@ -151,10 +185,15 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
                 itemCount: _friends.length,
                 itemBuilder: (context, index) {
                   final friend = _friends[index];
-                  // Filter out banned friends
+                  bool isServerMember = _serverMembers.any((member) => member['ID'] == friend['FriendID']);
+                  if (isServerMember) {
+                    return SizedBox.shrink();
+                  }
+
                   if (_bannedUsers.contains(friend['FriendID'])) {
                     return SizedBox.shrink();
                   }
+
                   return ListTile(
                     title: Text(friend['UserPseudo']),
                     leading: CircleAvatar(
@@ -186,7 +225,9 @@ class _SendInvitationPageState extends State<SendInvitationPage> {
               ),
             ),
             ElevatedButton(
-              onPressed: _selectedFriends.values.any((isSelected) => isSelected) ? _sendInvitations : null,
+              onPressed: _selectedFriends.values.any((isSelected) => isSelected)
+                  ? _sendInvitations
+                  : null,
               child: Text(AppLocalizations.of(context)!.sendButton),
             ),
           ],

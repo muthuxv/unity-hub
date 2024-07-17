@@ -476,7 +476,7 @@ class _FriendPageState extends State<FriendPage> {
 
     try {
       final response = await Dio().get(
-        '$apiPath/servers/friend/$friendId', // Endpoint pour récupérer les serveurs de l'ami
+        '$apiPath/servers/friend/$friendId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',

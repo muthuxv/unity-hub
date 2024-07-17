@@ -27,6 +27,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
   @override
   void initState() {
     super.initState();
+    _initializeCurrentUser();
     _fetchServerMembers();
   }
 
@@ -39,10 +40,12 @@ class _ServerMembersListState extends State<ServerMembersList> {
   Future<void> _initializeCurrentUser() async {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'token');
-    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
-    setState(() {
-      currentUserId = decodedToken['jti'];
-    });
+    if (token != null) {
+      final Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      setState(() {
+        currentUserId = decodedToken['jti'];
+      });
+    }
   }
 
   Future<void> _fetchServerMembers() async {
@@ -93,7 +96,6 @@ class _ServerMembersListState extends State<ServerMembersList> {
   }
 
   void _showBottomModal(Map member) async {
-
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -159,10 +161,17 @@ class _ServerMembersListState extends State<ServerMembersList> {
                           leading: const Icon(Icons.delete),
                           title: Text(AppLocalizations.of(context)!.banMember),
                           onTap: () {
-                            print('---------');
-                            print(currentUserId);
                             Navigator.pop(context);
                             _showBanConfirmationDialog(member);
+                          },
+                        ),
+                      if (!isServerCreator && !isCurrentUser)
+                        ListTile(
+                          leading: const Icon(Icons.remove_circle),
+                          title: Text(AppLocalizations.of(context)!.kickMember),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _kickMember(member);
                           },
                         ),
                       if (!isServerCreator && !isCurrentUser)
@@ -317,6 +326,38 @@ class _ServerMembersListState extends State<ServerMembersList> {
     }
   }
 
+  void _kickMember(Map member) async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    if (token == null) {
+      _showErrorDialog('User token not found');
+      return;
+    }
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    try {
+      final response = await _dio.delete(
+        '$apiPath/servers/${widget.serverId}/kick/users/${member['ID']}',
+        options: Options(headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        _showSuccessDialog(AppLocalizations.of(context)!.memberKickedSuccessfully);
+        _fetchServerMembers();
+      } else {
+        _showErrorDialog(AppLocalizations.of(context)!.failedKickMember);
+      }
+    } catch (e) {
+      _showErrorDialog('An error occurred: $e');
+    }
+  }
+
   void _showSuccessDialog(String message) {
     showDialog(
       context: context,
@@ -329,7 +370,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('OK'),
+              child: const Text('OK'),
             ),
           ],
         );
@@ -368,8 +409,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
                     const Icon(Icons.star, color: Colors.amber),
                   if (isCurrentUser)
                     const Text(" (moi)", style: TextStyle(color: Colors.grey)),
-                  if (isAdmin)
-                    const Icon(Icons.shield, color: Colors.blue),
+                  if (isAdmin) const Icon(Icons.shield, color: Colors.blue),
                 ],
               ),
               leading: CircleAvatar(

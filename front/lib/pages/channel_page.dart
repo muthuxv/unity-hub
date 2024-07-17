@@ -171,7 +171,6 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       }));
       _messageController.clear();
 
-      // Delay the scrolling slightly to ensure the new message is added to the list
       Future.delayed(const Duration(milliseconds: 100), () {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -369,6 +368,34 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     }
   }
 
+  List<TextSpan> formatMessage(String content) {
+    List<TextSpan> spans = [];
+    RegExp bold = RegExp(r'\*\*(.*?)\*\*');
+    RegExp italic = RegExp(r'\*(.*?)\*');
+    RegExp underline = RegExp(r'__(.*?)__');
+
+    while (content.isNotEmpty) {
+      if (bold.hasMatch(content)) {
+        var match = bold.firstMatch(content)!;
+        spans.add(TextSpan(text: match.group(1), style: TextStyle(fontWeight: FontWeight.bold)));
+        content = content.substring(match.end);
+      } else if (italic.hasMatch(content)) {
+        var match = italic.firstMatch(content)!;
+        spans.add(TextSpan(text: match.group(1), style: TextStyle(fontStyle: FontStyle.italic)));
+        content = content.substring(match.end);
+      } else if (underline.hasMatch(content)) {
+        var match = underline.firstMatch(content)!;
+        spans.add(TextSpan(text: match.group(1), style: TextStyle(decoration: TextDecoration.underline, decorationThickness: 1.5)));
+        content = content.substring(match.end);
+      } else {
+        spans.add(TextSpan(text: content));
+        content = '';
+      }
+    }
+
+    return spans;
+  }
+
   Future<void> _sendUserReport(String reportedID, String reportMessage) async {
     const storage = FlutterSecureStorage();
     final jwtToken = await storage.read(key: 'token');
@@ -492,11 +519,14 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                                           ],
                                         ),
                                         const SizedBox(height: 4.0),
-                                        if (message['Type'] == 'Text')
-                                          Text(
-                                            message['Content'],
-                                            style: TextStyle(color: isCurrentUser ? Colors.white : Colors.black),
+                                        if (message['Type'] == 'Text') ...[
+                                          Text.rich(
+                                            TextSpan(
+                                              children: formatMessage(message['Content']),
+                                              style: TextStyle(color: isCurrentUser ? Colors.white : Colors.black),
+                                            ),
                                           ),
+                                        ],
                                         if (message['Type'] == 'Image')
                                           Image.network(
                                             message['Content'],
@@ -573,6 +603,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       ),
     );
   }
+
 
   Widget _buildProfileWidget(dynamic message) {
     return message['User']['Profile'] != null && message['User']['Profile'].contains('<svg')
