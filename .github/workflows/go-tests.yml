@@ -16,4 +16,4 @@ jobs:
         go-version: '1.22.1'
 
     - name: Run tests
-      run: go test ./server/tests
+      run: go test ./server/app/tests
