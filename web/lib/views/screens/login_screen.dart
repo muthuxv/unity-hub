@@ -1,17 +1,20 @@
-  import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:provider/provider.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
 import 'package:web_admin/generated/l10n.dart';
 import 'package:web_admin/providers/user_data_provider.dart';
 import 'package:web_admin/theme/theme_extensions/app_button_theme.dart';
-import 'package:web_admin/theme/theme_extensions/app_color_scheme.dart';
 import 'package:web_admin/utils/app_focus_helper.dart';
 import 'package:web_admin/views/widgets/public_master_layout/public_master_layout.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:dio/dio.dart';
+import 'package:web_admin/environment.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,20 +42,54 @@ class _LoginScreenState extends State<LoginScreen> {
 
       setState(() => _isFormLoading = true);
 
-      Future.delayed(const Duration(seconds: 1), () async {
-        if (_formData.username != 'admin' || _formData.password != 'admin') {
-          onError.call('Invalid username or password.');
+      try {
+        final response = await Dio().post(
+          '${env.apiBaseUrl}/login',
+          data: {
+            'email': _formData.email,
+            'password': _formData.password,
+          },
+          options: Options(
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          ),
+        );
+
+        if (response.statusCode == 200) {
+          final decodedToken = JwtDecoder.decode(response.data['token']);
+          print(decodedToken);
+          final userRole = decodedToken['role'];
+          if (userRole == 'admin') {
+            const storage = FlutterSecureStorage();
+            await storage.write(key: 'token', value: response.data['token']);
+            await userDataProvider.setUserDataAsync(
+              username: _formData.email,
+              userProfileImageUrl: 'https://picsum.photos/id/1005/300/300', // Example image URL, replace as necessary
+            );
+
+            onSuccess.call();
+          } else {
+            onError.call('Accès refusé. Vous devez être administrateur pour vous connecter.');
+          }
         } else {
-          await userDataProvider.setUserDataAsync(
-            username: 'Admin ABC',
-            userProfileImageUrl: 'https://picsum.photos/id/1005/300/300',
-          );
-
-          onSuccess.call();
+          onError.call('Erreur lors de la connexion. Veuillez réessayer.');
         }
+      } on DioException catch (e) {
+        if (e.response != null) {
+          if (e.response!.statusCode == 404) {
+            onError.call('Utilisateur non trouvé.');
+          } else if (e.response!.statusCode == 401) {
+            onError.call('Mot de passe incorrect.');
+          } else {
+            onError.call('Erreur lors de la connexion. Veuillez réessayer.');
+          }
+        } else {
+          onError.call('Erreur réseau. Veuillez vérifier votre connexion.');
+        }
+      }
 
-        setState(() => _isFormLoading = false);
-      });
+      setState(() => _isFormLoading = false);
     }
   }
 
@@ -120,16 +157,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           Padding(
                             padding: const EdgeInsets.only(bottom: kDefaultPadding * 1.5),
                             child: FormBuilderTextField(
-                              name: 'username',
+                              name: 'email',
                               decoration: InputDecoration(
-                                labelText: lang.username,
-                                hintText: lang.username,
+                                labelText: lang.email,
+                                hintText: lang.email,
                                 border: const OutlineInputBorder(),
                                 floatingLabelBehavior: FloatingLabelBehavior.always,
                               ),
                               enableSuggestions: false,
-                              validator: FormBuilderValidators.required(),
-                              onSaved: (value) => (_formData.username = value ?? ''),
+                              validator: FormBuilderValidators.compose([
+                                FormBuilderValidators.required(),
+                                FormBuilderValidators.email(),
+                              ]),
+                              onSaved: (value) => (_formData.email = value ?? ''),
                             ),
                           ),
                           Padding(
@@ -158,10 +198,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onPressed: (_isFormLoading
                                     ? null
                                     : () => _doLoginAsync(
-                                          userDataProvider: context.read<UserDataProvider>(),
-                                          onSuccess: () => _onLoginSuccess(context),
-                                          onError: (message) => _onLoginError(context, message),
-                                        )),
+                                  userDataProvider: context.read<UserDataProvider>(),
+                                  onSuccess: () => _onLoginSuccess(context),
+                                  onError: (message) => _onLoginError(context, message),
+                                )),
                                 child: Text(lang.login),
                               ),
                             ),
@@ -181,6 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 class FormData {
-  String username = '';
+  String email = '';
   String password = '';
+  String role = '';
 }

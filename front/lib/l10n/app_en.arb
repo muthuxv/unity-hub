@@ -8,6 +8,7 @@
   "add_channel": "Add a Channel",
   "invite_friends": "Invite Friends",
   "friend_invitation": "want to be your friend",
+  "youAreServerCreator": "You are the server creator",
   "server_created": "Server created",
   "create_server": "Create your own server!",
   "give_name_and_visibility": "Give a name to your server and choose its visibility.",

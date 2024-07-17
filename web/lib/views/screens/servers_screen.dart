@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
@@ -217,8 +218,17 @@ class DataSource extends DataTableSource {
   });
 
   Future<void> loadData() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
     try {
-      final response = await Dio().get('${env.apiBaseUrl}/servers');
+      final response = await Dio().get('${env.apiBaseUrl}/servers',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
       if (response.statusCode == 200) {
         List<dynamic> servers = response.data;
         _data = List.generate(servers.length, (index) {

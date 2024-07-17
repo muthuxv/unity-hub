@@ -181,6 +181,7 @@
   "back": "Retour",
   "noFriendRequestsSent": "Vous n'avez pas encore fait de demande d'ami",
   "friendRequestSent": "Demande d'ami envoyée",
+  "youAreServerCreator": "Vous êtes le créateur du serveur",
   "searchFriends": "Rechercher des amis...",
   "noFriendRequests": "Vous n'avez pas de demande d'ami",
   "noFriendsYet": "Pas encore d'ami 😭",
