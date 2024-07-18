@@ -48,15 +48,35 @@ func CreateReactMessage() gin.HandlerFunc {
 			return
 		}
 
+		var reactType models.React
+		if err := db.GetDB().Where("id = ?", input.ReactID).First(&reactType).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Réaction non trouvé"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la récupération de ReactID"})
+			return
+		}
+
+		var message models.Message
+		if err := db.GetDB().Where("id = ?", input.MessageID).First(&message).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Message non trouvé"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la récupération de MessageID"})
+			return
+		}
+
 		var existingReact models.ReactMessage
 		err = db.GetDB().Where("user_id = ? AND react_id = ? AND message_id = ?", userID, input.ReactID, input.MessageID).First(&existingReact).Error
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to query existing reactions"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Échec de la vérification des réactions existantes"})
 			return
 		}
 
 		if existingReact.ID != uuid.Nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "user already reacted with this reactId to this messageId"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "L'utilisateur a déjà réagi avec ce ReactID à ce MessageID"})
 			return
 		}
 
@@ -67,7 +87,7 @@ func CreateReactMessage() gin.HandlerFunc {
 		}
 
 		if err := db.GetDB().Create(&reactMessage).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create react message"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Échec de la création de la réaction"})
 			return
 		}
 

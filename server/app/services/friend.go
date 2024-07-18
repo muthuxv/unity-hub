@@ -116,6 +116,11 @@ func RefuseFriend() gin.HandlerFunc {
 			return
 		}
 
+		if friend.Status == "accepted" {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Demande d'ami déjà acceptée, impossible de refuser"})
+			return
+		}
+
 		if friend.Status == "refused" {
 			c.JSON(http.StatusBadRequest, models.ErrorResponse{Error: "Demande d'ami déjà refusée"})
 			return
@@ -182,7 +187,6 @@ func GetFriendsByUser() gin.HandlerFunc {
 			return
 		}
 
-		// Vérifier si l'utilisateur existe en base de données
 		var user models.User
 		if err := db.GetDB().Where("id = ?", userID).First(&user).Error; err != nil {
 			handleError(c, http.StatusNotFound, "Utilisateur non trouvé")
@@ -248,6 +252,12 @@ func GetPendingFriendsByUser() gin.HandlerFunc {
 			return
 		}
 
+		var user models.User
+		if err := db.GetDB().Where("id = ?", userID).First(&user).Error; err != nil {
+			handleError(c, http.StatusNotFound, "Utilisateur non trouvé")
+			return
+		}
+
 		var friends []models.Friend
 		result := db.GetDB().Preload("User1").Preload("User2").
 			Where("user_id2 = ? AND status = ?", userID, "pending").Find(&friends)
@@ -258,14 +268,14 @@ func GetPendingFriendsByUser() gin.HandlerFunc {
 
 		friendsResponse := make([]models.FriendResponse, len(friends))
 		for i, friend := range friends {
-
-			friendData := models.FriendResponse{
-				ID:         friend.ID,
-				FriendID:   userID,
-				UserPseudo: friend.User1.Pseudo,
-				UserMail:   friend.User1.Email,
-				Profile:    friend.User1.Profile,
-				Status:     friend.Status,
+			friendData := map[string]interface{}{
+				"ID":            friend.ID,
+				"FriendID":      userID,
+				"FriendUser1ID": friend.User1.ID,
+				"Status":        friend.Status,
+				"UserPseudo":    friend.User1.Pseudo,
+				"UserMail":      friend.User1.Email,
+				"Profile":       friend.User1.Profile,
 			}
 			friendsResponse[i] = friendData
 		}
@@ -348,6 +358,16 @@ func CreateFriendRequest() gin.HandlerFunc {
 			return
 		}
 
+		if input.UserID == uuid.Nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Le champ UserID ne peut pas être vide"})
+			return
+		}
+
+		if input.UserPseudo == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Le champ UserPseudo ne peut pas être vide"})
+			return
+		}
+
 		var user models.User
 		result := db.GetDB().Where("pseudo = ?", input.UserPseudo).First(&user)
 		if result.Error != nil {
@@ -363,7 +383,6 @@ func CreateFriendRequest() gin.HandlerFunc {
 		var existingFriend models.Friend
 		result = db.GetDB().Where("((user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)) AND status = 'pending'",
 			input.UserID, user.ID, user.ID, input.UserID).First(&existingFriend)
-
 		if result.Error == nil {
 			c.JSON(http.StatusConflict, models.ErrorResponse{Error: "Demande d'ami déjà envoyée"})
 			return
@@ -372,7 +391,6 @@ func CreateFriendRequest() gin.HandlerFunc {
 		var existingFriendship models.Friend
 		result = db.GetDB().Where("((user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)) AND status = 'accepted'",
 			input.UserID, user.ID, user.ID, input.UserID).First(&existingFriendship)
-
 		if result.Error == nil {
 			c.JSON(http.StatusConflict, models.ErrorResponse{Error: "Vous êtes déjà amis avec cet utilisateur"})
 			return
