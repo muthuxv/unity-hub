@@ -460,7 +460,6 @@ func GetUserByPseudo() gin.HandlerFunc {
 		userResponse := map[string]interface{}{
 			"id":        user.ID,
 			"pseudo":    user.Pseudo,
-			"email":     user.Email,
 			"profile":   user.Profile,
 			"fcm_token": user.FcmToken,
 			"createdAt": user.CreatedAt,
