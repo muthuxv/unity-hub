@@ -5,6 +5,10 @@ import (
     "net/http"
     "sync"
 	"log"
+    "github.com/golang-jwt/jwt/v4"
+    "gorm.io/gorm"
+    "app/db"
+    "github.com/google/uuid"
 
     "github.com/pion/webrtc/v3"
 )
@@ -107,4 +111,37 @@ func ICECandidateHandler(w http.ResponseWriter, r *http.Request) {
     }
 
     w.WriteHeader(http.StatusOK)
+}
+
+type User struct {
+    ID     uuid.UUID `json:"id"`
+    Pseudo string    `json:"pseudo"`
+    Profile string   `json:"profile"`
+}
+
+func GetUsersInChannel(w http.ResponseWriter, r *http.Request) {
+    claims, exists := r.Context().Value("jwt_claims").(jwt.MapClaims)
+    if !exists {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+
+    userID, err := uuid.Parse(claims["jti"].(string))
+    if err != nil {
+        http.Error(w, "Invalid user ID in token", http.StatusUnauthorized)
+        return
+    }
+
+    var user User
+    if err := db.GetDB().First(&user, "id = ?", userID).Error; err != nil {
+        if err == gorm.ErrRecordNotFound {
+        http.Error(w, "User not found", http.StatusNotFound)
+        } else {
+        http.Error(w, "Database error", http.StatusInternalServerError)
+        }
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(user)
 }
