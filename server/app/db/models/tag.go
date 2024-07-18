@@ -10,3 +10,8 @@ type Tag struct {
 	gorm.Model
 	Name string `gorm:"unique;validate:required"`
 }
+
+type TagSwagger struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}
