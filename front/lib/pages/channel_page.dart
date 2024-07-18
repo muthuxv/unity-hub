@@ -647,7 +647,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                     onSubmitted: widget.canSendMessage ? (value) {
                       _sendMessage(value);
                     } : null,
-                    enabled: widget.canSendMessage,  // Disable the TextField if canSendMessage is false
+                    enabled: widget.canSendMessage,
                   ),
                 ),
                 IconButton(
