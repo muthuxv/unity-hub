@@ -107,11 +107,22 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
   }
 
   Future<List<dynamic>> getMessageReactions(String messageId) async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
 
     try {
-      final response = await Dio().get('$apiPath/messages/$messageId/reactions');
+      final response = await Dio().get(
+        '$apiPath/messages/$messageId/reactions',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $jwtToken',
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
+      );
       return response.data['data'];
     } catch (error) {
       print('Erreur lors de la récupération des réactions : $error');
@@ -239,10 +250,21 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
   }
 
   Future<void> _removeReaction(String reactionId) async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
     try {
-      await Dio().delete('$apiPath/reactMessages/$reactionId');
+        await Dio().delete(
+          '$apiPath/reactMessages/$reactionId',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $jwtToken',
+              'Content-Type': 'multipart/form-data',
+            },
+          ),
+        );
 
       setState(() {
 
