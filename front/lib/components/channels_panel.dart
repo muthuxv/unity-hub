@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:unity_hub/pages/voice_room.dart';
 import '../pages/channel_page.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:unity_hub/utils/input_formatter.dart';
 
 class ChannelsPanel extends StatefulWidget {
   final String serverId;
@@ -143,9 +145,11 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : Column(
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(AppLocalizations.of(context)!.text_channels_section),
@@ -154,117 +158,11 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
             child: ListTile(
               trailing: const Icon(Icons.arrow_forward_ios),
               title: Text(channel['Name']),
-              onTap: () => widget.getPermissionPower('accessChannel') >= widget.getPermissionPower(_permissions['accessChannel'].toString())
-                  ? Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ChannelPage(
-                    channelId: channel['ID'],
-                    channelName: channel['Name'],
-                    serverId: widget.serverId,
-                  ),
-                ),
-              ) : showDialog(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: Text("Accès refusé"),
-                    content: Text("Vous n'avez pas la permission d'accéder à ce salon."),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text('OK'),
-                      ),
-                    ],
-                  );
-                },
-              ),
+              onTap: () {
+                _checkAndNavigate(channel['ID'], channel['Name']);
+              },
               onLongPress: () {
-                widget.getPermissionPower('editChannel') >= widget.getPermissionPower(_permissions['editChannel'].toString())
-                    ? showDialog(
-                  context: context,
-                  builder: (context) {
-                    TextEditingController channelNameController =
-                    TextEditingController(text: channel['Name']);
-
-                    return AlertDialog(
-                      title: Text(AppLocalizations.of(context)!.edit_channel_title),
-                      content: SizedBox(
-                        width: double.maxFinite,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            TextField(
-                              controller: channelNameController,
-                              decoration: InputDecoration(
-                                labelText: AppLocalizations.of(context)!.edit_channel_name_label,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            _channelPermissions(channel['ID'].toString()),
-                          ],
-                        ),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () async {
-                            try {
-                              final response = await Dio().delete(
-                                '${dotenv.env['API_PATH']}/channels/${channel['ID']}',
-                              );
-
-                              if (response.statusCode == 204) {
-                                Navigator.pop(context);
-                                _fetchChannels();
-                              } else {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: Text(AppLocalizations.of(context)!.delete_channel_error_title),
-                                      content: Text(AppLocalizations.of(context)!.delete_channel_error_message),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                          },
-                                          child: const Text('OK'),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              }
-                            } catch (error) {
-                              print('Error deleting channel: $error');
-                            }
-                          },
-                          child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Annuler'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            _updateChannel(
-                              channel['ID'].toString(),
-                              channelNameController.text,
-                            );
-                            _updateChannelPermissions(channel['ID'].toString(), _permissions);
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Enregistrer'),
-                        ),
-                      ],
-                    );
-                  },
-                )
-                    : null;
+                _checkAndShowEditDialog(channel['ID'], channel['Name'], showPermissionDeniedDialog: false);
               },
             ),
           ),
@@ -272,120 +170,149 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
         for (final channel in _vocalChannels)
           ListTile(
             title: Text(channel['Name']),
-            onTap: () => widget.getPermissionPower('accessChannel') >= widget.getPermissionPower(_permissions['accessChannel'].toString())
-                ? Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => VoiceRoom(
-                  channelId: channel['ID'],
-                  channelName: channel['Name'],
-                ),
-              ),
-            )
-                : showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  title: Text("Accès refusé"),
-                  content: Text("Vous n'avez pas la permission d'accéder à ce salon."),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text('OK'),
-                    ),
-                  ],
-                );
-              },
-            ),
+            onTap: () {
+              _checkAndNavigate(channel['ID'], channel['Name'], isVocal: true);
+            },
             onLongPress: () {
-              widget.getPermissionPower('editChannel') >= widget.getPermissionPower(_permissions['editChannel'].toString())
-                  ? showDialog(
-                context: context,
-                builder: (context) {
-                  TextEditingController channelNameController =
-                  TextEditingController(text: channel['Name']);
-
-                  return AlertDialog(
-                    title: Text(AppLocalizations.of(context)!.edit_channel_title),
-                    content: SizedBox(
-                      width: double.maxFinite,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextField(
-                            controller: channelNameController,
-                            decoration: InputDecoration(
-                              labelText: AppLocalizations.of(context)!.edit_channel_name_label,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () async {
-                          try {
-                            final response = await Dio().delete(
-                              '${dotenv.env['API_PATH']}/channels/${channel['ID']}',
-                            );
-
-                            if (response.statusCode == 204) {
-                              Navigator.pop(context);
-                              _fetchChannels();
-                            } else {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: Text(AppLocalizations.of(context)!.delete_channel_error_title),
-                                    content: Text(AppLocalizations.of(context)!.delete_channel_error_message),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        },
-                                        child: const Text('OK'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            }
-                          } catch (error) {
-                            print('Error deleting channel: $error');
-                          }
-                        },
-                        child: const Icon(Icons.delete, color: Colors.red),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Annuler'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          _updateChannel(
-                            channel['ID'].toString(),
-                            channelNameController.text,
-                          );
-                          _updateChannelPermissions(channel['ID'].toString(), _permissions);
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Enregistrer'),
-                      ),
-                    ],
-                  );
-                },
-              )
-                  : null;
+              _checkAndShowEditDialog(channel['ID'], channel['Name'], showPermissionDeniedDialog: false);
             },
           ),
       ],
     );
   }
+
+  Future<void> _checkAndNavigate(String channelId, String channelName, {bool isVocal = false}) async {
+    await _fetchChannelPermissions(channelId);
+    if (widget.getPermissionPower('accessChannel') >= _permissions['accessChannel']) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => isVocal
+              ? VoiceRoom(
+            channelId: channelId,
+            channelName: channelName,
+          )
+              : ChannelPage(
+            channelId: channelId,
+            channelName: channelName,
+            serverId: widget.serverId,
+          ),
+        ),
+      );
+    } else {
+      _showPermissionDeniedDialog();
+    }
+  }
+
+  Future<void> _checkAndShowEditDialog(String channelId, String channelName, {bool showPermissionDeniedDialog = true}) async {
+    await _fetchChannelPermissions(channelId);
+    if (widget.getPermissionPower('editChannel') >= _permissions['editChannel']) {
+      _showEditDialog(channelId, channelName);
+    } else if (showPermissionDeniedDialog) {
+      _showPermissionDeniedDialog();
+    }
+  }
+
+  void _showPermissionDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Accès refusé"),
+          content: Text("Vous n'avez pas la permission d'accéder à ce salon."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditDialog(String channelId, String channelName) {
+    TextEditingController channelNameController = TextEditingController(text: channelName);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(AppLocalizations.of(context)!.edit_channel_title),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: channelNameController,
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.edit_channel_name_label,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _channelPermissions(channelId),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                try {
+                  final response = await Dio().delete(
+                    '${dotenv.env['API_PATH']}/channels/$channelId',
+                  );
+
+                  if (response.statusCode == 204) {
+                    Navigator.pop(context);
+                    _fetchChannels();
+                  } else {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text(AppLocalizations.of(context)!.delete_channel_error_title),
+                          content: Text(AppLocalizations.of(context)!.delete_channel_error_message),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                } catch (error) {
+                  print('Error deleting channel: $error');
+                }
+              },
+              child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () {
+                _updateChannel(channelId, channelNameController.text);
+                _updateChannelPermissions(channelId, _permissions);
+                Navigator.pop(context);
+              },
+              child: const Text('Enregistrer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   Widget _channelPermissions(String channelId) {
     return FutureBuilder(
@@ -424,6 +351,10 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                     child: TextField(
                       controller: TextEditingController(text: permission['power'].toString()),
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        NumberRangeTextInputFormatter(min: 0, max: 99),
+                      ],
                       onChanged: (value) {
                         setState(() {
                           _permissions[permission['label']] = int.parse(value);

@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:unity_hub/utils/input_formatter.dart';
 
 class PermissionsPage extends StatefulWidget {
   final String roleId;
@@ -207,28 +208,5 @@ class _PermissionsPageState extends State<PermissionsPage> {
     });
 
     return categories;
-  }
-}
-
-class NumberRangeTextInputFormatter extends TextInputFormatter {
-  final int min;
-  final int max;
-
-  NumberRangeTextInputFormatter({required this.min, required this.max});
-
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue,
-      TextEditingValue newValue,
-      ) {
-    if (newValue.text.isEmpty) {
-      return newValue.copyWith(text: '');
-    } else {
-      final intValue = int.tryParse(newValue.text);
-      if (intValue != null && intValue >= min && intValue <= max) {
-        return newValue;
-      }
-    }
-    return oldValue;
   }
 }

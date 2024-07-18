@@ -80,16 +80,16 @@ func UpdateRolePermissions(c *gin.Context) {
 	}
 
 	availablePermissions := map[string]struct{}{
-		"createChannel":  {},
-		"sendMessage":    {},
-		"accessChannel":  {},
-		"banUser":        {},
-		"kickUser":       {},
-		"createRole":     {},
-		"accessLog":      {},
-		"accessReport":   {},
-		"profileServer":  {},
-		"editChannel":    {},
+		"createChannel": {},
+		"sendMessage":   {},
+		"accessChannel": {},
+		"banUser":       {},
+		"kickUser":      {},
+		"createRole":    {},
+		"accessLog":     {},
+		"accessReport":  {},
+		"profileServer": {},
+		"editChannel":   {},
 	}
 
 	var requestBody map[string]int
@@ -100,9 +100,21 @@ func UpdateRolePermissions(c *gin.Context) {
 
 	for key := range availablePermissions {
 		power, exists := requestBody[key]
-		if !exists || power < 0 {
+		if !exists {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing parameters"})
 			return
+		}
+
+		if key == "editChannel" || key == "accessChannel" || key == "sendMessage" {
+			if power != 0 && power != 99 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid power value for " + key})
+				return
+			}
+		} else {
+			if power != 0 && power != 1 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid power value for " + key})
+				return
+			}
 		}
 	}
 

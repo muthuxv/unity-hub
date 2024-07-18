@@ -354,30 +354,27 @@ class _ServerPageState extends State<ServerPage> {
                             Row(
                               children: [
                                 Flexible(
-                                  child: Container(
-                                    child: Text(
-                                      _selectedServer['Name'] != null
-                                          ? (_selectedServer['Name'].length > 50
-                                          ? _selectedServer['Name'] + '...'
-                                          : _selectedServer['Name'])
-                                          : 'No server selected',
-                                      style: TextStyle(
-                                        fontSize: 20.0,
-                                        fontWeight: FontWeight.bold,
-                                        foreground: Paint()
-                                          ..shader = const LinearGradient(
-                                            colors: <Color>[
-                                              Colors.blue,
-                                              Colors.purple,
-                                              Colors.pink,
-                                            ],
-                                          ).createShader(
-                                              const Rect.fromLTWH(
-                                                  0.0, 0.0, 200.0, 70.0)),
-                                      ),
-                                      softWrap: true,
+                                  child: Text(
+                                    _selectedServer['Name'] != null
+                                        ? (_selectedServer['Name'].length > 50
+                                        ? _selectedServer['Name'] + '...'
+                                        : _selectedServer['Name'])
+                                        : 'No server selected',
+                                    style: TextStyle(
+                                      fontSize: 20.0,
+                                      fontWeight: FontWeight.bold,
+                                      foreground: Paint()
+                                        ..shader = const LinearGradient(
+                                          colors: <Color>[
+                                            Colors.blue,
+                                            Colors.purple,
+                                            Colors.pink,
+                                          ],
+                                        ).createShader(
+                                            const Rect.fromLTWH(
+                                                0.0, 0.0, 200.0, 70.0)),
                                     ),
-
+                                    softWrap: true,
                                   ),
                                 ),
                                 IconButton(

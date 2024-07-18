@@ -6,7 +6,7 @@ import (
 )
 
 type Role struct {
-	ID       uuid.UUID `gorm:"type:uuid;primaryKey"`
+	ID uuid.UUID `gorm:"type:uuid;primaryKey"`
 	gorm.Model
 	Label    string    `gorm:"validate:required"`
 	ServerID uuid.UUID `gorm:"validate:required"`
@@ -24,12 +24,19 @@ func (r *Role) AfterCreate(tx *gorm.DB) (err error) {
 		return err
 	}
 
-	power := 0
-	if r.Label == "admin" {
-		power = 1
-	}
-
 	for _, perm := range permissions {
+		var power int
+
+		if r.Label == "admin" {
+			if perm.Label == "editChannel" || perm.Label == "accessChannel" || perm.Label == "sendMessage" {
+				power = 99
+			} else {
+				power = 1
+			}
+		} else {
+			power = 0
+		}
+
 		rolePerm := RolePermissions{
 			RoleID:        r.ID,
 			PermissionsID: perm.ID,
