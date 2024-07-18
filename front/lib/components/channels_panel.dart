@@ -196,6 +196,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
             channelId: channelId,
             channelName: channelName,
             serverId: widget.serverId,
+            canSendMessage: widget.getPermissionPower('sendMessage') >= _permissions['sendMessage'],
           ),
         ),
       );

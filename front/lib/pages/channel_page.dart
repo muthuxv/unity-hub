@@ -17,8 +17,9 @@ class ChannelPage extends StatefulWidget {
   final String channelId;
   final String channelName;
   final String serverId;
+  final bool canSendMessage;
 
-  const ChannelPage({super.key, required this.channelId, required this.channelName, required this.serverId});
+  const ChannelPage({super.key, required this.channelId, required this.channelName, required this.serverId, required this.canSendMessage});
 
   @override
   State<ChannelPage> createState() => _ChannelPageState();
@@ -114,9 +115,12 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     );
   }
 
-  void _connectToWebSocket() {
+  Future<void> _connectToWebSocket() async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+
     _channel = WebSocketChannel.connect(
-      Uri.parse('${dotenv.env['WS_PATH']}/channels/${widget.channelId}/send'),
+      Uri.parse('${dotenv.env['WS_PATH']}/channels/${widget.channelId}/send?token=$jwtToken'),
     );
 
     _channel.stream.listen((message) async {
@@ -640,20 +644,21 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                       hintText: 'Message...',
                       border: OutlineInputBorder(),
                     ),
-                    onSubmitted: (value) {
+                    onSubmitted: widget.canSendMessage ? (value) {
                       _sendMessage(value);
-                    },
+                    } : null,
+                    enabled: widget.canSendMessage,  // Disable the TextField if canSendMessage is false
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.send),
-                  onPressed: () {
+                  onPressed: widget.canSendMessage ? () {
                     _sendMessage(_messageController.text);
-                  },
+                  } : null,
                 ),
                 IconButton(
                   icon: const Icon(Icons.image),
-                  onPressed: () async {
+                  onPressed: widget.canSendMessage ? () async {
                     final GiphyGif? gif = await GiphyPicker.pickGif(
                       context: context,
                       apiKey: dotenv.env['GIPHY_KEY']!,
@@ -668,11 +673,11 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                         'SentAt': DateTime.now().toIso8601String(),
                       }));
                     }
-                  },
+                  } : null,
                 ),
               ],
             ),
-          ),
+          )
         ],
       ),
     );
