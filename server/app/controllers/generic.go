@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -77,8 +78,15 @@ func Get(factory ModelFactory, preloads ...PreloadField) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
+		// Vérification de l'UUID
+		uid, err := uuid.Parse(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
+			return
+		}
+
 		model := factory()
-		query := db.GetDB().Where("id = ?", id)
+		query := db.GetDB().Where("id = ?", uid)
 
 		for _, preload := range preloads {
 			if len(preload.Fields) > 0 {
@@ -109,8 +117,16 @@ func Get(factory ModelFactory, preloads ...PreloadField) gin.HandlerFunc {
 func Update(factory ModelFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
+
+		// Vérification de l'UUID
+		uid, err := uuid.Parse(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
+			return
+		}
+
 		model := factory()
-		if err := db.GetDB().Where("id = ?", id).First(model).Error; err != nil {
+		if err := db.GetDB().Where("id = ?", uid).First(model).Error; err != nil {
 			c.Error(err)
 			return
 		}
@@ -135,8 +151,16 @@ func Update(factory ModelFactory) gin.HandlerFunc {
 func Delete(factory ModelFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
+
+		// Vérification de l'UUID
+		uid, err := uuid.Parse(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
+			return
+		}
+
 		model := factory()
-		if err := db.GetDB().Where("id = ?", id).Delete(model).Error; err != nil {
+		if err := db.GetDB().Where("id = ?", uid).Delete(model).Error; err != nil {
 			c.Error(err)
 			return
 		}

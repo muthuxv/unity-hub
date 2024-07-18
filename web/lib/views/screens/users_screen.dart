@@ -69,8 +69,18 @@ class _UsersScreenState extends State<UsersScreen> {
 
   void _doDelete(BuildContext context, String userId) async {
     final lang = Lang.of(context);
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
     try {
-      final response = await Dio().delete('${env.apiBaseUrl}/users/$userId');
+      final response = await Dio().delete('${env.apiBaseUrl}/users/$userId',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
       if (response.statusCode == 204) {
         final dialog = AwesomeDialog(
           context: context,
