@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:unity_hub/pages/voice_room.dart';
 import '../pages/channel_page.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -9,7 +10,6 @@ class ChannelsPanel extends StatefulWidget {
   final String serverId;
   static final GlobalKey<_ChannelsPanelState> globalKey = GlobalKey<_ChannelsPanelState>();
   final Function(String) getPermissionPower;
-
 
   const ChannelsPanel({super.key, required this.serverId, required this.getPermissionPower});
 
@@ -21,6 +21,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
   bool _isLoading = false;
   List<dynamic> _textChannels = [];
   List<dynamic> _vocalChannels = [];
+  final Map<String, int> _permissions = {};
 
   Future<void> _fetchChannels() async {
     setState(() {
@@ -31,7 +32,16 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
     final apiPath = dotenv.env['API_PATH']!;
 
     try {
-      final response = await Dio().get('$apiPath/servers/${widget.serverId}/channels');
+      const storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'token');
+
+      final response = await Dio().get('$apiPath/servers/${widget.serverId}/channels',
+          options: Options(
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          ));
 
       if (response.statusCode == 200) {
         setState(() {
@@ -49,7 +59,6 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
   }
 
   Future<void> _updateChannel(String channelId, String channelName) async {
-
     if (channelName.isEmpty) {
       showDialog(
         context: context,
@@ -73,17 +82,48 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
 
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
     try {
       await Dio().put(
         '$apiPath/channels/$channelId',
         data: {
           'name': channelName,
         },
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
       );
 
       _fetchChannels();
     } catch (error) {
       print('Error updating channel: $error');
+    }
+  }
+
+  Future<void> _updateChannelPermissions(String channelId, Map<String, int> permissions) async {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+    try {
+      await Dio().put(
+        '$apiPath/channels/$channelId/permissions',
+        data: permissions,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          }
+        ),
+      );
+    } catch (error) {
+      print('Error updating channel permissions: $error');
     }
   }
 
@@ -114,36 +154,36 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
             child: ListTile(
               trailing: const Icon(Icons.arrow_forward_ios),
               title: Text(channel['Name']),
-              onTap: () => widget.getPermissionPower('accessChannel') > 0 ?
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChannelPage(
-                        channelId: channel['ID'],
-                        channelName: channel['Name'],
-                        serverId: widget.serverId,
-                      ),
-                    ),
-                  ) : showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: Text("Accès refusé"),
-                        content: Text("Vous n'avez pas la permission d'accéder à ce salon."),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      );
-                    },
+              onTap: () => widget.getPermissionPower('accessChannel') >= widget.getPermissionPower(_permissions['accessChannel'].toString())
+                  ? Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChannelPage(
+                    channelId: channel['ID'],
+                    channelName: channel['Name'],
+                    serverId: widget.serverId,
                   ),
+                ),
+              ) : showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text("Accès refusé"),
+                    content: Text("Vous n'avez pas la permission d'accéder à ce salon."),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  );
+                },
+              ),
               onLongPress: () {
-                widget.getPermissionPower('editChannel') > 0 ?
-                showDialog(
+                widget.getPermissionPower('editChannel') >= widget.getPermissionPower(_permissions['editChannel'].toString())
+                    ? showDialog(
                   context: context,
                   builder: (context) {
                     TextEditingController channelNameController =
@@ -162,6 +202,8 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                                 labelText: AppLocalizations.of(context)!.edit_channel_name_label,
                               ),
                             ),
+                            const SizedBox(height: 8),
+                            _channelPermissions(channel['ID'].toString()),
                           ],
                         ),
                       ),
@@ -199,7 +241,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                               print('Error deleting channel: $error');
                             }
                           },
-                          child: const Icon(Icons.delete, color: Colors.red),
+                          child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
                         ),
                         TextButton(
                           onPressed: () {
@@ -213,6 +255,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                               channel['ID'].toString(),
                               channelNameController.text,
                             );
+                            _updateChannelPermissions(channel['ID'].toString(), _permissions);
                             Navigator.pop(context);
                           },
                           child: const Text('Enregistrer'),
@@ -220,7 +263,8 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                       ],
                     );
                   },
-                ) : null;
+                )
+                    : null;
               },
             ),
           ),
@@ -228,35 +272,36 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
         for (final channel in _vocalChannels)
           ListTile(
             title: Text(channel['Name']),
-            onTap: () => widget.getPermissionPower('accessChannel') > 0 ?
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => VoiceRoom(
-                      channelId: channel['ID'],
-                      channelName: channel['Name'],
-                    ),
-                  ),
-                ) : showDialog(
-                  context: context,
-                  builder: (context) {
-                    return AlertDialog(
-                      title: Text("Accès refusé"),
-                      content: Text("Vous n'avez pas la permission d'accéder à ce salon."),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    );
-                  },
+            onTap: () => widget.getPermissionPower('accessChannel') >= widget.getPermissionPower(_permissions['accessChannel'].toString())
+                ? Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => VoiceRoom(
+                  channelId: channel['ID'],
+                  channelName: channel['Name'],
                 ),
+              ),
+            )
+                : showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text("Accès refusé"),
+                  content: Text("Vous n'avez pas la permission d'accéder à ce salon."),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            ),
             onLongPress: () {
-              widget.getPermissionPower('editChannel') > 0 ?
-              showDialog(
+              widget.getPermissionPower('editChannel') >= widget.getPermissionPower(_permissions['editChannel'].toString())
+                  ? showDialog(
                 context: context,
                 builder: (context) {
                   TextEditingController channelNameController =
@@ -326,6 +371,7 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                             channel['ID'].toString(),
                             channelNameController.text,
                           );
+                          _updateChannelPermissions(channel['ID'].toString(), _permissions);
                           Navigator.pop(context);
                         },
                         child: const Text('Enregistrer'),
@@ -333,11 +379,97 @@ class _ChannelsPanelState extends State<ChannelsPanel> {
                     ],
                   );
                 },
-              ) : null;
+              )
+                  : null;
             },
           ),
       ],
     );
+  }
+
+  Widget _channelPermissions(String channelId) {
+    return FutureBuilder(
+      future: _fetchChannelPermissions(channelId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text('Erreur: ${snapshot.error}'),
+          );
+        }
+
+        if (!snapshot.hasData || (snapshot.data as List).isEmpty) {
+          return const Center(
+            child: Text('Aucune permission trouvée'),
+          );
+        }
+
+        final permissions = snapshot.data as List;
+
+        return Column(
+          children: [
+            for (final permission in permissions)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(permission['label']),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 50,
+                    child: TextField(
+                      controller: TextEditingController(text: permission['power'].toString()),
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) {
+                        setState(() {
+                          _permissions[permission['label']] = int.parse(value);
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<List> _fetchChannelPermissions(String channelId) async {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    try {
+      const storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'token');
+
+      final response = await Dio().get('$apiPath/channels/$channelId/permissions',
+          options: Options(
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          ));
+
+      if (response.statusCode == 200) {
+        final permissions = response.data as List;
+        setState(() {
+          for (final permission in permissions) {
+            _permissions[permission['label']] = permission['power'];
+          }
+        });
+        return permissions;
+      } else {
+        throw Exception('Failed to load permissions');
+      }
+    } catch (error) {
+      print('Error fetching channel permissions: $error');
+      throw error;
+    }
   }
 
   void onChannelAdded(Response<dynamic> response) {

@@ -185,7 +185,7 @@ class _PermissionsPageState extends State<PermissionsPage> {
                 FilteringTextInputFormatter.digitsOnly,
                 NumberRangeTextInputFormatter(min: 0, max: 99),
               ],
-              controller: _controllers[permission['label']],
+              controller: _controllers[permission['power']],
               onChanged: (value) {
                 setState(() {
                   permission['power'] = value;

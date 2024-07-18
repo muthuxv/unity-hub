@@ -171,7 +171,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
                       widget.userRole == 'admin' && !isServerCreator ?
                         ListTile(
                           leading: const Icon(Icons.edit),
-                          title: const Text("Update role"),
+                          title: const Text("Modifier le rôle"),
                           onTap: () {
                             Navigator.pop(context);
                             _showUpdateMemberRoleDialog(member);
@@ -308,81 +308,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
 
       if (rolesResponse.statusCode == 200) {
         final List roles = rolesResponse.data;
-        try {
-          final userRoleResponse = await Dio().get(
-            '$apiPath/user/${member['ID']}/servers/${widget.serverId}/roles',
-            options: Options(
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer $token',
-              },
-            ),
-          );
-
-          if (userRoleResponse.statusCode == 200) {
-            final userRole = userRoleResponse.data;
-            String selectedRole = userRole['id'];
-
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return StatefulBuilder(
-                  builder: (context, setState) {
-                    return AlertDialog(
-                      title: Text("Update member role"),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          const Icon(Icons.warning, size: 48, color: Colors.orange),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Are you sure you want to update the role of ${member['Pseudo']}?",
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 24),
-                          DropdownButton<String>(
-                            value: selectedRole,
-                            items: roles.map<DropdownMenuItem<String>>((role) {
-                              return DropdownMenuItem<String>(
-                                value: role['ID'],
-                                child: Text(role['Label']),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                selectedRole = value!;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            print(selectedRole);
-                            Navigator.of(context).pop();
-                            _updateMemberRole(member, selectedRole);
-                          },
-                          child: Text("Yes"),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: Text("No"),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-            );
-          } else {
-            _showErrorDialog("Failed to load user role.");
-          }
-        } catch (e) {
-          _showErrorDialog('An error occurred while fetching user role: $e');
-        }
+        await _showUserRoleDialog(member, roles, token!, apiPath);
       } else {
         _showErrorDialog("Failed to load roles.");
       }
@@ -390,6 +316,117 @@ class _ServerMembersListState extends State<ServerMembersList> {
       _showErrorDialog('An error occurred while fetching roles: $e');
     }
   }
+
+  Future<void> _showUserRoleDialog(Map member, List roles, String token, String apiPath) async {
+    try {
+      final userRoleResponse = await Dio().get(
+        '$apiPath/user/${member['ID']}/servers/${widget.serverId}/roles',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (userRoleResponse.statusCode == 200) {
+        final userRole = userRoleResponse.data;
+        String selectedRole = userRole['id'];
+
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return StatefulBuilder(
+              builder: (context, setState) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  title: Row(
+                    children: [
+                      Icon(Icons.update, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text("Modification rôle", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(Icons.warning_amber_rounded, size: 48, color: Colors.orange),
+                      SizedBox(height: 16),
+                      Text(
+                        "Voulez-vous vraiment modifier le rôle de ${member['Pseudo']} ?",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                      SizedBox(height: 24),
+                      DropdownButtonFormField<String>(
+                        value: selectedRole,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[200],
+                        ),
+                        items: roles.map<DropdownMenuItem<String>>((role) {
+                          return DropdownMenuItem<String>(
+                            value: role['ID'],
+                            child: Text(role['Label']),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedRole = value!;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _updateMemberRole(member, selectedRole);
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.green,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                      ),
+                      child: Text("Oui"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.red,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                      ),
+                      child: Text("Non"),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      } else {
+        _showErrorDialog("Failed to load user role.");
+      }
+    } catch (e) {
+      _showErrorDialog('An error occurred while fetching user role: $e');
+    }
+  }
+
 
   void _updateMemberRole(Map member, String roleId) async {
     const storage = FlutterSecureStorage();
