@@ -1,78 +1,98 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 
-class MicrophoneFeedbackPage extends StatefulWidget {
-  const MicrophoneFeedbackPage({Key? key}) : super(key: key);
+class AudioFeedbackPage extends StatefulWidget {
+  const AudioFeedbackPage({super.key});
 
   @override
-  _MicrophoneFeedbackPageState createState() => _MicrophoneFeedbackPageState();
+  _AudioFeedbackPageState createState() => _AudioFeedbackPageState();
 }
 
-class _MicrophoneFeedbackPageState extends State<MicrophoneFeedbackPage> {
-  FlutterSoundRecorder _recorder = FlutterSoundRecorder();
-  FlutterSoundPlayer _player = FlutterSoundPlayer();
+class _AudioFeedbackPageState extends State<AudioFeedbackPage> {
+  FlutterSoundPlayer? _player;
+  FlutterSoundRecorder? _recorder;
   bool _isRecording = false;
+  Directory tempDir = Directory.systemTemp;
+  String tempPath = '';
 
   @override
   void initState() {
     super.initState();
-    _initializeRecorder();
+    _player = FlutterSoundPlayer();
+    _recorder = FlutterSoundRecorder();
+    _initialize();
   }
 
-  Future<void> _initializeRecorder() async {
+  Future<void> _initialize() async {
     await Permission.microphone.request();
-    await _recorder.openRecorder();
-    await _player.openPlayer();
-  }
 
-  Future<void> _startRecording() async {
     try {
-      await _recorder.startRecorder(
-        toFile: 'feedback.aac',
-        codec: Codec.aacADTS,
-      );
-      setState(() {
-        _isRecording = true;
-      });
-    } catch (err) {
-      print('Error starting recording: $err');
+      await _recorder!.openRecorder();
+      await _player!.openPlayer();
+    } catch (e) {
+      print('Error initializing recorder/player: $e');
     }
   }
 
-  Future<void> _stopRecording() async {
-    await _recorder.stopRecorder();
-    await _player.startPlayer(
-      fromURI: 'feedback.aac',
-      codec: Codec.aacADTS,
-    );
-    setState(() {
-      _isRecording = false;
-    });
+  void _toggleRecording() async {
+    if (_isRecording) {
+      try {
+        await _recorder!.stopRecorder();
+        setState(() {
+          _isRecording = false;
+        });
+      } catch (e) {
+        print('Error stopping recorder: $e');
+      }
+    } else {
+      try {
+        await _recorder!.startRecorder(
+          codec: Codec.pcm16WAV,
+          sampleRate: 44100,
+          numChannels: 1,
+          bitRate: 64000,
+        );
+        setState(() {
+          _isRecording = true;
+        });
+      } catch (e) {
+        print('Error starting recorder: $e');
+      }
+    }
   }
 
   @override
   void dispose() {
-    _recorder.closeRecorder();
-    _player.closePlayer();
+    _closeAudioResources();
     super.dispose();
+  }
+
+  Future<void> _closeAudioResources() async {
+    try {
+      if (_player != null) {
+        await _player!.closePlayer();
+      }
+      if (_recorder != null) {
+        await _recorder!.closeRecorder();
+      }
+    } catch (e) {
+      print('Error closing audio resources: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Microphone Feedback'),
+        title: Text('Microphone App'),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            ElevatedButton(
-              onPressed: _isRecording ? _stopRecording : _startRecording,
-              child: Text(_isRecording ? 'Stop Feedback' : 'Start Feedback'),
-            ),
-          ],
+        child: ElevatedButton(
+          onPressed: _toggleRecording,
+          child: Text(_isRecording ? 'Arrêter' : 'Démarrer'),
         ),
       ),
     );
