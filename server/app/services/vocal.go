@@ -4,24 +4,32 @@ import (
     "encoding/json"
     "net/http"
     "sync"
-	"log"
-    "github.com/golang-jwt/jwt/v4"
-    "gorm.io/gorm"
-    "app/db"
-    "github.com/google/uuid"
+    "log"
 
     "github.com/pion/webrtc/v3"
 )
 
 var (
     peerConnections = make(map[string]*webrtc.PeerConnection)
+    userInfo        = make(map[string]map[string]string) // ChannelID -> UserID -> UserInfo
     mutex           sync.Mutex
 )
+
+type UserMessage struct {
+    Type      string `json:"type"`
+    UserID    string `json:"userId"`
+    UserName  string `json:"userName"`
+    Profile   string `json:"profile"`
+    ChannelID string `json:"channelId"`
+}
 
 func SDPHandler(w http.ResponseWriter, r *http.Request) {
     var offer struct {
         webrtc.SessionDescription
         ChannelID string `json:"channel_id"`
+        UserID    string `json:"user_id"`
+        UserName  string `json:"user_name"`
+        Profile   string `json:"profile"`
     }
     if err := json.NewDecoder(r.Body).Decode(&offer); err != nil {
         http.Error(w, "Failed to parse offer", http.StatusBadRequest)
@@ -38,6 +46,10 @@ func SDPHandler(w http.ResponseWriter, r *http.Request) {
 
     mutex.Lock()
     peerConnections[offer.ChannelID] = peerConnection
+    if userInfo[offer.ChannelID] == nil {
+        userInfo[offer.ChannelID] = make(map[string]string)
+    }
+    userInfo[offer.ChannelID][offer.UserID] = offer.UserName + ";" + offer.Profile
     mutex.Unlock()
 
     peerConnection.OnICECandidate(func(candidate *webrtc.ICECandidate) {
@@ -89,6 +101,15 @@ func SDPHandler(w http.ResponseWriter, r *http.Request) {
     log.Printf("Set local description and sending answer for channel: %s", offer.ChannelID)
 
     json.NewEncoder(w).Encode(answer)
+
+    // Notify other users about the new user
+    notifyUsers(offer.ChannelID, UserMessage{
+        Type:      "join",
+        UserID:    offer.UserID,
+        UserName:  offer.UserName,
+        Profile:   offer.Profile,
+        ChannelID: offer.ChannelID,
+    })
 }
 
 func ICECandidateHandler(w http.ResponseWriter, r *http.Request) {
@@ -113,35 +134,16 @@ func ICECandidateHandler(w http.ResponseWriter, r *http.Request) {
     w.WriteHeader(http.StatusOK)
 }
 
-type User struct {
-    ID     uuid.UUID `json:"id"`
-    Pseudo string    `json:"pseudo"`
-    Profile string   `json:"profile"`
-}
-
-func GetUsersInChannel(w http.ResponseWriter, r *http.Request) {
-    claims, exists := r.Context().Value("jwt_claims").(jwt.MapClaims)
-    if !exists {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
-
-    userID, err := uuid.Parse(claims["jti"].(string))
-    if err != nil {
-        http.Error(w, "Invalid user ID in token", http.StatusUnauthorized)
-        return
-    }
-
-    var user User
-    if err := db.GetDB().First(&user, "id = ?", userID).Error; err != nil {
-        if err == gorm.ErrRecordNotFound {
-        http.Error(w, "User not found", http.StatusNotFound)
-        } else {
-        http.Error(w, "Database error", http.StatusInternalServerError)
+func notifyUsers(channelID string, msg UserMessage) {
+    mutex.Lock()
+    defer mutex.Unlock()
+    for id, pc := range peerConnections {
+        if id == channelID {
+            continue
         }
-        return
+        go func(pc *webrtc.PeerConnection) {
+            // Simuler l'envoi d'un message pour notifier les autres utilisateurs
+            log.Printf("Notifying user about new user in channel: %s", msg.ChannelID)
+        }(pc)
     }
-
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(user)
 }
