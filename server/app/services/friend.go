@@ -266,16 +266,15 @@ func GetPendingFriendsByUser() gin.HandlerFunc {
 			return
 		}
 
-		friendsResponse := make([]models.FriendResponse, len(friends))
+		friendsResponse := make([]map[string]interface{}, len(friends))
 		for i, friend := range friends {
 			friendData := map[string]interface{}{
-				"ID":            friend.ID,
-				"FriendID":      userID,
-				"FriendUser1ID": friend.User1.ID,
-				"Status":        friend.Status,
-				"UserPseudo":    friend.User1.Pseudo,
-				"UserMail":      friend.User1.Email,
-				"Profile":       friend.User1.Profile,
+				"ID":         friend.ID,
+				"FriendID":   friend.User2.ID,
+				"Status":     friend.Status,
+				"UserPseudo": friend.User2.Pseudo,
+				"UserMail":   friend.User2.Email,
+				"Profile":    friend.User2.Profile,
 			}
 			friendsResponse[i] = friendData
 		}
