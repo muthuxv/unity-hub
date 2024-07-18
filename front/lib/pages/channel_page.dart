@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:unity_hub/pages/profil/user_profil_page.dart';
@@ -12,6 +14,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:unity_hub/utils/messaging_service.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../components/video_player.dart';
 
 class ChannelPage extends StatefulWidget {
   final String channelId;
@@ -26,6 +31,8 @@ class ChannelPage extends StatefulWidget {
 
 class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
   bool _isLoading = false;
+  String _photoUrl = '';
+
   late String currentUserID;
   late WebSocketChannel _channel;
   final ScrollController _scrollController = ScrollController();
@@ -384,13 +391,13 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
               ),
             if (message['UserID'].toString() != currentUserID)
               ListTile(
-              leading: Icon(Icons.report),
-              title: Text("Signaler l'utilisateur"),
-              onTap: () {
-                Navigator.pop(context);
-                _showReportUserDialog(context, message);
-              },
-            ),
+                leading: Icon(Icons.report),
+                title: Text("Signaler l'utilisateur"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showReportUserDialog(context, message);
+                },
+              ),
             if (message['UserID'].toString() == currentUserID)
               ListTile(
                 leading: Icon(Icons.delete),
@@ -526,9 +533,6 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     );
   }
 
-
-
-
   Future<void> _sendReport(String messageID, String reportMessage) async {
     const storage = FlutterSecureStorage();
     final jwtToken = await storage.read(key: 'token');
@@ -591,7 +595,6 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     }
   }
 
-
   List<TextSpan> formatMessage(String content) {
     List<TextSpan> spans = [];
     RegExp bold = RegExp(r'\*\*(.*?)\*\*');
@@ -649,6 +652,46 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur lors de l\'envoi du signalement: $e')),
       );
+    }
+  }
+
+  Future<void> _sendImage(File image) async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    FormData formData = FormData.fromMap({
+      "file": await MultipartFile.fromFile(image.path,
+    contentType: MediaType('image', image.path.split('.').last
+      ),
+    ),
+    });
+
+    try {
+      final response = await Dio().post(
+        '$apiPath/upload',
+        data: formData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $jwtToken',
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
+      );
+
+      final imageUrl = response.data['path'].split('upload/').last;
+      final isVideo = imageUrl.endsWith('.mp4');
+
+      _channel.sink.add(jsonEncode({
+        'UserID': currentUserID,
+        'Content': imageUrl,
+        'Type': isVideo ? 'Video' : 'Photo',
+        'SentAt': DateTime.now().toIso8601String(),
+      }));
+    } catch (e) {
+      _showErrorSnack('Une erreur s\'est produite lors de l\'envoi de l\'image.');
     }
   }
 
@@ -762,6 +805,16 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                                             message['Content'],
                                             width: 200,
                                             height: 200,
+                                          ),
+                                        if (message['Type'] == 'Photo')
+                                          Image.network(
+                                            'http://10.0.2.2:8080/uploads/${message['Content']}?random=${DateTime.now().millisecondsSinceEpoch}',
+                                            width: 200,
+                                            height: 200,
+                                          ),
+                                        if (message['Type'] == 'Video')
+                                          VideoPlayerWidget(
+                                            url: 'http://10.0.2.2:8080/uploads/${message['Content']}?random=${DateTime.now().millisecondsSinceEpoch}',
                                           ),
                                         FutureBuilder<List<dynamic>>(
                                           future: getMessageReactions(message['ID']),
@@ -878,7 +931,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                   },
                 ),
                 IconButton(
-                  icon: const Icon(Icons.image),
+                  icon: const Icon(Icons.gif),
                   onPressed: () async {
                     final GiphyGif? gif = await GiphyPicker.pickGif(
                       context: context,
@@ -896,6 +949,18 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                     }
                   },
                 ),
+                IconButton(
+                  icon: const Icon(Icons.photo),
+                  onPressed: () async {
+                    final picker = ImagePicker();
+                    final pickedFile = await picker.pickMedia();
+
+                    if (pickedFile != null) {
+                      final file = File(pickedFile.path);
+                      await _sendImage(file);
+                    }
+                  },
+                ),
               ],
             ),
           ),
@@ -904,15 +969,15 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     );
   }
 
-
   Widget _buildProfileWidget(dynamic message) {
     return message['User']['Profile'] != null && message['User']['Profile'].contains('<svg')
         ? SvgPicture.string(
       message['User']['Profile'],
       height: 40,
       width: 40,
-    ) : CircleAvatar(
-        backgroundImage: NetworkImage(message['User']['Profile'])
+    )
+        : CircleAvatar(
+      backgroundImage: NetworkImage(message['User']['Profile']),
     );
   }
 }
