@@ -58,8 +58,6 @@ func MakeMigrations() {
 		&models.Role{},
 		&models.RolePermissions{},
 		&models.RoleUser{},
-		&models.Theme{},
-		&models.ThemeServer{},
 		&models.Ban{},
 		&models.Group{},
 		&models.GroupMember{},
@@ -70,6 +68,8 @@ func MakeMigrations() {
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
+
+	models.CreateInitialReaction(db)
 
 	models.CreateInitialPermissions(db)
 	models.CreateInitialChannelPermissions(db)

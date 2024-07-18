@@ -351,11 +351,9 @@ class SidebarHeader extends StatelessWidget {
         const SizedBox(height: kDefaultPadding * 0.5),
         Align(
           alignment: Alignment.centerRight,
-          child: IntrinsicHeight(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _textButton(themeData, sidebarTheme, Icons.manage_accounts_rounded, lang.account, onAccountButtonPressed),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4.0),
                   child: VerticalDivider(
@@ -370,7 +368,6 @@ class SidebarHeader extends StatelessWidget {
               ],
             ),
           ),
-        ),
       ],
     );
   }

@@ -12,9 +12,10 @@ class ReportsPage extends StatefulWidget {
 }
 
 class _ReportsPageState extends State<ReportsPage> {
-  String _currentStatus = 'pending';
-  List<dynamic> _reports = [];
+  List<dynamic> _pendingReports = [];
+  List<dynamic> _finishedReports = [];
   bool _isLoading = true;
+  String _currentStatus = 'pending'; // Par défaut, filtre sur "pending"
 
   @override
   void initState() {
@@ -31,13 +32,16 @@ class _ReportsPageState extends State<ReportsPage> {
     final apiPath = dotenv.env['API_PATH']!;
 
     try {
-      final response = await Dio().get(
-        '$apiPath/reports/server/${widget.serverID}',
-        queryParameters: {'status': _currentStatus},
+      final responsePending = await Dio().get(
+          '$apiPath/servers/${widget.serverID}/reports/pending'
       );
-      if (response.statusCode == 200) {
+      final responseFinished = await Dio().get(
+          '$apiPath/servers/${widget.serverID}/reports/finished'
+      );
+      if (responsePending.statusCode == 200 && responseFinished.statusCode == 200) {
         setState(() {
-          _reports = response.data['data'];
+          _pendingReports = responsePending.data['data'];
+          _finishedReports = responseFinished.data['data'];
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -60,7 +64,6 @@ class _ReportsPageState extends State<ReportsPage> {
       setState(() {
         _currentStatus = newStatus;
       });
-      _fetchReports();
     }
   }
 
@@ -84,7 +87,7 @@ class _ReportsPageState extends State<ReportsPage> {
               onPressed: () async {
                 Navigator.of(context).pop();
                 await _deleteMessage(report['MessageID']);
-                await _updateReportStatus(report['ID'], 'finish');
+                await _updateReportStatus(report['ID'], 'finished');
                 _fetchReports();
               },
             ),
@@ -109,7 +112,6 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Future<void> _deleteMessage(String messageId) async {
-
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
 
@@ -129,7 +131,6 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Future<void> _deleteReport(String reportId) async {
-
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
 
@@ -146,7 +147,6 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Future<void> _updateReportStatus(String reportId, String status) async {
-
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
 
@@ -167,6 +167,9 @@ class _ReportsPageState extends State<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
+    List<dynamic> displayedReports =
+    _currentStatus == 'pending' ? _pendingReports : _finishedReports;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Reports'),
@@ -181,8 +184,8 @@ class _ReportsPageState extends State<ReportsPage> {
                 child: Text('Pending'),
               ),
               DropdownMenuItem(
-                value: 'finish',
-                child: Text('Finish'),
+                value: 'finished',
+                child: Text('Finished'),
               ),
             ],
           ),
@@ -198,56 +201,83 @@ class _ReportsPageState extends State<ReportsPage> {
         ),
         child: _isLoading
             ? Center(child: CircularProgressIndicator())
-            : ListView.builder(
-          itemCount: _reports.length,
-          itemBuilder: (context, index) {
-            final report = _reports[index];
-            final reportedMessage = report['ReportedMessage'];
-            final reporter = report['Reporter'];
+            : _buildReportsSection(
+          _currentStatus == 'pending' ? 'Pending Reports' : 'Finished Reports',
+          displayedReports,
+          _currentStatus == 'pending',
+        ),
+      ),
+    );
+  }
 
-            return GestureDetector(
-              onTap: _currentStatus == 'pending'
-                  ? () => _showReportActions(context, report)
-                  : null,
-              child: Card(
-                margin: EdgeInsets.all(10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15.0),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Message: ${report['Message']}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+  Widget _buildReportsSection(String title, List<dynamic> reports, bool isPending) {
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(height: 10),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: reports.length,
+            itemBuilder: (context, index) {
+              final report = reports[index];
+              final reportedMessage = report['ReportedMessage'];
+              final reporter = report['Reporter'];
+
+              return GestureDetector(
+                onTap: isPending
+                    ? () => _showReportActions(context, report)
+                    : null,
+                child: Card(
+                  margin: EdgeInsets.all(10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15.0),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Message: ${report['Message']}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        'Status: ${report['Status']}',
-                        style: TextStyle(color: Colors.black54),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        'Reported Message: ${reportedMessage['Content']}',
-                        style: TextStyle(color: Colors.black54),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        'Reported by: ${reporter['Pseudo']}',
-                        style: TextStyle(color: Colors.black54),
-                      ),
-                    ],
+                        SizedBox(height: 5),
+                        Text(
+                          'Status: ${report['Status']}',
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          'Reported Message: ${reportedMessage['Content']}',
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          'Reported by: ${reporter['Pseudo']}',
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

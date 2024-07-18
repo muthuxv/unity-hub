@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
@@ -217,8 +218,17 @@ class DataSource extends DataTableSource {
   });
 
   Future<void> loadData() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
     try {
-      final response = await Dio().get('${env.apiBaseUrl}/servers');
+      final response = await Dio().get('${env.apiBaseUrl}/servers',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
       if (response.statusCode == 200) {
         List<dynamic> servers = response.data;
         _data = List.generate(servers.length, (index) {
@@ -251,7 +261,7 @@ class DataSource extends DataTableSource {
         CircleAvatar(
           radius: 70,
           backgroundImage: Image.network(
-            'https:unityhub.fr/uploads/${data['Media']['FileName']}?rand=${DateTime.now().millisecondsSinceEpoch}',
+            '${env.apiBaseUrl}/uploads/${data['Media']['FileName']}?rand=${DateTime.now().millisecondsSinceEpoch}',
             errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
               return Image.asset('assets/images/air-force.png');
             },

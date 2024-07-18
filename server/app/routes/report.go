@@ -14,5 +14,6 @@ func ReportRoutes(r *gin.Engine) {
 	r.PUT("/reports/:id", controllers.Update(func() interface{} { return &models.Report{} }))
 	r.DELETE("/reports/:id", controllers.Delete(func() interface{} { return &models.Report{} }))
 
-	r.GET("/reports/server/:serverId", services.GetReportsByServer())
+	r.GET("/servers/:id/reports/finished", services.GetFinishedReportsByServer())
+	r.GET("/servers/:id/reports/pending", services.GetPendingReportsByServer())
 }

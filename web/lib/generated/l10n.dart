@@ -50,246 +50,246 @@ class Lang {
     return Localizations.of<Lang>(context, Lang);
   }
 
-  /// `Account`
+  /// `Compte`
   String get account {
     return Intl.message(
-      'Account',
+      'Compte',
       name: 'account',
       desc: '',
       args: [],
     );
   }
 
-  /// `Admin Portal Login`
+  /// `Connexion au Portail Administrateur`
   String get adminPortalLogin {
     return Intl.message(
-      'Admin Portal Login',
+      'Connexion au Portail Administrateur',
       name: 'adminPortalLogin',
       desc: '',
       args: [],
     );
   }
 
-  /// `Web Admin`
+  /// `Administration Web`
   String get appTitle {
     return Intl.message(
-      'Web Admin',
+      'Administration Web',
       name: 'appTitle',
       desc: '',
       args: [],
     );
   }
 
-  /// `Back to Login`
+  /// `Retour à la connexion`
   String get backToLogin {
     return Intl.message(
-      'Back to Login',
+      'Retour à la connexion',
       name: 'backToLogin',
       desc: '',
       args: [],
     );
   }
 
-  /// `Button Emphasis`
+  /// `Mise en avant du bouton`
   String get buttonEmphasis {
     return Intl.message(
-      'Button Emphasis',
+      'Mise en avant du bouton',
       name: 'buttonEmphasis',
       desc: '',
       args: [],
     );
   }
 
-  /// `{count, plural, one{Button} other{Buttons}}`
+  /// `{count, plural, one{Bouton} other{Boutons}}`
   String buttons(num count) {
     return Intl.plural(
       count,
-      one: 'Button',
-      other: 'Buttons',
+      one: 'Bouton',
+      other: 'Boutons',
       name: 'buttons',
       desc: '',
       args: [count],
     );
   }
 
-  /// `Cancel`
+  /// `Annuler`
   String get cancel {
     return Intl.message(
-      'Cancel',
+      'Annuler',
       name: 'cancel',
       desc: '',
       args: [],
     );
   }
 
-  /// `Close Navigation Menu`
+  /// `Fermer le menu de navigation`
   String get closeNavigationMenu {
     return Intl.message(
-      'Close Navigation Menu',
+      'Fermer le menu de navigation',
       name: 'closeNavigationMenu',
       desc: '',
       args: [],
     );
   }
 
-  /// `{count, plural, one{Color} other{Colors}}`
+  /// `{count, plural, one{Couleur} other{Couleurs}}`
   String colors(num count) {
     return Intl.plural(
       count,
-      one: 'Color',
-      other: 'Colors',
+      one: 'Couleur',
+      other: 'Couleurs',
       name: 'colors',
       desc: '',
       args: [count],
     );
   }
 
-  /// `Color Palette`
+  /// `Palette de couleurs`
   String get colorPalette {
     return Intl.message(
-      'Color Palette',
+      'Palette de couleurs',
       name: 'colorPalette',
       desc: '',
       args: [],
     );
   }
 
-  /// `Color Scheme`
+  /// `Schème de couleurs`
   String get colorScheme {
     return Intl.message(
-      'Color Scheme',
+      'Schème de couleurs',
       name: 'colorScheme',
       desc: '',
       args: [],
     );
   }
 
-  /// `Confirm delete this record?`
+  /// `Confirmer la suppression de cet enregistrement ?`
   String get confirmDeleteRecord {
     return Intl.message(
-      'Confirm delete this record?',
+      'Confirmer la suppression de cet enregistrement ?',
       name: 'confirmDeleteRecord',
       desc: '',
       args: [],
     );
   }
 
-  /// `Confirm submit this record?`
+  /// `Confirmer la soumission de cet enregistrement ?`
   String get confirmSubmitRecord {
     return Intl.message(
-      'Confirm submit this record?',
+      'Confirmer la soumission de cet enregistrement ?',
       name: 'confirmSubmitRecord',
       desc: '',
       args: [],
     );
   }
 
-  /// `Copy`
+  /// `Copier`
   String get copy {
     return Intl.message(
-      'Copy',
+      'Copier',
       name: 'copy',
       desc: '',
       args: [],
     );
   }
 
-  /// `This field requires a valid credit card number.`
+  /// `Ce champ nécessite un numéro de carte de crédit valide.`
   String get creditCardErrorText {
     return Intl.message(
-      'This field requires a valid credit card number.',
+      'Ce champ nécessite un numéro de carte de crédit valide.',
       name: 'creditCardErrorText',
       desc: '',
       args: [],
     );
   }
 
-  /// `Back`
+  /// `Retour`
   String get crudBack {
     return Intl.message(
-      'Back',
+      'Retour',
       name: 'crudBack',
       desc: '',
       args: [],
     );
   }
 
-  /// `Delete`
+  /// `Supprimer`
   String get crudDelete {
     return Intl.message(
-      'Delete',
+      'Supprimer',
       name: 'crudDelete',
       desc: '',
       args: [],
     );
   }
 
-  /// `Detail`
+  /// `Détail`
   String get crudDetail {
     return Intl.message(
-      'Detail',
+      'Détail',
       name: 'crudDetail',
       desc: '',
       args: [],
     );
   }
 
-  /// `New`
+  /// `Nouveau`
   String get crudNew {
     return Intl.message(
-      'New',
+      'Nouveau',
       name: 'crudNew',
       desc: '',
       args: [],
     );
   }
 
-  /// `Dark Theme`
+  /// `Thème sombre`
   String get darkTheme {
     return Intl.message(
-      'Dark Theme',
+      'Thème sombre',
       name: 'darkTheme',
       desc: '',
       args: [],
     );
   }
 
-  /// `Dashboard`
+  /// `Tableau de bord`
   String get dashboard {
     return Intl.message(
-      'Dashboard',
+      'Tableau de bord',
       name: 'dashboard',
       desc: '',
       args: [],
     );
   }
 
-  /// `This field requires a valid date string.`
+  /// `Ce champ nécessite une chaîne de date valide.`
   String get dateStringErrorText {
     return Intl.message(
-      'This field requires a valid date string.',
+      'Ce champ nécessite une chaîne de date valide.',
       name: 'dateStringErrorText',
       desc: '',
       args: [],
     );
   }
 
-  /// `{count, plural, one{Dialog} other{Dialogs}}`
+  /// `{count, plural, one{Dialogue} other{Dialogues}}`
   String dialogs(num count) {
     return Intl.plural(
       count,
-      one: 'Dialog',
-      other: 'Dialogs',
+      one: 'Dialogue',
+      other: 'Dialogues',
       name: 'dialogs',
       desc: '',
       args: [count],
     );
   }
 
-  /// `Don't have an account?`
+  /// `Vous n'avez pas de compte ?`
   String get dontHaveAnAccount {
     return Intl.message(
-      'Don\'t have an account?',
+      'Vous n\'avez pas de compte ?',
       name: 'dontHaveAnAccount',
       desc: '',
       args: [],
@@ -306,60 +306,60 @@ class Lang {
     );
   }
 
-  /// `This field requires a valid email address.`
+  /// `Ce champ nécessite une adresse email valide.`
   String get emailErrorText {
     return Intl.message(
-      'This field requires a valid email address.',
+      'Ce champ nécessite une adresse email valide.',
       name: 'emailErrorText',
       desc: '',
       args: [],
     );
   }
 
-  /// `This field value must be equal to {value}.`
+  /// `La valeur de ce champ doit être égale à {value}.`
   String equalErrorText(Object value) {
     return Intl.message(
-      'This field value must be equal to $value.',
+      'La valeur de ce champ doit être égale à $value.',
       name: 'equalErrorText',
       desc: '',
       args: [value],
     );
   }
 
-  /// `Error 404`
+  /// `Erreur 404`
   String get error404 {
     return Intl.message(
-      'Error 404',
+      'Erreur 404',
       name: 'error404',
       desc: '',
       args: [],
     );
   }
 
-  /// `Sorry, the page you are looking for has been removed or not exists.`
+  /// `Désolé, la page que vous recherchez a été supprimée ou n'existe pas.`
   String get error404Message {
     return Intl.message(
-      'Sorry, the page you are looking for has been removed or not exists.',
+      'Désolé, la page que vous recherchez a été supprimée ou n\'existe pas.',
       name: 'error404Message',
       desc: '',
       args: [],
     );
   }
 
-  /// `Page not found`
+  /// `Page non trouvée`
   String get error404Title {
     return Intl.message(
-      'Page not found',
+      'Page non trouvée',
       name: 'error404Title',
       desc: '',
       args: [],
     );
   }
 
-  /// `Example`
+  /// `Exemple`
   String get example {
     return Intl.message(
-      'Example',
+      'Exemple',
       name: 'example',
       desc: '',
       args: [],
@@ -378,122 +378,122 @@ class Lang {
     );
   }
 
-  /// `{count, plural, one{Form} other{Forms}}`
+  /// `{count, plural, one{Formulaire} other{Formulaires}}`
   String forms(num count) {
     return Intl.plural(
       count,
-      one: 'Form',
-      other: 'Forms',
+      one: 'Formulaire',
+      other: 'Formulaires',
       name: 'forms',
       desc: '',
       args: [count],
     );
   }
 
-  /// `General UI`
+  /// `UI Générale`
   String get generalUi {
     return Intl.message(
-      'General UI',
+      'UI Générale',
       name: 'generalUi',
       desc: '',
       args: [],
     );
   }
 
-  /// `Hi`
+  /// `Salut`
   String get hi {
     return Intl.message(
-      'Hi',
+      'Salut',
       name: 'hi',
       desc: '',
       args: [],
     );
   }
 
-  /// `Home`
+  /// `Accueil`
   String get homePage {
     return Intl.message(
-      'Home',
+      'Accueil',
       name: 'homePage',
       desc: '',
       args: [],
     );
   }
 
-  /// `IFrame Demo`
+  /// `Démo IFrame`
   String get iframeDemo {
     return Intl.message(
-      'IFrame Demo',
+      'Démo IFrame',
       name: 'iframeDemo',
       desc: '',
       args: [],
     );
   }
 
-  /// `This field requires a valid integer.`
+  /// `Ce champ nécessite un entier valide.`
   String get integerErrorText {
     return Intl.message(
-      'This field requires a valid integer.',
+      'Ce champ nécessite un entier valide.',
       name: 'integerErrorText',
       desc: '',
       args: [],
     );
   }
 
-  /// `This field requires a valid IP.`
+  /// `Ce champ nécessite une adresse IP valide.`
   String get ipErrorText {
     return Intl.message(
-      'This field requires a valid IP.',
+      'Ce champ nécessite une adresse IP valide.',
       name: 'ipErrorText',
       desc: '',
       args: [],
     );
   }
 
-  /// `Language`
+  /// `Langue`
   String get language {
     return Intl.message(
-      'Language',
+      'Langue',
       name: 'language',
       desc: '',
       args: [],
     );
   }
 
-  /// `Light Theme`
+  /// `Thème clair`
   String get lightTheme {
     return Intl.message(
-      'Light Theme',
+      'Thème clair',
       name: 'lightTheme',
       desc: '',
       args: [],
     );
   }
 
-  /// `Login`
+  /// `Connexion`
   String get login {
     return Intl.message(
-      'Login',
+      'Connexion',
       name: 'login',
       desc: '',
       args: [],
     );
   }
 
-  /// `Login now!`
+  /// `Connectez-vous maintenant !`
   String get loginNow {
     return Intl.message(
-      'Login now!',
+      'Connectez-vous maintenant !',
       name: 'loginNow',
       desc: '',
       args: [],
     );
   }
 
-  /// `Logout`
+  /// `Déconnexion`
   String get logout {
     return Intl.message(
-      'Logout',
+      'Déconnexion',
       name: 'logout',
       desc: '',
       args: [],
@@ -510,114 +510,114 @@ class Lang {
     );
   }
 
-  /// `Value does not match pattern.`
+  /// `La valeur ne correspond pas au motif.`
   String get matchErrorText {
     return Intl.message(
-      'Value does not match pattern.',
+      'La valeur ne correspond pas au motif.',
       name: 'matchErrorText',
       desc: '',
       args: [],
     );
   }
 
-  /// `Value must be less than or equal to {max}`
+  /// `La valeur doit être inférieure ou égale à {max}.`
   String maxErrorText(Object max) {
     return Intl.message(
-      'Value must be less than or equal to $max',
+      'La valeur doit être inférieure ou égale à $max.',
       name: 'maxErrorText',
       desc: '',
       args: [max],
     );
   }
 
-  /// `Value must have a length less than or equal to {maxLength}`
+  /// `La valeur doit avoir une longueur inférieure ou égale à {maxLength}.`
   String maxLengthErrorText(Object maxLength) {
     return Intl.message(
-      'Value must have a length less than or equal to $maxLength',
+      'La valeur doit avoir une longueur inférieure ou égale à $maxLength.',
       name: 'maxLengthErrorText',
       desc: '',
       args: [maxLength],
     );
   }
 
-  /// `Value must be greater than or equal to {min}.`
+  /// `La valeur doit être supérieure ou égale à {min}.`
   String minErrorText(Object min) {
     return Intl.message(
-      'Value must be greater than or equal to $min.',
+      'La valeur doit être supérieure ou égale à $min.',
       name: 'minErrorText',
       desc: '',
       args: [min],
     );
   }
 
-  /// `Value must have a length greater than or equal to {minLength}`
+  /// `La valeur doit avoir une longueur supérieure ou égale à {minLength}.`
   String minLengthErrorText(Object minLength) {
     return Intl.message(
-      'Value must have a length greater than or equal to $minLength',
+      'La valeur doit avoir une longueur supérieure ou égale à $minLength.',
       name: 'minLengthErrorText',
       desc: '',
       args: [minLength],
     );
   }
 
-  /// `My Profile`
+  /// `Mon Profil`
   String get myProfile {
     return Intl.message(
-      'My Profile',
+      'Mon Profil',
       name: 'myProfile',
       desc: '',
       args: [],
     );
   }
 
-  /// `{count, plural, one{New Order} other{New Orders}}`
+  /// `{count, plural, one{Nouvelle Commande} other{Nouvelles Commandes}}`
   String newOrders(num count) {
     return Intl.plural(
       count,
-      one: 'New Order',
-      other: 'New Orders',
+      one: 'Nouvelle Commande',
+      other: 'Nouvelles Commandes',
       name: 'newOrders',
       desc: '',
       args: [count],
     );
   }
 
-  /// `{count, plural, one{New User} other{New Users}}`
+  /// `{count, plural, one{Nouvel Utilisateur} other{Nouveaux Utilisateurs}}`
   String newUsers(num count) {
     return Intl.plural(
       count,
-      one: 'New User',
-      other: 'New Users',
+      one: 'Nouvel Utilisateur',
+      other: 'Nouveaux Utilisateurs',
       name: 'newUsers',
       desc: '',
       args: [count],
     );
   }
 
-  /// `This field value must not be equal to {value}.`
+  /// `La valeur de ce champ ne doit pas être égale à {value}.`
   String notEqualErrorText(Object value) {
     return Intl.message(
-      'This field value must not be equal to $value.',
+      'La valeur de ce champ ne doit pas être égale à $value.',
       name: 'notEqualErrorText',
       desc: '',
       args: [value],
     );
   }
 
-  /// `Value must be numeric.`
+  /// `La valeur doit être numérique.`
   String get numericErrorText {
     return Intl.message(
-      'Value must be numeric.',
+      'La valeur doit être numérique.',
       name: 'numericErrorText',
       desc: '',
       args: [],
     );
   }
 
-  /// `Open in new tab`
+  /// `Ouvrir dans un nouvel onglet`
   String get openInNewTab {
     return Intl.message(
-      'Open in new tab',
+      'Ouvrir dans un nouvel onglet',
       name: 'openInNewTab',
       desc: '',
       args: [],
@@ -636,256 +636,256 @@ class Lang {
     );
   }
 
-  /// `Password`
+  /// `Mot de passe`
   String get password {
     return Intl.message(
-      'Password',
+      'Mot de passe',
       name: 'password',
       desc: '',
       args: [],
     );
   }
 
-  /// `* 6 - 18 characters`
+  /// `* 6 - 18 caractères`
   String get passwordHelperText {
     return Intl.message(
-      '* 6 - 18 characters',
+      '* 6 - 18 caractères',
       name: 'passwordHelperText',
       desc: '',
       args: [],
     );
   }
 
-  /// `Password not match.`
+  /// `Les mots de passe ne correspondent pas.`
   String get passwordNotMatch {
     return Intl.message(
-      'Password not match.',
+      'Les mots de passe ne correspondent pas.',
       name: 'passwordNotMatch',
       desc: '',
       args: [],
     );
   }
 
-  /// `{count, plural, one{Pending Issue} other{Pending Issues}}`
+  /// `{count, plural, one{Problème en attente} other{Problèmes en attente}}`
   String pendingIssues(num count) {
     return Intl.plural(
       count,
-      one: 'Pending Issue',
-      other: 'Pending Issues',
+      one: 'Problème en attente',
+      other: 'Problèmes en attente',
       name: 'pendingIssues',
       desc: '',
       args: [count],
     );
   }
 
-  /// `{count, plural, one{Recent Order} other{Recent Orders}}`
+  /// `{count, plural, one{Commande Récente} other{Commandes Récentes}}`
   String recentOrders(num count) {
     return Intl.plural(
       count,
-      one: 'Recent Order',
-      other: 'Recent Orders',
+      one: 'Commande Récente',
+      other: 'Commandes Récentes',
       name: 'recentOrders',
       desc: '',
       args: [count],
     );
   }
 
-  /// `Record deleted successfully.`
+  /// `Enregistrement supprimé avec succès.`
   String get recordDeletedSuccessfully {
     return Intl.message(
-      'Record deleted successfully.',
+      'Enregistrement supprimé avec succès.',
       name: 'recordDeletedSuccessfully',
       desc: '',
       args: [],
     );
   }
 
-  /// `Record saved successfully.`
+  /// `Enregistrement sauvegardé avec succès.`
   String get recordSavedSuccessfully {
     return Intl.message(
-      'Record saved successfully.',
+      'Enregistrement sauvegardé avec succès.',
       name: 'recordSavedSuccessfully',
       desc: '',
       args: [],
     );
   }
 
-  /// `Record submitted successfully.`
+  /// `Enregistrement soumis avec succès.`
   String get recordSubmittedSuccessfully {
     return Intl.message(
-      'Record submitted successfully.',
+      'Enregistrement soumis avec succès.',
       name: 'recordSubmittedSuccessfully',
       desc: '',
       args: [],
     );
   }
 
-  /// `Register`
+  /// `S'inscrire`
   String get register {
     return Intl.message(
-      'Register',
+      'S\'inscrire',
       name: 'register',
       desc: '',
       args: [],
     );
   }
 
-  /// `Register a new account`
+  /// `Créer un nouveau compte`
   String get registerANewAccount {
     return Intl.message(
-      'Register a new account',
+      'Créer un nouveau compte',
       name: 'registerANewAccount',
       desc: '',
       args: [],
     );
   }
 
-  /// `Register now!`
+  /// `Inscrivez-vous maintenant !`
   String get registerNow {
     return Intl.message(
-      'Register now!',
+      'Inscrivez-vous maintenant !',
       name: 'registerNow',
       desc: '',
       args: [],
     );
   }
 
-  /// `This field cannot be empty.`
+  /// `Ce champ ne peut pas être vide.`
   String get requiredErrorText {
     return Intl.message(
-      'This field cannot be empty.',
+      'Ce champ ne peut pas être vide.',
       name: 'requiredErrorText',
       desc: '',
       args: [],
     );
   }
 
-  /// `Retype Password`
+  /// `Retaper le mot de passe`
   String get retypePassword {
     return Intl.message(
-      'Retype Password',
+      'Retaper le mot de passe',
       name: 'retypePassword',
       desc: '',
       args: [],
     );
   }
 
-  /// `Save`
+  /// `Enregistrer`
   String get save {
     return Intl.message(
-      'Save',
+      'Enregistrer',
       name: 'save',
       desc: '',
       args: [],
     );
   }
 
-  /// `Search`
+  /// `Rechercher`
   String get search {
     return Intl.message(
-      'Search',
+      'Rechercher',
       name: 'search',
       desc: '',
       args: [],
     );
   }
 
-  /// `Submit`
+  /// `Soumettre`
   String get submit {
     return Intl.message(
-      'Submit',
+      'Soumettre',
       name: 'submit',
       desc: '',
       args: [],
     );
   }
 
-  /// `Text`
+  /// `Texte`
   String get text {
     return Intl.message(
-      'Text',
+      'Texte',
       name: 'text',
       desc: '',
       args: [],
     );
   }
 
-  /// `Text Emphasis`
+  /// `Mise en avant du texte`
   String get textEmphasis {
     return Intl.message(
-      'Text Emphasis',
+      'Mise en avant du texte',
       name: 'textEmphasis',
       desc: '',
       args: [],
     );
   }
 
-  /// `Text Theme`
+  /// `Thème de texte`
   String get textTheme {
     return Intl.message(
-      'Text Theme',
+      'Thème de texte',
       name: 'textTheme',
       desc: '',
       args: [],
     );
   }
 
-  /// `Today Sales`
+  /// `Ventes du jour`
   String get todaySales {
     return Intl.message(
-      'Today Sales',
+      'Ventes du jour',
       name: 'todaySales',
       desc: '',
       args: [],
     );
   }
 
-  /// `Typography`
+  /// `Typographie`
   String get typography {
     return Intl.message(
-      'Typography',
+      'Typographie',
       name: 'typography',
       desc: '',
       args: [],
     );
   }
 
-  /// `{count, plural, one{UI Element} other{UI Elements}}`
+  /// `{count, plural, one{Élément UI} other{Éléments UI}}`
   String uiElements(num count) {
     return Intl.plural(
       count,
-      one: 'UI Element',
-      other: 'UI Elements',
+      one: 'Élément UI',
+      other: 'Éléments UI',
       name: 'uiElements',
       desc: '',
       args: [count],
     );
   }
 
-  /// `This field requires a valid URL address.`
+  /// `Ce champ nécessite une adresse URL valide.`
   String get urlErrorText {
     return Intl.message(
-      'This field requires a valid URL address.',
+      'Ce champ nécessite une adresse URL valide.',
       name: 'urlErrorText',
       desc: '',
       args: [],
     );
   }
 
-  /// `Username`
+  /// `Nom d'utilisateur`
   String get username {
     return Intl.message(
-      'Username',
+      'Nom d\'utilisateur',
       name: 'username',
       desc: '',
       args: [],
     );
   }
 
-  /// `Yes`
+  /// `Oui`
   String get yes {
     return Intl.message(
-      'Yes',
+      'Oui',
       name: 'yes',
       desc: '',
       args: [],

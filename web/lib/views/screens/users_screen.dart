@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
@@ -68,8 +69,18 @@ class _UsersScreenState extends State<UsersScreen> {
 
   void _doDelete(BuildContext context, String userId) async {
     final lang = Lang.of(context);
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
     try {
-      final response = await Dio().delete('${env.apiBaseUrl}/users/$userId');
+      final response = await Dio().delete('${env.apiBaseUrl}/users/$userId',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
       if (response.statusCode == 204) {
         final dialog = AwesomeDialog(
           context: context,
@@ -210,7 +221,6 @@ class _UsersScreenState extends State<UsersScreen> {
                                           DataColumn(label: Text('Pseudo')),
                                           DataColumn(label: Text('Email')),
                                           DataColumn(label: Text('Rôle')),
-                                          DataColumn(label: Text('Vérifié')),
                                           DataColumn(label: Text('Créé le')),
                                           DataColumn(label: Text('Modifié le')),
                                           DataColumn(label: Text('Supprimé le')),
@@ -249,8 +259,17 @@ class DataSource extends DataTableSource {
   });
 
   Future<void> loadData() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
     try {
-      final response = await Dio().get('${env.apiBaseUrl}/users');
+      final response = await Dio().get('${env.apiBaseUrl}/users',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
       if (response.statusCode == 200) {
         List<dynamic> users = response.data;
         _data = List.generate(users.length, (index) {
@@ -259,7 +278,6 @@ class DataSource extends DataTableSource {
             'pseudo': users[index]['Pseudo'],
             'email': users[index]['Email'],
             'role': users[index]['Role'],
-            'isVerified': users[index]['IsVerified'],
             'createdAt': users[index]['CreatedAt'],
             'updatedAt': users[index]['UpdatedAt'],
             'deletedAt': users[index]['DeletedAt'],
@@ -298,7 +316,6 @@ class DataSource extends DataTableSource {
       DataCell(Text(data['pseudo'].toString())),
       DataCell(Text(data['email'].toString())),
       DataCell(Text(data['role'].toString())),
-      DataCell(Icon(data['isVerified'] ? Icons.check : Icons.close)),
       DataCell(Text(formatDateTime(data['createdAt']))),
       DataCell(Text(formatDateTime(data['updatedAt']))),
       DataCell(Text(formatDateTime(data['deletedAt']))),

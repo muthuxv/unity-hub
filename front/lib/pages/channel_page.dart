@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:unity_hub/pages/profil/user_profil_page.dart';
@@ -12,6 +14,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:unity_hub/utils/messaging_service.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../components/video_player.dart';
 
 class ChannelPage extends StatefulWidget {
   final String channelId;
@@ -27,6 +32,8 @@ class ChannelPage extends StatefulWidget {
 
 class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
   bool _isLoading = false;
+  String _photoUrl = '';
+
   late String currentUserID;
   late WebSocketChannel _channel;
   final ScrollController _scrollController = ScrollController();
@@ -97,6 +104,30 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<List<dynamic>> getMessageReactions(String messageId) async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    try {
+      final response = await Dio().get(
+        '$apiPath/messages/$messageId/reactions',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $jwtToken',
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
+      );
+      return response.data['data'];
+    } catch (error) {
+      print('Erreur lors de la récupération des réactions : $error');
+      return [];
     }
   }
 
@@ -206,7 +237,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
             TextButton(
               child: Text('Oui'),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the confirmation dialog
+                Navigator.of(context).pop();
                 _deleteMessage(messageId);
               },
             ),
@@ -220,6 +251,141 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
         );
       },
     );
+  }
+
+  Future<void> _removeReaction(String reactionId) async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+    try {
+        await Dio().delete(
+          '$apiPath/reactMessages/$reactionId',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $jwtToken',
+              'Content-Type': 'multipart/form-data',
+            },
+          ),
+        );
+
+      setState(() {
+
+      });
+    } catch (error) {
+      print('Erreur lors de la suppression de la réaction : $error');
+    }
+  }
+
+
+  Future<void> _showReactionPopup(BuildContext context, String messageId) async {
+    List<dynamic> reactions = await _fetchReactions();
+
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Choisissez une réaction',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 16.0),
+              Wrap(
+                spacing: 16.0,
+                runSpacing: 12.0,
+                children: reactions.map((reaction) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _reactToMessage(messageId, reaction['ID']);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8.0),
+                        border: Border.all(
+                          color: Colors.grey[400]!,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SvgPicture.string(
+                            reaction['Name'],
+                            height: 24,
+                            width: 24,
+                          ),
+                          SizedBox(width: 8.0),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+
+  Future<List<dynamic>> _fetchReactions() async {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+    try {
+      final response = await Dio().get('$apiPath/reacts');
+      print(response);
+      return response.data;
+    } catch (error) {
+      print('Erreur lors de la récupération des réactions : $error');
+      return [];
+    }
+  }
+
+  Future<void> _reactToMessage(String messageId, String reactionId) async {
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+    final decodedToken = JwtDecoder.decode(jwtToken!);
+    final userID = decodedToken['jti'];
+
+    try {
+      List<dynamic> currentReactions = await getMessageReactions(messageId);
+
+      bool userAlreadyReacted = currentReactions.any((reaction) =>
+      reaction['UserID'] == userID && reaction['React']['ID'] == reactionId);
+
+      if (!userAlreadyReacted) {
+        await Dio().post(
+          '$apiPath/reactMessages',
+          data: {
+            'UserID': userID,
+            'ReactID': reactionId,
+            'MessageID': messageId,
+          },
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $jwtToken',
+              'Content-Type': 'application/json',
+            },
+          ),
+        );
+        setState(() {
+        });
+      } else {
+        print('L\'utilisateur a déjà réagi avec cette réaction.');
+      }
+    } catch (error) {
+      print('Erreur lors de la réaction au message : $error');
+    }
   }
 
 
@@ -251,13 +417,13 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
               ),
             if (message['UserID'].toString() != currentUserID)
               ListTile(
-              leading: Icon(Icons.report),
-              title: Text("Signaler l'utilisateur"),
-              onTap: () {
-                Navigator.pop(context);
-                _showReportUserDialog(context, message);
-              },
-            ),
+                leading: Icon(Icons.report),
+                title: Text("Signaler l'utilisateur"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showReportUserDialog(context, message);
+                },
+              ),
             if (message['UserID'].toString() == currentUserID)
               ListTile(
                 leading: Icon(Icons.delete),
@@ -379,9 +545,6 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     );
   }
 
-
-
-
   Future<void> _sendReport(String messageID, String reportMessage) async {
     const storage = FlutterSecureStorage();
     final jwtToken = await storage.read(key: 'token');
@@ -427,7 +590,6 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
         '$apiPath/messages/$messageId',
         data: {'Content': 'Ce message a été supprimé par l\'utilisateur'},
       );
-      // Update the local state to reflect the message deletion
       setState(() {
         _messagesByDate.forEach((date, messages) {
           final messageIndex = messages.indexWhere((message) => message['ID'] == messageId);
@@ -444,7 +606,6 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       });
     }
   }
-
 
   List<TextSpan> formatMessage(String content) {
     List<TextSpan> spans = [];
@@ -506,6 +667,46 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _sendImage(File image) async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    FormData formData = FormData.fromMap({
+      "file": await MultipartFile.fromFile(image.path,
+    contentType: MediaType('image', image.path.split('.').last
+      ),
+    ),
+    });
+
+    try {
+      final response = await Dio().post(
+        '$apiPath/upload',
+        data: formData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $jwtToken',
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
+      );
+
+      final imageUrl = response.data['path'].split('upload/').last;
+      final isVideo = imageUrl.endsWith('.mp4');
+
+      _channel.sink.add(jsonEncode({
+        'UserID': currentUserID,
+        'Content': imageUrl,
+        'Type': isVideo ? 'Video' : 'Photo',
+        'SentAt': DateTime.now().toIso8601String(),
+      }));
+    } catch (e) {
+      _showErrorSnack('Une erreur s\'est produite lors de l\'envoi de l\'image.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -548,6 +749,12 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                             padding: const EdgeInsets.all(8.0),
                             child: Row(
                               children: [
+                                IconButton(
+                                  icon: Icon(Icons.emoji_emotions),
+                                  onPressed: () {
+                                    _showReactionPopup(context, message['ID']);
+                                  },
+                                ),
                                 if (!isCurrentUser)
                                   GestureDetector(
                                     onTap: () {
@@ -611,6 +818,86 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                                             width: 200,
                                             height: 200,
                                           ),
+                                        if (message['Type'] == 'Photo')
+                                          Image.network(
+                                            'http://10.0.2.2:8080/uploads/${message['Content']}?random=${DateTime.now().millisecondsSinceEpoch}',
+                                            width: 200,
+                                            height: 200,
+                                          ),
+                                        if (message['Type'] == 'Video')
+                                          VideoPlayerWidget(
+                                            url: 'http://10.0.2.2:8080/uploads/${message['Content']}?random=${DateTime.now().millisecondsSinceEpoch}',
+                                          ),
+                                        FutureBuilder<List<dynamic>>(
+                                          future: getMessageReactions(message['ID']),
+                                          builder: (context, snapshot) {
+                                            if (snapshot.connectionState == ConnectionState.waiting) {
+                                              return CircularProgressIndicator();
+                                            } else if (snapshot.hasError) {
+                                              return Text('Erreur : ${snapshot.error}');
+                                            } else if (snapshot.hasData) {
+                                              Map<String, int> reactionCounts = {};
+                                              snapshot.data!.forEach((reaction) {
+                                                String reactId = reaction['React']['ID'];
+                                                if (reactionCounts.containsKey(reactId)) {
+                                                  reactionCounts[reactId] = reactionCounts[reactId]! + 1;
+                                                } else {
+                                                  reactionCounts[reactId] = 1;
+                                                }
+                                              });
+
+                                              List<Widget> reactionIcons = [];
+                                              Set<String> uniqueReactions = {};
+
+                                              reactionCounts.forEach((reactId, count) {
+                                                if (!uniqueReactions.contains(reactId)) {
+                                                  uniqueReactions.add(reactId);
+                                                  Widget reactionWidget = Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      SvgPicture.string(
+                                                        snapshot.data!.firstWhere((element) => element['React']['ID'] == reactId)['React']['Name'],
+                                                        height: 24,
+                                                        width: 24,
+                                                      ),
+                                                      SizedBox(width: 4),
+                                                      Text('$count'),
+                                                    ],
+                                                  );
+
+                                                  bool currentUserReacted = snapshot.data!.any((reaction) => reaction['UserID'] == currentUserID && reaction['React']['ID'] == reactId);
+
+                                                  if (currentUserReacted) {
+                                                    reactionWidget = GestureDetector(
+                                                      onTap: () async {
+                                                        await _removeReaction(snapshot.data!.firstWhere((reaction) => reaction['UserID'] == currentUserID && reaction['React']['ID'] == reactId)['ID']);
+                                                      },
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                          borderRadius: BorderRadius.circular(8.0),
+                                                          color: Colors.yellow[200],
+                                                        ),
+                                                        padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                                                        child: reactionWidget,
+                                                      ),
+                                                    );
+                                                  }
+
+                                                  reactionIcons.add(reactionWidget);
+                                                  reactionIcons.add(SizedBox(width: 8.0));
+                                                }
+                                              });
+
+                                              return Row(
+                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                children: reactionIcons,
+                                              );
+                                            } else {
+                                              return SizedBox.shrink();
+                                            }
+                                          },
+                                        ),
+
                                       ],
                                     ),
                                   ),
@@ -657,7 +944,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                   } : null,
                 ),
                 IconButton(
-                  icon: const Icon(Icons.image),
+                  icon: const Icon(Icons.gif),
                   onPressed: widget.canSendMessage ? () async {
                     final GiphyGif? gif = await GiphyPicker.pickGif(
                       context: context,
@@ -675,6 +962,30 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                     }
                   } : null,
                 ),
+                IconButton(
+                  icon: const Icon(Icons.photo),
+                  onPressed: widget.canSendMessage ? () async {
+                    final picker = ImagePicker();
+                    final pickedFile = await picker.pickMedia();
+
+                    if (pickedFile != null) {
+                      final file = File(pickedFile.path);
+                      await _sendImage(file);
+                    }
+                  } : null,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.photo),
+                  onPressed: widget.canSendMessage ? () async {
+                    final picker = ImagePicker();
+                    final pickedFile = await picker.pickMedia();
+
+                    if (pickedFile != null) {
+                      final file = File(pickedFile.path);
+                      await _sendImage(file);
+                    }
+                  } : null,
+                ),
               ],
             ),
           )
@@ -683,15 +994,15 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     );
   }
 
-
   Widget _buildProfileWidget(dynamic message) {
     return message['User']['Profile'] != null && message['User']['Profile'].contains('<svg')
         ? SvgPicture.string(
       message['User']['Profile'],
       height: 40,
       width: 40,
-    ) : CircleAvatar(
-        backgroundImage: NetworkImage(message['User']['Profile'])
+    )
+        : CircleAvatar(
+      backgroundImage: NetworkImage(message['User']['Profile']),
     );
   }
 }

@@ -12,6 +12,7 @@ import 'package:web_admin/theme/theme_extensions/app_button_theme.dart';
 import 'package:web_admin/utils/app_focus_helper.dart';
 import 'package:web_admin/views/widgets/card_elements.dart';
 import 'package:web_admin/views/widgets/portal_master_layout/portal_master_layout.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class CrudDetailUserScreen extends StatefulWidget {
   final String id;
@@ -28,13 +29,24 @@ class CrudDetailUserScreen extends StatefulWidget {
 class _CrudDetailUserScreenState extends State<CrudDetailUserScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
   final _formData = FormData();
+  final _storage = const FlutterSecureStorage();
 
   Future<bool>? _future;
 
   Future<bool> _getDataAsync() async {
     if (widget.id.isNotEmpty) {
       try {
-        final response = await Dio().get('${env.apiBaseUrl}/users/${widget.id}');
+        final token = await _storage.read(key: 'token');
+
+        final response = await Dio().get(
+          '${env.apiBaseUrl}/users/${widget.id}',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $token',
+            },
+          ),
+        );
+
         if (response.statusCode == 200) {
           final user = response.data;
           _formData.id = widget.id;
@@ -66,8 +78,15 @@ class _CrudDetailUserScreenState extends State<CrudDetailUserScreen> {
         btnOkText: 'Oui',
         btnOkOnPress: () async {
           try {
+            final token = await _storage.read(key: 'token');
+
             final response = await Dio().put(
-              '${env.apiBaseUrl}/users/${widget.id}',
+              '${env.apiBaseUrl}/users/${widget.id}/admin-update',
+              options: Options(
+                headers: {
+                  'Authorization': 'Bearer $token',
+                },
+              ),
               data: {
                 'Pseudo': _formData.pseudo,
                 'Email': _formData.email,

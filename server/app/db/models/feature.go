@@ -8,7 +8,7 @@ import (
 type Feature struct {
 	gorm.Model
 	ID     uuid.UUID `gorm:"type:uuid;primaryKey"`
-	Name   string    `gorm:"validate:required"`
+	Name   string    `gorm:"unique;validate:required"`
 	Status string    `gorm:"validate:required"`
 }
 

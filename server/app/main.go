@@ -5,6 +5,7 @@ import (
 	"app/db"
 	_ "app/docs"
 	"app/routes"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -64,15 +65,9 @@ func main() {
 	routes.ReactMessageRoutes(r)
 	routes.ReportRoutes(r)
 	routes.RoleRoutes(r)
-	routes.RolePermissionsRoutes(r)
-	routes.RoleUserRoutes(r)
 	routes.ServerRoutes(r)
 	routes.TagRoutes(r)
 	routes.FeatureRoutes(r)
-	routes.ThemeRoutes(r)
-	routes.ThemeServerRoutes(r)
-	routes.RuleRoutes(r)
-	routes.ActiveRuleRoutes(r)
 	routes.GroupRoutes(r)
 	routes.GroupMemberRoutes(r)
 	routes.BanRoutes(r)

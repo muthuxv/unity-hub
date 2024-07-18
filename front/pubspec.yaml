@@ -45,6 +45,7 @@ dependencies:
   google_sign_in: ^6.2.1
   github_sign_in_plus: ^0.0.2
   google_fonts:
+  video_player: ^2.2.11
   flutter_webrtc: ^0.10.3
   random_avatar: ^0.0.8
   flutter_svg: ^2.0.9

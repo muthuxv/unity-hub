@@ -68,7 +68,6 @@ class PortalMasterLayout extends StatelessWidget {
               endIndent: 14.0,
             ),
           ),
-          _changeLanguageButton(context),
           const SizedBox(width: kDefaultPadding * 0.5),
         ],
       ),
@@ -163,46 +162,6 @@ class PortalMasterLayout extends StatelessWidget {
       ),
     );
   }
-
-  Widget _changeLanguageButton(BuildContext context) {
-    return PopupMenuButton(
-      splashRadius: 0.0,
-      tooltip: '',
-      position: PopupMenuPosition.under,
-      itemBuilder: (context) {
-        return localeMenuConfigs.map<PopupMenuItem>((e) {
-          return PopupMenuItem(
-            onTap: () async {
-              final provider = context.read<AppPreferencesProvider>();
-
-              await provider.setLocaleAsync(locale: Locale.fromSubtags(languageCode: e.languageCode, scriptCode: e.scriptCode));
-            },
-            child: Text(e.name),
-          );
-        }).toList(growable: false);
-      },
-      child: Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: kDefaultPadding * 0.5),
-        constraints: const BoxConstraints(minWidth: 48.0),
-        child: Row(
-          children: [
-            Icon(
-              Icons.translate_rounded,
-              size: (Theme.of(context).textTheme.labelLarge!.fontSize! + 4.0),
-            ),
-            Visibility(
-              visible: (MediaQuery.of(context).size.width > kScreenWidthMd),
-              child: Padding(
-                padding: const EdgeInsets.only(left: kDefaultPadding * 0.5),
-                child: Text(Lang.of(context).language),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class ResponsiveAppBarTitle extends StatelessWidget {
@@ -231,7 +190,7 @@ class ResponsiveAppBarTitle extends StatelessWidget {
                 padding: const EdgeInsets.only(right: kDefaultPadding * 0.7),
                 height: 40.0,
                 child: Image.asset(
-                  'assets/images/app_logo.png',
+                  'assets/images/unitylog.png',
                   fit: BoxFit.contain,
                 ),
               ),

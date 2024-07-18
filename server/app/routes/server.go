@@ -2,16 +2,14 @@ package routes
 
 import (
 	"app/controllers"
-	"app/db/models"
+	_ "app/db/models"
 	"app/services"
 
 	"github.com/gin-gonic/gin"
 )
 
 func ServerRoutes(r *gin.Engine) {
-	r.POST("/servers", controllers.Create(func() interface{} { return &models.Server{} }))
-
-	r.GET("/servers", controllers.TokenAuthMiddleware("user"), services.GetAllServers())
+	r.GET("/servers", controllers.TokenAuthMiddleware("admin"), services.GetAllServers())
 	r.GET("/servers/search", services.SearchServerByName())
 	r.GET("/servers/:id", services.GetServerByID())
 	r.PUT("/servers/:id", services.UpdateServerByID(), controllers.PermissionMiddleware("profileServer"))

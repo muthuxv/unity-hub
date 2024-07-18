@@ -181,6 +181,7 @@
   "back": "Retour",
   "noFriendRequestsSent": "Vous n'avez pas encore fait de demande d'ami",
   "friendRequestSent": "Demande d'ami envoyée",
+  "youAreServerCreator": "Vous êtes le créateur du serveur",
   "searchFriends": "Rechercher des amis...",
   "noFriendRequests": "Vous n'avez pas de demande d'ami",
   "noFriendsYet": "Pas encore d'ami 😭",
@@ -266,5 +267,8 @@
   "contact_details": "Si vous avez des questions ou des préoccupations concernant cette politique de confidentialité et de sécurité, veuillez nous contacter à l'adresse suivante :",
   "email": "Email : support@unityhub.com",
   "address": "Adresse : UnityHub, 242 rue du Faubourg Saint-Antoine, 75012 Paris, France",
-  "acceptance": "En utilisant UnityHub, vous acceptez les pratiques décrites dans cette politique de confidentialité et de sécurité."
+  "acceptance": "En utilisant UnityHub, vous acceptez les pratiques décrites dans cette politique de confidentialité et de sécurité.",
+  "create_new_tag": "Créer un nouveau tag",
+  "select_tags": "Sélectionner des tags",
+  "enter_tag_name": "Entrez le nom du tag"
 }

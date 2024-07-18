@@ -8,5 +8,10 @@ import (
 type Tag struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey"`
 	gorm.Model
-	Name string `gorm:"validate:required"`
+	Name string `gorm:"unique;validate:required"`
+}
+
+type TagSwagger struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }

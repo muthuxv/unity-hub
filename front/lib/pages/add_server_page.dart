@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
@@ -11,7 +10,7 @@ import 'package:unity_hub/utils/media_uploader.dart';
 
 class AddServerPage extends StatefulWidget {
   final Function(Map)? onServerAdded;
-  const AddServerPage({super.key, this.onServerAdded});
+  const AddServerPage({Key? key, this.onServerAdded}) : super(key: key);
 
   @override
   State<AddServerPage> createState() => _AddServerPageState();
@@ -59,7 +58,7 @@ class _AddServerPageState extends State<AddServerPage> {
         _tags = response.data;
       });
     } else {
-      _showErrorSnackBar(response.data['message']);
+      _showErrorSnackBar(response.data['error']);
     }
   }
 
@@ -76,6 +75,82 @@ class _AddServerPageState extends State<AddServerPage> {
   void initState() {
     super.initState();
     _fetchTags();
+  }
+
+  Future<void> _createTag(String tagName) async {
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    final data = {'name': tagName};
+
+    final response = await Dio().post(
+      '$apiPath/tags',
+      data: data,
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        validateStatus: (status) {
+          return status! < 500;
+        },
+      ),
+    );
+
+    if (response.statusCode == 201) {
+      final newTag = response.data;
+
+      setState(() {
+        _tags.add(newTag);
+
+        List<dynamic> updatedSelectedTags = List.from(_selectedTags);
+        updatedSelectedTags.add(newTag);
+        _selectedTags = updatedSelectedTags;
+      });
+    } else {
+      _showErrorSnackBar(response.data['error']);
+    }
+  }
+
+  void _showCreateTagDialog(BuildContext context) {
+    String newTagName = '';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(AppLocalizations.of(context)!.create_new_tag),
+          content: TextField(
+            onChanged: (value) {
+              newTagName = value;
+            },
+            decoration: InputDecoration(
+              hintText: AppLocalizations.of(context)!.enter_tag_name,
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text(AppLocalizations.of(context)!.cancel),
+            ),
+            TextButton(
+              onPressed: () {
+                if (newTagName.isNotEmpty) {
+                  _createTag(newTagName);
+                  Navigator.pop(context);
+                }
+              },
+              child: Text(AppLocalizations.of(context)!.confirmButton),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _addServer() async {
@@ -96,11 +171,11 @@ class _AddServerPageState extends State<AddServerPage> {
     final avatarGenerator = ServerAvatarGenerator(filename: 'lib/images/unity_white.png');
     final mediaUploader = await MediaUploader(filePath: (await avatarGenerator.generate())).upload();
 
-    const storage = FlutterSecureStorage();
-    final token = await storage.read(key: 'token');
-
     final tagIds = _selectedTags.map((tag) => tag['ID']).toList();
     final tagObjects = tagIds.map((tagId) => {'id': tagId}).toList();
+
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
 
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
@@ -154,146 +229,57 @@ class _AddServerPageState extends State<AddServerPage> {
     });
   }
 
-  final TextEditingController _linkController = TextEditingController();
-
-  void _showInvitationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(AppLocalizations.of(context)!.enter_invitation_link_title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              TextFormField(
-                controller: _linkController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)!.invitation_link_label,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return AppLocalizations.of(context)!.invitation_link_label;
-                  }
-                  return null;
-                },
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(AppLocalizations.of(context)!.cancel_button),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      _joinServer(_linkController.text);
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(AppLocalizations.of(context)!.join_button),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _joinServer(String link) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    const storage = FlutterSecureStorage();
-    final token = await storage.read(key: 'token');
-
-    try {
-      final response = await Dio().post(
-        link,
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-          validateStatus: (status) {
-            return status! < 500;
-          },
-        ),
-      );
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.joined_server_success_message),
-          ),
-        );
-      } else {
-        final errorMessage = response.data['error'] ?? AppLocalizations.of(context)!.join_server_error_message;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.join_server_error_message),
-        ),
-      );
-    }
-
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       extendBodyBehindAppBar: true,
       extendBody: true,
-      resizeToAvoidBottomInset: true, // Ensure the keyboard doesn't hide input
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height,
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xff4776e6), Color(0xff8e54e9)],
-                stops: [0, 1],
-                begin: Alignment.centerRight,
-                end: Alignment.centerLeft,
-              ),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              margin: const EdgeInsets.only(top: 100),
-              child: Column(
-                children: [
-                  Expanded(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xff4776e6), Color(0xff8e54e9)],
+            stops: [0, 1],
+            begin: Alignment.centerRight,
+            end: Alignment.centerLeft,
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top + 100,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          AppLocalizations.of(context)!.create_server,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
+                        Center(
+                          child: Text(
+                            AppLocalizations.of(context)!.create_server,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Image.asset(
-                          'lib/images/unitylog.png',
-                          width: 100,
-                          color: Colors.white,
+                        Center(
+                          child: Image.asset(
+                            'lib/images/unitylog.png',
+                            width: 100,
+                            color: Colors.white,
+                          ),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(16.0),
@@ -379,110 +365,68 @@ class _AddServerPageState extends State<AddServerPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        _showTagsField
-                            ? Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: InkWell(
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: Text(AppLocalizations.of(context)!.tags_label),
-                                    content: SizedBox(
-                                      width: double.maxFinite,
-                                      child: MultiSelectDialogField(
-                                        items: _tags
-                                            .map((tag) => MultiSelectItem(tag, tag['Name']))
-                                            .toList(),
-                                        initialValue: _selectedTags,
-                                        onConfirm: (selected) {
-                                          setState(() {
-                                            _selectedTags = selected;
-                                          });
-                                          Navigator.pop(context);
-                                        },
-                                      ),
-                                    ),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        },
-                                        child: Text(AppLocalizations.of(context)!.cancel_button),
-                                      ),
-                                    ],
-                                  );
+                        if (_showTagsField)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  _showCreateTagDialog(context);
                                 },
-                              );
-                            },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Text(
-                                  AppLocalizations.of(context)!.tags_label,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
+                                child: Text(AppLocalizations.of(context)!.create_new_tag),
+                                style: ElevatedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
-                                const Icon(Icons.arrow_drop_down),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: MultiSelectDialogField(
+                                  items: _tags.map((tag) => MultiSelectItem(tag, tag['Name'])).toList(),
+                                  title: Text(
+                                    AppLocalizations.of(context)!.select_tags,
+                                    style: const TextStyle(color: Colors.black),
+                                  ),
+                                  selectedColor: Colors.blue,
+                                  initialValue: _selectedTags,
+                                  onConfirm: (values) {
+                                    _selectedTags = values;
+                                  },
+                                  buttonText: Text(
+                                    AppLocalizations.of(context)!.select_tags,
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                  buttonIcon: const Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Colors.white,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.transparent),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        )
-                            : _visibility == 'public'
-                            ? Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            AppLocalizations.of(context)!.tags_required_public,
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                        )
-                            : const SizedBox(),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _isLoading ? null : _addServer,
+                          child: _isLoading
+                              ? const CircularProgressIndicator()
+                              : Text(AppLocalizations.of(context)!.create_server_button),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  _isLoading
-                      ? const CircularProgressIndicator()
-                      : ElevatedButton(
-                    onPressed: _addServer,
-                    style: ButtonStyle(
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                        const EdgeInsets.all(16),
-                      ),
-                    ),
-                    child: Text(AppLocalizations.of(context)!.create_server_button),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    AppLocalizations.of(context)!.already_have_invitation_code,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w200,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      _showInvitationDialog(context);
-                    },
-                    child: Text(AppLocalizations.of(context)!.join_server_button),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),

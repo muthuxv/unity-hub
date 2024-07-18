@@ -5,17 +5,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type ModelFactory func() interface{}
 
-// GetAll handles GET requests to fetch all items.
-// @Summary Get all items
-// @Description Get a list of all items
-// @Produce json
-// @Success 200 {array} interface{}
-// @Router /friends [get]
 type PreloadField struct {
 	Association string
 	Fields      []string
@@ -44,13 +39,6 @@ func GetAll(factory ModelFactory, preloads ...PreloadField) gin.HandlerFunc {
 	}
 }
 
-// Create handles POST requests to create a new item.
-// @Summary Create a new item
-// @Description Create a new item
-// @Accept json
-// @Produce json
-// @Success 201 {object} interface{}
-// @Router /friends [post]
 func Create(factory ModelFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		model := factory()
@@ -66,19 +54,19 @@ func Create(factory ModelFactory) gin.HandlerFunc {
 	}
 }
 
-// Get handles GET requests to fetch a single item by ID.
-// @Summary Get an item by ID
-// @Description Get a single item by ID
-// @Produce json
-// @Param id path string true "Item ID"
-// @Success 200 {object} interface{}
-// @Router /friends/{id} [get]
 func Get(factory ModelFactory, preloads ...PreloadField) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
+		// Vérification de l'UUID
+		uid, err := uuid.Parse(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
+			return
+		}
+
 		model := factory()
-		query := db.GetDB().Where("id = ?", id)
+		query := db.GetDB().Where("id = ?", uid)
 
 		for _, preload := range preloads {
 			if len(preload.Fields) > 0 {
@@ -91,31 +79,31 @@ func Get(factory ModelFactory, preloads ...PreloadField) gin.HandlerFunc {
 		}
 
 		if err := query.First(model).Error; err != nil {
-			c.Error(err)
+			c.JSON(http.StatusNotFound, gin.H{"error": "UUID not found"})
 			return
 		}
 		c.JSON(http.StatusOK, model)
 	}
 }
 
-// Update handles PUT requests to update an item by ID.
-// @Summary Update an item by ID
-// @Description Update an item by ID
-// @Accept json
-// @Produce json
-// @Param id path string true "Item ID"
-// @Success 200 {object} interface{}
-// @Router /friends/{id} [put]
 func Update(factory ModelFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
+
+		// Vérification de l'UUID
+		uid, err := uuid.Parse(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
+			return
+		}
+
 		model := factory()
-		if err := db.GetDB().Where("id = ?", id).First(model).Error; err != nil {
-			c.Error(err)
+		if err := db.GetDB().Where("id = ?", uid).First(model).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "UUID not found"})
 			return
 		}
 		if err := c.ShouldBindJSON(model); err != nil {
-			c.Error(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		if err := db.GetDB().Save(model).Error; err != nil {
@@ -126,17 +114,24 @@ func Update(factory ModelFactory) gin.HandlerFunc {
 	}
 }
 
-// Delete handles DELETE requests to delete an item by ID.
-// @Summary Delete an item by ID
-// @Description Delete an item by ID
-// @Param id path string true "Item ID"
-// @Success 204
-// @Router /friends/{id} [delete]
 func Delete(factory ModelFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
+
+		// Vérification de l'UUID
+		uid, err := uuid.Parse(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
+			return
+		}
+
 		model := factory()
-		if err := db.GetDB().Where("id = ?", id).Delete(model).Error; err != nil {
+		if err := db.GetDB().Where("id = ?", uid).First(model).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "UUID not found"})
+			return
+		}
+
+		if err := db.GetDB().Where("id = ?", uid).Delete(model).Error; err != nil {
 			c.Error(err)
 			return
 		}

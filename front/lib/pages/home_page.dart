@@ -29,13 +29,26 @@ class _HomePageState extends State<HomePage> {
   final MessagingService messagingService = MessagingService();
   int _selectedIndex = 0;
   String email = '';
+  int _notificationCount = 0;
 
   Future<List<Map<String, dynamic>>> fetchFeatureStatuses() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
 
     try {
-      final response = await Dio().get('$apiPath/features');
+      final response = await Dio().get(
+        '$apiPath/features',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
 
@@ -70,6 +83,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _selectedIndex = value;
     });
+    _fetchNotifications(); // Fetch notifications on tab change
   }
 
   final List<Widget> _pages = [
@@ -104,6 +118,54 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _fetchNotifications() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+    final userId = decodedToken['jti'];
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    try {
+      final responseInvitations = await Dio().get(
+        '$apiPath/invitations/user/$userId',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          validateStatus: (status) {
+            return status! < 500;
+          },
+        ),
+      );
+
+      final responseFriendRequests = await Dio().get(
+        '$apiPath/friends/pending/$userId',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          validateStatus: (status) {
+            return status! < 500;
+          },
+        ),
+      );
+
+      if (responseInvitations.statusCode == 200 && responseFriendRequests.statusCode == 200) {
+        setState(() {
+          _notificationCount = responseInvitations.data.length + responseFriendRequests.data.length;
+        });
+      } else {
+        print('Failed to fetch notifications');
+      }
+    } catch (e) {
+      print('Error fetching notifications: $e');
+    }
+  }
+
   void _logout() async {
     const storage = FlutterSecureStorage();
     await storage.deleteAll();
@@ -119,6 +181,7 @@ class _HomePageState extends State<HomePage> {
     _checkToken();
     messagingService.init(context);
     Provider.of<GroupProvider>(context, listen: false).fetchGroups();
+    _fetchNotifications(); // Fetch notifications on init
   }
 
   @override
@@ -127,6 +190,7 @@ class _HomePageState extends State<HomePage> {
       extendBodyBehindAppBar: true,
       bottomNavigationBar: MyBottomNavBar(
         onTabChange: (value) => navigateBottomNavBar(value),
+        notificationCount: _notificationCount, // Pass notification count
       ),
       appBar: AppBar(
         backgroundColor: Colors.transparent,

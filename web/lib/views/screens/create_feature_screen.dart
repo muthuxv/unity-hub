@@ -12,6 +12,7 @@ import 'package:web_admin/theme/theme_extensions/app_button_theme.dart';
 import 'package:web_admin/utils/app_focus_helper.dart';
 import 'package:web_admin/views/widgets/card_elements.dart';
 import 'package:web_admin/views/widgets/portal_master_layout/portal_master_layout.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class CreateFeatureScreen extends StatefulWidget {
   final String id;
@@ -27,6 +28,7 @@ class CreateFeatureScreen extends StatefulWidget {
 
 class _CreateFeatureScreenState extends State<CreateFeatureScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
+  final _storage = const FlutterSecureStorage();
   final _formData = {
     'name': ''
   };
@@ -40,8 +42,15 @@ class _CreateFeatureScreenState extends State<CreateFeatureScreen> {
       });
 
       try {
+        final token = await _storage.read(key: 'token');
+
         final response = await Dio().post(
           '${env.apiBaseUrl}/features',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $token',
+            },
+          ),
           data: _formData,
         );
 
