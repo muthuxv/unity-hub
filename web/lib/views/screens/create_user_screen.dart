@@ -2,8 +2,10 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
+import 'package:random_avatar/random_avatar.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/environment.dart';
 import 'package:web_admin/constants/dimens.dart';
@@ -27,6 +29,7 @@ class CreateUserScreen extends StatefulWidget {
 
 class _CreateUserScreenState extends State<CreateUserScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
+  final _storage = const FlutterSecureStorage();
   final _formData = {
     'pseudo': '',
     'email': '',
@@ -43,15 +46,22 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
         _isSaving = true;
       });
 
+      _formData['profile'] = RandomAvatarString(DateTime.now().toIso8601String());
+
       try {
+        final token = await _storage.read(key: 'token');
+
         final response = await Dio().post(
           '${env.apiBaseUrl}/users',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $token',
+            },
+          ),
           data: _formData,
         );
 
         if (response.statusCode == 201) {
-          final lang = Lang.of(context);
-
           final dialog = AwesomeDialog(
             context: context,
             dialogType: DialogType.success,
@@ -69,7 +79,6 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
         }
       } catch (e) {
         print('Error creating user: $e');
-        final lang = Lang.of(context);
 
         final dialog = AwesomeDialog(
           context: context,
@@ -168,10 +177,10 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                               items: ['user', 'admin']
                                   .map(
                                     (role) => DropdownMenuItem(
-                                      value: role,
-                                      child: Text(role[0].toUpperCase() + role.substring(1)),
-                                    ),
-                                  )
+                                  value: role,
+                                  child: Text(role[0].toUpperCase() + role.substring(1)),
+                                ),
+                              )
                                   .toList(),
                               onChanged: (value) => _formData['role'] = value ?? '',
                             ),
@@ -181,8 +190,8 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                             child: FormBuilderTextField(
                               name: 'password',
                               decoration: const InputDecoration(
-                                labelText: 'Mote de passe',
-                                hintText: 'Mote de passe',
+                                labelText: 'Mot de passe',
+                                hintText: 'Mot de passe',
                                 border: OutlineInputBorder(),
                                 floatingLabelBehavior: FloatingLabelBehavior.always,
                               ),
@@ -191,20 +200,6 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                               ]),
                               obscureText: true,
                               onChanged: (value) => _formData['password'] = value ?? '',
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: kDefaultPadding * 2.0),
-                            child: FormBuilderTextField(
-                              name: 'profile',
-                              decoration: const InputDecoration(
-                                labelText: 'Profil',
-                                hintText: 'Profil',
-                                border: OutlineInputBorder(),
-                                floatingLabelBehavior: FloatingLabelBehavior.always,
-                              ),
-                              validator: FormBuilderValidators.required(),
-                              onChanged: (value) => _formData['profile'] = value ?? '',
                             ),
                           ),
                           Row(

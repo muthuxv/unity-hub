@@ -204,6 +204,7 @@ Future<String> getServerName(String serverId) async {
 class LogDataSource extends DataTableSource {
   final void Function(Map<String, dynamic> data) onDetailButtonPressed;
   final void Function(Map<String, dynamic> data) onDeleteButtonPressed;
+  final _storage = const FlutterSecureStorage();
 
   List<Map<String, dynamic>> _data = [];
 
@@ -213,8 +214,17 @@ class LogDataSource extends DataTableSource {
   });
 
   Future<void> loadData() async {
-    try {
-      final response = await Dio().get('${env.apiBaseUrl}/logs');
+    try {;
+      final token = await _storage.read(key: 'token');
+
+      final response = await Dio().get(
+        '${env.apiBaseUrl}/logs',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
       if (response.statusCode == 200) {
         List<dynamic> logs = response.data;
         _data = await Future.wait(logs.map((log) async {

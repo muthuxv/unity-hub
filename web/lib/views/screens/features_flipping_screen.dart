@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
@@ -23,6 +24,7 @@ class FeaturesFlippingScreen extends StatefulWidget {
 class _FeaturesFlippingScreenState extends State<FeaturesFlippingScreen> {
   final _scrollController = ScrollController();
   final _formKey = GlobalKey<FormBuilderState>();
+  final _storage = const FlutterSecureStorage();
 
   late DataSource _dataSource;
   bool _isLoading = true;
@@ -66,7 +68,17 @@ class _FeaturesFlippingScreenState extends State<FeaturesFlippingScreen> {
   void _doDelete(BuildContext context, String featureId) async {
     final lang = Lang.of(context);
     try {
-      final response = await Dio().delete('${env.apiBaseUrl}/features/$featureId');
+      final token = await _storage.read(key: 'token');
+
+      final response = await Dio().delete(
+          '${env.apiBaseUrl}/features/$featureId',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $token',
+            },
+          ),
+      );
+
       if (response.statusCode == 204) {
         final dialog = AwesomeDialog(
           context: context,
@@ -234,6 +246,7 @@ class _FeaturesFlippingScreenState extends State<FeaturesFlippingScreen> {
 class DataSource extends DataTableSource {
   final void Function(Map<String, dynamic> data) onDetailButtonPressed;
   final void Function(Map<String, dynamic> data) onDeleteButtonPressed;
+  final _storage = const FlutterSecureStorage();
 
   List<Map<String, dynamic>> _data = []; // Updated to store API data
 
@@ -244,7 +257,16 @@ class DataSource extends DataTableSource {
 
   Future<void> loadData() async {
     try {
-      final response = await Dio().get('${env.apiBaseUrl}/features');
+      final token = await _storage.read(key: 'token');
+
+      final response = await Dio().get(
+        '${env.apiBaseUrl}/features',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
       if (response.statusCode == 200) {
         List<dynamic> features = response.data;
         _data = List.generate(features.length, (index) {

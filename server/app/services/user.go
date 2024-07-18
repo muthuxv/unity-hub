@@ -29,6 +29,12 @@ func Register() gin.HandlerFunc {
 			return
 		}
 
+		// Vérification si les champs sont vides
+		if inputUser.Email == "" || inputUser.Pseudo == "" || inputUser.Password == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Email, Pseudo, and Password are required"})
+			return
+		}
+
 		if validationErr := validate.Struct(inputUser); validationErr != nil {
 			c.Error(validationErr)
 			return
@@ -71,6 +77,49 @@ func Register() gin.HandlerFunc {
 	}
 }
 
+func CreateUserByAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var inputUser models.User
+		if err := c.ShouldBindJSON(&inputUser); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+			return
+		}
+
+		// Vérification si les champs sont vides
+		if inputUser.Email == "" || inputUser.Pseudo == "" || inputUser.Password == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Email, Pseudo, and Password are required"})
+			return
+		}
+
+		if validationErr := validate.Struct(inputUser); validationErr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input structure"})
+			return
+		}
+
+		// Administrateurs peuvent définir n'importe quel rôle
+		var existingUser models.User
+		if err := db.GetDB().Where("email = ?", inputUser.Email).First(&existingUser).Error; err == nil {
+			c.JSON(http.StatusConflict, gin.H{"error": "User with this email already exists"})
+			return
+		}
+
+		if err := db.GetDB().Where("pseudo = ?", inputUser.Pseudo).First(&existingUser).Error; err == nil {
+			c.JSON(http.StatusConflict, gin.H{"error": "User with this pseudo already exists"})
+			return
+		}
+
+		// Optionnel : Vous pouvez générer un jeton de vérification ou d'autres données requises ici
+
+		result := db.GetDB().Create(&inputUser)
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+			return
+		}
+
+		c.JSON(http.StatusCreated, inputUser)
+	}
+}
+
 func Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var payload struct {
@@ -80,12 +129,12 @@ func Login() gin.HandlerFunc {
 		var user models.User
 
 		if err := c.ShouldBindJSON(&payload); err != nil {
-			c.Error(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 			return
 		}
 
 		if err := validate.Struct(payload); err != nil {
-			c.Error(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input structure"})
 			return
 		}
 
@@ -97,13 +146,13 @@ func Login() gin.HandlerFunc {
 		}
 
 		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password)); err != nil {
-			c.Error(err)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Incorrect password"})
 			return
 		}
 
 		tokenString, err := controllers.GenerateJWT(user.ID, user.Email, user.Role, user.Pseudo)
 		if err != nil {
-			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 			return
 		}
 
@@ -157,6 +206,69 @@ func ChangePassword() gin.HandlerFunc {
 		db.GetDB().Save(&user)
 
 		c.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
+	}
+}
+
+func UpdateUserAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userIDStr := c.Param("id")
+
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+
+		var input struct {
+			Pseudo string `json:"pseudo"`
+			Email  string `json:"email"`
+			Role   string `json:"role"`
+		}
+
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+			return
+		}
+
+		var user models.User
+		result := db.GetDB().Where("id = ?", userID).First(&user)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			} else {
+				c.Error(result.Error)
+			}
+			return
+		}
+
+		if input.Pseudo != "" && input.Pseudo != user.Pseudo {
+			var existingUser models.User
+			if err := db.GetDB().Where("pseudo = ?", input.Pseudo).First(&existingUser).Error; err == nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Pseudo already exists"})
+				return
+			}
+			user.Pseudo = input.Pseudo
+		}
+
+		if input.Email != "" && input.Email != user.Email {
+			var existingUser models.User
+			if err := db.GetDB().Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Email already exists"})
+				return
+			}
+			user.Email = input.Email
+		}
+
+		if input.Role != "" {
+			user.Role = input.Role
+		}
+
+		if err := db.GetDB().Save(&user).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+			return
+		}
+
+		c.JSON(http.StatusOK, user)
 	}
 }
 
