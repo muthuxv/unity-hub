@@ -820,13 +820,13 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                                           ),
                                         if (message['Type'] == 'Photo')
                                           Image.network(
-                                            'http://10.0.2.2:8080/uploads/${message['Content']}?random=${DateTime.now().millisecondsSinceEpoch}',
+                                            'https://unityhub.fr/uploads/${message['Content']}?random=${DateTime.now().millisecondsSinceEpoch}',
                                             width: 200,
                                             height: 200,
                                           ),
                                         if (message['Type'] == 'Video')
                                           VideoPlayerWidget(
-                                            url: 'http://10.0.2.2:8080/uploads/${message['Content']}?random=${DateTime.now().millisecondsSinceEpoch}',
+                                            url: 'https://unityhub.fr/uploads/${message['Content']}?random=${DateTime.now().millisecondsSinceEpoch}',
                                           ),
                                         FutureBuilder<List<dynamic>>(
                                           future: getMessageReactions(message['ID']),

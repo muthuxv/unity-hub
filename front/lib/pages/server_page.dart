@@ -293,7 +293,7 @@ class _ServerPageState extends State<ServerPage> {
                           itemCount: _servers.length,
                           itemBuilder: (context, index) {
                             String filename = _servers[index]['Media']['FileName'];
-                            String imageUrl = 'http://10.0.2.2:8080/uploads/$filename?rand=${DateTime.now().millisecondsSinceEpoch}';
+                            String imageUrl = 'https://unityhub.fr/uploads/$filename?rand=${DateTime.now().millisecondsSinceEpoch}';
 
                             return Padding(
                               padding: const EdgeInsets.all(2.5),
@@ -391,7 +391,7 @@ class _ServerPageState extends State<ServerPage> {
                                                 ListTile(
                                                   leading: CircleAvatar(
                                                     backgroundImage: NetworkImage(
-                                                      'http://10.0.2.2:8080/uploads/${_selectedServer['Media']['FileName']}?rand=${DateTime.now().millisecondsSinceEpoch}',
+                                                      'https://unityhub.fr/uploads/${_selectedServer['Media']['FileName']}?rand=${DateTime.now().millisecondsSinceEpoch}',
                                                     ),
                                                   ),
                                                   title: Text(
