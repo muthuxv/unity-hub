@@ -58,7 +58,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (response.statusCode == 200) {
           final decodedToken = JwtDecoder.decode(response.data['token']);
-          print(decodedToken);
           final userRole = decodedToken['role'];
           if (userRole == 'admin') {
             const storage = FlutterSecureStorage();

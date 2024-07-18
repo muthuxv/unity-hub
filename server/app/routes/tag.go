@@ -9,11 +9,10 @@ import (
 )
 
 func TagRoutes(r *gin.Engine) {
-	r.GET("/tags/:id", controllers.Get(func() interface{} { return &models.Tag{} }))
-	r.PUT("/tags/:id", controllers.Update(func() interface{} { return &models.Tag{} }))
-	r.DELETE("/tags/:id", controllers.Delete(func() interface{} { return &models.Tag{} }))
+	r.GET("/tags/:id", controllers.TokenAuthMiddleware("admin"), controllers.Get(func() interface{} { return &models.Tag{} }))
+	r.PUT("/tags/:id", controllers.TokenAuthMiddleware("admin"), controllers.Update(func() interface{} { return &models.Tag{} }))
+	r.DELETE("/tags/:id", controllers.TokenAuthMiddleware("admin"), controllers.Delete(func() interface{} { return &models.Tag{} }))
 
-	r.POST("/tags", services.CreateTag())
-	r.GET("/tags", services.GetAllTags())
-	r.GET("/tags/:id/servers", services.GetServersByTag())
+	r.POST("/tags", controllers.TokenAuthMiddleware("user"), services.CreateTag())
+	r.GET("/tags", controllers.TokenAuthMiddleware("user"), services.GetAllTags())
 }

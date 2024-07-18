@@ -460,20 +460,6 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     );
   }
 
-  Future<List<dynamic>> getReactionReactions(String reactionId) async {
-    await dotenv.load();
-    final apiPath = dotenv.env['API_PATH']!;
-
-    try {
-      final response = await Dio().get('$apiPath/reactions/$reactionId/reactions');
-      return response.data['data'];
-    } catch (error) {
-      print('Erreur lors de la récupération des réactions de la réaction : $error');
-      return [];
-    }
-  }
-
-
   void _showReportUserDialog(BuildContext context, dynamic message) {
     TextEditingController _reportController = TextEditingController();
 

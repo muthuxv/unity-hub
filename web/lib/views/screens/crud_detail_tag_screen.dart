@@ -2,6 +2,7 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
 import 'package:web_admin/app_router.dart';
@@ -28,13 +29,24 @@ class CrudDetailTagScreen extends StatefulWidget {
 class _CrudDetailTagScreenState extends State<CrudDetailTagScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
   final _formData = FormData();
+  final _storage = const FlutterSecureStorage();
 
   Future<bool>? _future;
 
   Future<bool> _getDataAsync() async {
     if (widget.id.isNotEmpty) {
       try {
-        final response = await Dio().get('${env.apiBaseUrl}/tags/${widget.id}');
+        final token = await _storage.read(key: 'token');
+
+        final response = await Dio().get(
+            '${env.apiBaseUrl}/tags/${widget.id}',
+            options: Options(
+              headers: {
+                'Authorization': 'Bearer $token',
+              },
+            ),
+        );
+
         if (response.statusCode == 200) {
           final tag = response.data;
           _formData.id = widget.id;

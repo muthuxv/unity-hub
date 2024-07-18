@@ -31,11 +31,23 @@ class _HomePageState extends State<HomePage> {
   String email = '';
 
   Future<List<Map<String, dynamic>>> fetchFeatureStatuses() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
 
     try {
-      final response = await Dio().get('$apiPath/features');
+      final response = await Dio().get(
+        '$apiPath/features',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
 

@@ -14,6 +14,8 @@ import 'package:web_admin/theme/theme_extensions/app_color_scheme.dart';
 import 'package:web_admin/theme/theme_extensions/app_data_table_theme.dart';
 import 'package:web_admin/views/widgets/card_elements.dart';
 import 'package:web_admin/views/widgets/portal_master_layout/portal_master_layout.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_svg/svg.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -37,8 +39,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> fetchData() async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    if (token == null) {
+      // Handle the case when the token is not available
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
+
     try {
       final dio = Dio();
+      dio.options.headers["Authorization"] = "Bearer $token";
+
       final serverResponse = await dio.get('${env.apiBaseUrl}/servers');
       final userResponse = await dio.get('${env.apiBaseUrl}/users');
       final tagResponse = await dio.get('${env.apiBaseUrl}/tags');
@@ -187,7 +202,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     DataColumn(label: Text('Pseudo')),
                                     DataColumn(label: Text('Email')),
                                     DataColumn(label: Text('Rôle')),
-                                    DataColumn(label: Text('Vérifié')),
                                     DataColumn(label: Text('Crée le')),
                                     DataColumn(label: Text('Modifié le')),
                                     DataColumn(label: Text('Supprimé le')),
@@ -201,11 +215,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     return DataRow.byIndex(
                                       index: index,
                                       cells: [
-                                        DataCell(Text(user['Pseudo'])),
+                                        DataCell(
+                                          CircleAvatar(
+                                            radius: 55,
+                                            child: user['Profile'].contains('<svg')
+                                                ? SvgPicture.string(
+                                              user['Profile'],
+                                              height: 120,
+                                              width: 120,
+                                            )
+                                                : CircleAvatar(
+                                              radius: 50,
+                                              backgroundImage: NetworkImage(user['Profile']),
+                                            ),
+                                          ),
+                                        ),
                                         DataCell(Text(user['Pseudo'])),
                                         DataCell(Text(user['Email'])),
                                         DataCell(Text(user['Role'])),
-                                        DataCell(Icon(user['IsVerified'] ? Icons.check : Icons.close)),
                                         DataCell(Text(DateFormat('dd/MM/yyyy HH:mm').format(createdAt))),
                                         DataCell(Text(DateFormat('dd/MM/yyyy HH:mm').format(updatedAt))),
                                         DataCell(deletedAt != null ? Text(DateFormat('dd/MM/yyyy HH:mm').format(deletedAt)) : Text('-')),
