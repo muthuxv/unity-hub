@@ -4,8 +4,9 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MyBottomNavBar extends StatelessWidget {
   final Function(int)? onTabChange;
+  final int notificationCount;
 
-  const MyBottomNavBar({super.key, required this.onTabChange});
+  const MyBottomNavBar({super.key, required this.onTabChange, required this.notificationCount});
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +33,36 @@ class MyBottomNavBar extends StatelessWidget {
           GButton(
             icon: Icons.notifications,
             text: AppLocalizations.of(context)!.notifications_tab,
+            leading: notificationCount > 0
+                ? Stack(
+              children: [
+                Icon(Icons.notifications),
+                Positioned(
+                  right: 0,
+                  child: Container(
+                    padding: EdgeInsets.all(1),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    constraints: BoxConstraints(
+                      minWidth: 12,
+                      minHeight: 12,
+                    ),
+                    child: Text(
+                      '$notificationCount',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              ],
+            )
+                : Icon(Icons.notifications),
           ),
           GButton(
             icon: Icons.person,
