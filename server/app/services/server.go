@@ -26,6 +26,14 @@ type BanUserInput struct {
 	Duration int    `json:"duration" binding:"required"`
 }
 
+// GetAllServers godoc
+// @Summary Get all servers
+// @Description Get all servers
+// @Tags servers
+// @Produce json
+// @Success 200 {array} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers [get]
 func GetAllServers() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims, exists := c.Get("jwt_claims")
@@ -69,6 +77,15 @@ func GetAllServers() gin.HandlerFunc {
 	}
 }
 
+// GetServerBans godoc
+// @Summary Get server bans
+// @Description Get all bans for a specific server
+// @Tags servers
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {array} models.BanSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/{id}/bans [get]
 func GetServerBans() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverID := c.Param("id")
@@ -185,6 +202,15 @@ func BanUser() gin.HandlerFunc {
 	}
 }
 
+// GetServersFriendNotIn godoc
+// @Summary Get servers friend is not in
+// @Description Get servers that a specific friend is not a member of
+// @Tags servers
+// @Produce json
+// @Param friendID path string true "Friend ID"
+// @Success 200 {object} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/friend/{friendID} [get]
 func GetServersFriendNotIn() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims, exists := c.Get("jwt_claims")
@@ -269,6 +295,18 @@ func GetServersFriendNotIn() gin.HandlerFunc {
 	}
 }
 
+// UnbanUser godoc
+// @Summary Unban a user from a server
+// @Description Unban a user from a specific server
+// @Tags servers
+// @Accept json
+// @Produce json
+// @Param id path string true "Server ID"
+// @Param userID path string true "User ID"
+// @Success 200 {object} models.SuccessServerResponse
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 404 {object} models.ErrorServerResponse
+// @Router /servers/{id}/unban/{userID} [delete]
 func UnbanUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverID := c.Param("id")
@@ -301,6 +339,16 @@ func UnbanUser() gin.HandlerFunc {
 	}
 }
 
+// GetServerByID godoc
+// @Summary Get a server by ID
+// @Description Get details of a specific server by ID
+// @Tags servers
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {object} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 404 {object} models.ErrorServerResponse
+// @Router /servers/{id} [get]
 func GetServerByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
@@ -320,6 +368,15 @@ func GetServerByID() gin.HandlerFunc {
 	}
 }
 
+// SearchServerByName godoc
+// @Summary Search servers by name
+// @Description Search for servers by name
+// @Tags servers
+// @Produce json
+// @Param name query string true "Server name"
+// @Success 200 {array} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/search [get]
 func SearchServerByName() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		name := c.Query("name")
@@ -338,6 +395,18 @@ func SearchServerByName() gin.HandlerFunc {
 	}
 }
 
+// NewServer godoc
+// @Summary Create a new server
+// @Description Create a new server with specified details
+// @Tags servers
+// @Accept json
+// @Produce json
+// @Param server body models.ServerSwagger true "Server details"
+// @Success 201 {object} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 401 {object} models.ErrorServerResponse
+// @Failure 500 {object} models.ErrorServerResponse
+// @Router /servers [post]
 func NewServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var inputServer models.Server
@@ -486,6 +555,18 @@ func NewServer() gin.HandlerFunc {
 	}
 }
 
+// KickUser godoc
+// @Summary Kick a user from a server
+// @Description Kick a user from a specific server
+// @Tags servers
+// @Accept json
+// @Produce json
+// @Param id path string true "Server ID"
+// @Param userID path string true "User ID"
+// @Success 200 {object} models.SuccessServerResponse
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 404 {object} models.ErrorServerResponse
+// @Router /servers/{id}/kick/{userID} [delete]
 func KickUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverID := c.Param("id")
@@ -526,6 +607,17 @@ func KickUser() gin.HandlerFunc {
 	}
 }
 
+// JoinServer godoc
+// @Summary Join a server
+// @Description Join a specific server by ID
+// @Tags servers
+// @Accept json
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {object} models.OnServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 404 {object} models.ErrorServerResponse
+// @Router /servers/join/{id} [post]
 func JoinServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
@@ -620,6 +712,15 @@ func JoinServer() gin.HandlerFunc {
 	}
 }
 
+// GetPublicAvailableServers godoc
+// @Summary Get public available servers
+// @Description Get all public servers that a user is not a member of
+// @Tags servers
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {array} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/public/{id} [get]
 func GetPublicAvailableServers() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDStr := c.Param("id")
@@ -649,6 +750,17 @@ func GetPublicAvailableServers() gin.HandlerFunc {
 	}
 }
 
+// LeaveServer godoc
+// @Summary Leave a server
+// @Description Leave a specific server by ID
+// @Tags servers
+// @Accept json
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {object} models.OnServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 404 {object} models.ErrorServerResponse
+// @Router /servers/leave/{id} [delete]
 func LeaveServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
@@ -719,6 +831,15 @@ func LeaveServer() gin.HandlerFunc {
 	}
 }
 
+// GetServersByUser godoc
+// @Summary Get servers by user ID
+// @Description Get all servers that a specific user is a member of
+// @Tags servers
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {array} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/user/{id} [get]
 func GetServersByUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDStr := c.Param("id")
@@ -744,6 +865,15 @@ func GetServersByUser() gin.HandlerFunc {
 	}
 }
 
+// GetServerMembers godoc
+// @Summary Get server members
+// @Description Get all members of a specific server
+// @Tags servers
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {array} models.User
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/{id}/members [get]
 func GetServerMembers() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
@@ -773,6 +903,15 @@ func GetServerMembers() gin.HandlerFunc {
 	}
 }
 
+// GetServerChannels godoc
+// @Summary Get server channels
+// @Description Get all channels of a specific server
+// @Tags servers
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {object} map[string][]models.ChannelSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/{id}/channels [get]
 func GetServerChannels() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
@@ -804,6 +943,15 @@ func GetServerChannels() gin.HandlerFunc {
 	}
 }
 
+// GetServerLogs godoc
+// @Summary Get server logs
+// @Description Get all logs of a specific server
+// @Tags servers
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {array} models.LogsSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/{id}/logs [get]
 func GetServerLogs() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
@@ -908,6 +1056,16 @@ func UpdateServerByID() gin.HandlerFunc {
 	}
 }
 
+// DeleteServerByID godoc
+// @Summary Delete server by ID
+// @Description Delete a specific server by ID
+// @Tags servers
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {object} models.SuccessServerResponse
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 404 {object} models.ErrorServerResponse
+// @Router /servers/{id} [delete]
 func DeleteServerByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")

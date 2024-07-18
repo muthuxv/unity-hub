@@ -14,6 +14,14 @@ type OnServer struct {
 	Server   Server    `gorm:"foreignKey:ServerID;references:ID;"`
 }
 
+type OnServerSwagger struct {
+	ID       uuid.UUID     `json:"id"`
+	UserID   uuid.UUID     `json:"user_id"`
+	User     UserSwagger   `json:"user"`
+	ServerID uuid.UUID     `json:"server_id"`
+	Server   ServerSwagger `json:"server"`
+}
+
 func (os *OnServer) BeforeCreate(tx *gorm.DB) (err error) {
 	os.ID = uuid.New()
 	return nil
