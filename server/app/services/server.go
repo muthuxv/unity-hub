@@ -357,6 +357,11 @@ func NewServer() gin.HandlerFunc {
 			return
 		}
 
+		if inputServer.Visibility != "public" && inputServer.Visibility != "private" {
+			handleError(c, http.StatusBadRequest, "La visibilité du serveur doit être 'public' ou 'private'")
+			return
+		}
+
 		if inputServer.Visibility == "public" && len(inputServer.Tags) == 0 {
 			handleError(c, http.StatusBadRequest, "Un tag est requis pour les serveurs publics")
 			return
@@ -392,6 +397,12 @@ func NewServer() gin.HandlerFunc {
 		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la conversion de l'ID utilisateur")
+			return
+		}
+
+		var user models.User
+		if err := db.GetDB().First(&user, userID).Error; err != nil {
+			handleError(c, http.StatusBadRequest, "L'utilisateur n'existe pas")
 			return
 		}
 
@@ -568,6 +579,13 @@ func JoinServer() gin.HandlerFunc {
 			}
 		}()
 
+		var user models.User
+		if err := tx.First(&user, userID).Error; err != nil {
+			tx.Rollback()
+			handleError(c, http.StatusBadRequest, "L'utilisateur n'existe pas.")
+			return
+		}
+
 		var server models.Server
 		if err := tx.First(&server, serverID).Error; err != nil {
 			tx.Rollback()
@@ -728,6 +746,12 @@ func GetServersByUser() gin.HandlerFunc {
 			return
 		}
 
+		var user models.User
+		if err := db.GetDB().First(&user, userID).Error; err != nil {
+			handleError(c, http.StatusNotFound, "Utilisateur non trouvé")
+			return
+		}
+
 		var servers []models.Server
 		if err := db.GetDB().Table("servers").
 			Joins("JOIN on_servers ON servers.id = on_servers.server_id AND on_servers.deleted_at IS NULL").
@@ -749,13 +773,13 @@ func GetServerMembers() gin.HandlerFunc {
 		serverIDStr := c.Param("id")
 		serverID, err := uuid.Parse(serverIDStr)
 		if err != nil {
-			handleError(c, http.StatusBadRequest, "ID de serveur invalide")
+			handleError(c, http.StatusBadRequest, "Invalid server ID")
 			return
 		}
 
 		var server models.Server
 		if err := db.GetDB().First(&server, serverID).Error; err != nil {
-			handleError(c, http.StatusBadRequest, "Le serveur n'existe pas.")
+			handleError(c, http.StatusNotFound, "Server not found")
 			return
 		}
 
@@ -765,8 +789,14 @@ func GetServerMembers() gin.HandlerFunc {
 			Where("on_servers.server_id = ?", serverID).
 			Where("on_servers.deleted_at IS NULL").
 			Find(&users).Error; err != nil {
-			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des membres du serveur.")
+
+			handleError(c, http.StatusInternalServerError, "Error retrieving server members")
 			return
+		}
+
+		for i := range users {
+			users[i].Password = ""
+			users[i].FcmToken = ""
 		}
 
 		c.JSON(http.StatusOK, gin.H{"data": users})
@@ -853,10 +883,23 @@ func UpdateServerByID() gin.HandlerFunc {
 		if input.Name != "" {
 			server.Name = input.Name
 		}
+
 		if input.Visibility != "" {
+			if input.Visibility != "public" && input.Visibility != "private" {
+				handleError(c, http.StatusBadRequest, "La visibilité du serveur doit être 'public' ou 'private'")
+				return
+			}
+
 			server.Visibility = input.Visibility
 		}
+
 		if input.MediaID != uuid.Nil {
+			var media models.Media
+			if err := db.GetDB().First(&media, input.MediaID).Error; err != nil {
+				handleError(c, http.StatusBadRequest, "Le média n'existe pas")
+				return
+			}
+
 			server.MediaID = input.MediaID
 		}
 
