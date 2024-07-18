@@ -56,7 +56,7 @@ func AcceptFriend() gin.HandlerFunc {
 			return
 		}
 
-		var friendData map[string]interface{}
+		var friendData models.FriendResponse
 		if friend.UserID1 == inputFriend.UserID2 {
 			friendData = models.FriendResponse{
 				ID:         friend.ID,
@@ -309,13 +309,13 @@ func GetPendingFriendsFromUser() gin.HandlerFunc {
 
 		friendsResponse := make([]models.FriendResponse, len(friends))
 		for i, friend := range friends {
-			friendData := map[string]interface{}{
-				"ID":         friend.ID,
-				"FriendID":   friend.User2.ID,
-				"Status":     friend.Status,
-				"UserPseudo": friend.User2.Pseudo,
-				"UserMail":   friend.User2.Email,
-				"Profile":    friend.User2.Profile,
+			friendData := models.FriendResponse{
+				ID:         friend.ID,
+				FriendID:   friend.UserID2,
+				Status:     friend.Status,
+				UserPseudo: friend.User2.Pseudo,
+				UserMail:   friend.User2.Email,
+				Profile:    friend.User2.Profile,
 			}
 			friendsResponse[i] = friendData
 		}
