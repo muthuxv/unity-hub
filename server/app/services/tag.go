@@ -14,7 +14,12 @@ func CreateTag() gin.HandlerFunc {
 		var tag models.Tag
 
 		if err := c.ShouldBindJSON(&tag); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+			return
+		}
+
+		if tag.Name == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Le nom du tag ne peut pas être vide"})
 			return
 		}
 

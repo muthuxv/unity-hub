@@ -99,7 +99,7 @@ func Get(factory ModelFactory, preloads ...PreloadField) gin.HandlerFunc {
 		}
 
 		if err := query.First(model).Error; err != nil {
-			c.Error(err)
+			c.JSON(http.StatusNotFound, gin.H{"error": "UUID not found"})
 			return
 		}
 		c.JSON(http.StatusOK, model)
@@ -127,11 +127,11 @@ func Update(factory ModelFactory) gin.HandlerFunc {
 
 		model := factory()
 		if err := db.GetDB().Where("id = ?", uid).First(model).Error; err != nil {
-			c.Error(err)
+			c.JSON(http.StatusNotFound, gin.H{"error": "UUID not found"})
 			return
 		}
 		if err := c.ShouldBindJSON(model); err != nil {
-			c.Error(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		if err := db.GetDB().Save(model).Error; err != nil {
@@ -160,6 +160,11 @@ func Delete(factory ModelFactory) gin.HandlerFunc {
 		}
 
 		model := factory()
+		if err := db.GetDB().Where("id = ?", uid).First(model).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "UUID not found"})
+			return
+		}
+
 		if err := db.GetDB().Where("id = ?", uid).Delete(model).Error; err != nil {
 			c.Error(err)
 			return
