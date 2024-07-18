@@ -14,6 +14,14 @@ type Channel struct {
 	ServerID   uuid.UUID `gorm:"validate:required"`
 }
 
+type ChannelSwagger struct {
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	Type       string    `json:"type"`
+	Permission string    `json:"permission"`
+	ServerID   uuid.UUID `json:"server_id"`
+}
+
 func (c *Channel) BeforeCreate(tx *gorm.DB) (err error) {
 	c.ID = uuid.New()
 	return nil

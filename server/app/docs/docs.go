@@ -15,55 +15,116 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/friends": {
-            "get": {
-                "description": "Get a list of all items",
+        "/friends/accept": {
+            "put": {
+                "description": "Accept a friend request",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Get all items",
+                "tags": [
+                    "friends"
+                ],
+                "summary": "Accept a friend request",
+                "parameters": [
+                    {
+                        "description": "Friend request data",
+                        "name": "friendRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.FriendRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.FriendResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/friends/pending/from/{id}": {
+            "get": {
+                "description": "Get pending friend requests sent by user ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "friends"
+                ],
+                "summary": "Get pending friend requests sent by user ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "object"
+                                "$ref": "#/definitions/models.FriendResponse"
                             }
                         }
-                    }
-                }
-            },
-            "post": {
-                "description": "Create a new item",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Create a new item",
-                "responses": {
-                    "201": {
-                        "description": "Created",
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/friends/{id}": {
+        "/friends/pending/{id}": {
             "get": {
-                "description": "Get a single item by ID",
+                "description": "Get pending friend requests by user ID",
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Get an item by ID",
+                "tags": [
+                    "friends"
+                ],
+                "summary": "Get pending friend requests by user ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Item ID",
+                        "description": "User ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -73,24 +134,189 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.FriendResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
-            },
+            }
+        },
+        "/friends/refuse": {
             "put": {
-                "description": "Update an item by ID",
+                "description": "Refuse a friend request",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Update an item by ID",
+                "tags": [
+                    "friends"
+                ],
+                "summary": "Refuse a friend request",
+                "parameters": [
+                    {
+                        "description": "Friend request data",
+                        "name": "friendRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.FriendRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/friends/request": {
+            "post": {
+                "description": "Create a friend request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "friends"
+                ],
+                "summary": "Create a friend request",
+                "parameters": [
+                    {
+                        "description": "Friend request data",
+                        "name": "friendRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.FriendRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/friends/search/{pseudo}": {
+            "get": {
+                "description": "Search for users by pseudo",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "friends"
+                ],
+                "summary": "Search for users by pseudo",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Item ID",
+                        "description": "User Pseudo",
+                        "name": "pseudo",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.SearchUserResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/friends/user/{id}": {
+            "get": {
+                "description": "Get friends by user ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "friends"
+                ],
+                "summary": "Get friends by user ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -100,27 +326,1354 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.FriendResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "description": "Login a user with email and password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login a user",
+                "parameters": [
+                    {
+                        "description": "Login credentials",
+                        "name": "credentials",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.LoginPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.TokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorUserResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorUserResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Register a new user with email and pseudo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "description": "User info",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.UserSwagger"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorUserResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorUserResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers": {
+            "get": {
+                "description": "Get all servers",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Get all servers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ServerSwagger"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
                         }
                     }
                 }
             },
-            "delete": {
-                "description": "Delete an item by ID",
-                "summary": "Delete an item by ID",
+            "post": {
+                "description": "Create a new server with specified details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Create a new server",
+                "parameters": [
+                    {
+                        "description": "Server details",
+                        "name": "server",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ServerSwagger"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.ServerSwagger"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers/friend/{friendID}": {
+            "get": {
+                "description": "Get servers that a specific friend is not a member of",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Get servers friend is not in",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Item ID",
+                        "description": "Friend ID",
+                        "name": "friendID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ServerSwagger"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers/join/{id}": {
+            "post": {
+                "description": "Join a specific server by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Join a server",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "No Content"
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.OnServerSwagger"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
                     }
+                }
+            }
+        },
+        "/servers/leave/{id}": {
+            "delete": {
+                "description": "Leave a specific server by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Leave a server",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.OnServerSwagger"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers/public/{id}": {
+            "get": {
+                "description": "Get all public servers that a user is not a member of",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Get public available servers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ServerSwagger"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers/search": {
+            "get": {
+                "description": "Search for servers by name",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Search servers by name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server name",
+                        "name": "name",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ServerSwagger"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers/user/{id}": {
+            "get": {
+                "description": "Get all servers that a specific user is a member of",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Get servers by user ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ServerSwagger"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers/{id}": {
+            "get": {
+                "description": "Get details of a specific server by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Get a server by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ServerSwagger"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a specific server by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Delete server by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessServerResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers/{id}/bans": {
+            "get": {
+                "description": "Get all bans for a specific server",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Get server bans",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.BanSwagger"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers/{id}/channels": {
+            "get": {
+                "description": "Get all channels of a specific server",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Get server channels",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/models.ChannelSwagger"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers/{id}/kick/{userID}": {
+            "delete": {
+                "description": "Kick a user from a specific server",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Kick a user from a server",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessServerResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers/{id}/logs": {
+            "get": {
+                "description": "Get all logs of a specific server",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Get server logs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.LogsSwagger"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers/{id}/members": {
+            "get": {
+                "description": "Get all members of a specific server",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Get server members",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.User"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/servers/{id}/unban/{userID}": {
+            "delete": {
+                "description": "Unban a user from a specific server",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "servers"
+                ],
+                "summary": "Unban a user from a server",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Server ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessServerResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorServerResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/fcm-token": {
+            "post": {
+                "description": "Register a Firebase Cloud Messaging token for push notifications",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Register FCM token",
+                "parameters": [
+                    {
+                        "description": "FCM token",
+                        "name": "fcmToken",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.FcmTokenPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorUserResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorUserResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/{id}": {
+            "put": {
+                "description": "Update the data of an existing user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Update user data",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User data",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateUserDataPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.UserSwagger"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorUserResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorUserResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorUserResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/{id}/password": {
+            "put": {
+                "description": "Change the password of an existing user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Change user password",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Password info",
+                        "name": "password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ChangePasswordPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorUserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorUserResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorUserResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/verify/{token}": {
+            "get": {
+                "description": "Verify a user account using the verification token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Verify a user account",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Verification token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorUserResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.BanSwagger": {
+            "type": "object",
+            "properties": {
+                "banned_by": {
+                    "$ref": "#/definitions/models.UserSwagger"
+                },
+                "banned_by_id": {
+                    "type": "string"
+                },
+                "duration": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "server": {
+                    "$ref": "#/definitions/models.ServerSwagger"
+                },
+                "server_id": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/models.UserSwagger"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ChangePasswordPayload": {
+            "type": "object",
+            "required": [
+                "currentPassword",
+                "newPassword"
+            ],
+            "properties": {
+                "currentPassword": {
+                    "type": "string"
+                },
+                "newPassword": {
+                    "type": "string",
+                    "minLength": 6
+                }
+            }
+        },
+        "models.ChannelSwagger": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "permission": {
+                    "type": "string"
+                },
+                "server_id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ErrorServerResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ErrorUserResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.FcmTokenPayload": {
+            "type": "object",
+            "required": [
+                "fcmToken"
+            ],
+            "properties": {
+                "fcmToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.FriendRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "ID of the friend request",
+                    "type": "string"
+                },
+                "userId2": {
+                    "description": "ID of the user who is supposed to accept/refuse the friend request",
+                    "type": "string"
+                }
+            }
+        },
+        "models.FriendResponse": {
+            "type": "object",
+            "properties": {
+                "friendId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "profile": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "userMail": {
+                    "type": "string"
+                },
+                "userPseudo": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.LoginPayload": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.LogsSwagger": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "server": {
+                    "$ref": "#/definitions/models.ServerSwagger"
+                },
+                "server_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.MediaSwagger": {
+            "type": "object",
+            "properties": {
+                "file_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mime_type": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.OnServerSwagger": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "server": {
+                    "$ref": "#/definitions/models.ServerSwagger"
+                },
+                "server_id": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/models.UserSwagger"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.SearchUserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "profile": {
+                    "type": "string"
+                },
+                "pseudo": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ServerSwagger": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "media": {
+                    "$ref": "#/definitions/models.MediaSwagger"
+                },
+                "media_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TagSwagger"
+                    }
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.SuccessServerResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.TagSwagger": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpdateUserDataPayload": {
+            "type": "object",
+            "properties": {
+                "profile": {
+                    "type": "string"
+                },
+                "pseudo": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "fcmToken": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isVerified": {
+                    "type": "boolean"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "profile": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "providerID": {
+                    "type": "string"
+                },
+                "pseudo": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "verificationToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UserSwagger": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "fcm_token": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_verified": {
+                    "type": "boolean"
+                },
+                "profile": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "provider_id": {
+                    "type": "string"
+                },
+                "pseudo": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "verification_token": {
+                    "type": "string"
                 }
             }
         }
