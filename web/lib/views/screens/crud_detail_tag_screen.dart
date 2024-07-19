@@ -76,8 +76,15 @@ class _CrudDetailTagScreenState extends State<CrudDetailTagScreen> {
         btnOkText: 'Oui',
         btnOkOnPress: () async {
           try {
+            final token = await _storage.read(key: 'token');
+
             final response = await Dio().put(
               '${env.apiBaseUrl}/tags/${widget.id}',
+              options: Options(
+                headers: {
+                  'Authorization': 'Bearer $token',
+                },
+              ),
               data: {
                 'Name': _formData.name,
               },

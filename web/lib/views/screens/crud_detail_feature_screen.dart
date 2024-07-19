@@ -5,6 +5,7 @@ import 'package:web_admin/app_router.dart';
 import 'package:web_admin/constants/dimens.dart';
 import 'package:web_admin/generated/l10n.dart';
 import 'package:web_admin/environment.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web_admin/theme/theme_extensions/app_button_theme.dart';
 import 'package:web_admin/views/widgets/card_elements.dart';
 import 'package:web_admin/views/widgets/portal_master_layout/portal_master_layout.dart';
@@ -29,19 +30,30 @@ class CrudDetailFeatureScreen extends StatefulWidget {
 class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
   final _formData = FormData();
+  final _storage = const FlutterSecureStorage();
 
   Future<bool>? _future;
 
   Future<bool> _getDataAsync() async {
     if (widget.id.isNotEmpty) {
       try {
-        final response = await Dio().get('${env.apiBaseUrl}/features/${widget.id}');
+        final token = await _storage.read(key: 'token');
+
+        final response = await Dio().get(
+          '${env.apiBaseUrl}/features/${widget.id}',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $token',
+            },
+          ),
+        );
         if (response.statusCode == 200) {
           final feature = response.data;
           print(feature);
           setState(() {
             _formData.id = widget.id;
-            _formData.status = feature['Status'];
+            _formData.status = feature['Status'] ?? 'false';
+            _formData.name = feature['Name'] ?? '';
           });
         }
       } catch (e) {
@@ -68,10 +80,18 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
         btnOkText: 'Oui',
         btnOkOnPress: () async {
           try {
+            final token = await _storage.read(key: 'token');
+
             final response = await Dio().put(
               '${env.apiBaseUrl}/features/${widget.id}',
+              options: Options(
+                headers: {
+                  'Authorization': 'Bearer $token',
+                },
+              ),
               data: {
                 'Status': _formData.status,
+                'Name': _formData.name, // Assurez-vous que le nom est inclus dans les données envoyées
               },
             );
 
@@ -133,24 +153,20 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
                       future: (_future ??= _getDataAsync()),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
-                          if (snapshot.hasData && snapshot.data!) {
-                            return _content(context);
-                          }
+                          return Center(
+                            child: SizedBox(
+                              height: 40.0,
+                              width: 40.0,
+                              child: CircularProgressIndicator(
+                                backgroundColor: themeData.scaffoldBackgroundColor,
+                              ),
+                            ),
+                          );
                         } else if (snapshot.hasData && snapshot.data!) {
                           return _content(context);
+                        } else {
+                          return Center(child: Text('Erreur de chargement des données'));
                         }
-
-                        return Container(
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(vertical: kDefaultPadding),
-                          child: SizedBox(
-                            height: 40.0,
-                            width: 40.0,
-                            child: CircularProgressIndicator(
-                              backgroundColor: themeData.scaffoldBackgroundColor,
-                            ),
-                          ),
-                        );
                       },
                     ),
                   ),
@@ -175,6 +191,25 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: kDefaultPadding * 1.5),
+            child: FormBuilderTextField(
+              name: 'name',
+              decoration: const InputDecoration(
+                labelText: 'Name',
+                hintText: 'Name',
+                border: OutlineInputBorder(),
+                floatingLabelBehavior: FloatingLabelBehavior.always,
+              ),
+              initialValue: _formData.name,
+              validator: FormBuilderValidators.required(),
+              onChanged: (value) {
+                setState(() {
+                  _formData.name = value ?? '';
+                });
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: kDefaultPadding * 1.5),
             child: FormBuilderDropdown(
               name: 'status',
               decoration: const InputDecoration(
@@ -187,7 +222,7 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
                 DropdownMenuItem(value: 'true', child: Text('Activé')),
                 DropdownMenuItem(value: 'false', child: Text('Désactivé')),
               ],
-              initialValue: _formData.status.isNotEmpty ? _formData.status : 'false', // Ajoutez cette ligne pour définir une valeur par défaut
+              initialValue: _formData.status,
               validator: FormBuilderValidators.required(),
               onChanged: (String? value) {
                 setState(() {
@@ -253,4 +288,5 @@ class _CrudDetailFeatureScreenState extends State<CrudDetailFeatureScreen> {
 class FormData {
   String id = '';
   String status = 'false';
+  String name = '';
 }
