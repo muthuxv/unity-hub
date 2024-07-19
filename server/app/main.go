@@ -22,6 +22,8 @@ func initDb() {
 // @host localhost:8080
 // @BasePath /
 func main() {
+	gin.SetMode(gin.ReleaseMode)
+
 	initDb()
 
 	r := gin.Default()
