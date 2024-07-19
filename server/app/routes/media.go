@@ -9,5 +9,5 @@ import (
 
 func MediaRoutes(r *gin.Engine) {
 	r.GET("/medias", controllers.GetAll(func() interface{} { return &[]models.Media{} }))
-	r.POST("/upload", services.UploadFile)
+	r.POST("/upload", controllers.TokenAuthMiddleware("user"), services.UploadFile)
 }

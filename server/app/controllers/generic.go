@@ -1,18 +1,38 @@
 package controllers
 
 import (
-	"net/http"
-	"github.com/gin-gonic/gin"
 	"app/db"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type ModelFactory func() interface{}
 
-func GetAll(factory ModelFactory) gin.HandlerFunc {
+type PreloadField struct {
+	Association string
+	Fields      []string
+}
+
+func GetAll(factory ModelFactory, preloads ...PreloadField) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		modelSlice := factory()
-		if err := db.GetDB().Find(modelSlice).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		query := db.GetDB().Model(modelSlice)
+
+		for _, preload := range preloads {
+			if len(preload.Fields) > 0 {
+				query = query.Preload(preload.Association, func(db *gorm.DB) *gorm.DB {
+					return db.Select(preload.Fields)
+				})
+			} else {
+				query = query.Preload(preload.Association)
+			}
+		}
+
+		if err := query.Find(modelSlice).Error; err != nil {
+			c.Error(err)
 			return
 		}
 		c.JSON(http.StatusOK, modelSlice)
@@ -23,23 +43,43 @@ func Create(factory ModelFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		model := factory()
 		if err := c.ShouldBindJSON(model); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.Error(err)
 			return
 		}
 		if err := db.GetDB().Create(model).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.Error(err)
 			return
 		}
 		c.JSON(http.StatusCreated, model)
 	}
 }
 
-func Get(factory ModelFactory) gin.HandlerFunc {
+func Get(factory ModelFactory, preloads ...PreloadField) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
+
+		// Vérification de l'UUID
+		uid, err := uuid.Parse(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
+			return
+		}
+
 		model := factory()
-		if err := db.GetDB().First(model, id).Error; err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		query := db.GetDB().Where("id = ?", uid)
+
+		for _, preload := range preloads {
+			if len(preload.Fields) > 0 {
+				query = query.Preload(preload.Association, func(db *gorm.DB) *gorm.DB {
+					return db.Select(preload.Fields)
+				})
+			} else {
+				query = query.Preload(preload.Association)
+			}
+		}
+
+		if err := query.First(model).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "UUID not found"})
 			return
 		}
 		c.JSON(http.StatusOK, model)
@@ -49,16 +89,27 @@ func Get(factory ModelFactory) gin.HandlerFunc {
 func Update(factory ModelFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
+
+		// Vérification de l'UUID
+		uid, err := uuid.Parse(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
+			return
+		}
+
 		model := factory()
-		if err := db.GetDB().First(model, id).Error; err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		if err := db.GetDB().Where("id = ?", uid).First(model).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "UUID not found"})
 			return
 		}
 		if err := c.ShouldBindJSON(model); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		db.GetDB().Save(model)
+		if err := db.GetDB().Save(model).Error; err != nil {
+			c.Error(err)
+			return
+		}
 		c.JSON(http.StatusOK, model)
 	}
 }
@@ -66,9 +117,22 @@ func Update(factory ModelFactory) gin.HandlerFunc {
 func Delete(factory ModelFactory) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
+
+		// Vérification de l'UUID
+		uid, err := uuid.Parse(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
+			return
+		}
+
 		model := factory()
-		if err := db.GetDB().Delete(model, id).Error; err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		if err := db.GetDB().Where("id = ?", uid).First(model).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "UUID not found"})
+			return
+		}
+
+		if err := db.GetDB().Where("id = ?", uid).Delete(model).Error; err != nil {
+			c.Error(err)
 			return
 		}
 		c.Status(http.StatusNoContent)

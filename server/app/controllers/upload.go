@@ -5,10 +5,15 @@ import (
 	"mime/multipart"
 )
 
-const MaxUploadSize = 10 << 20 
+const MaxUploadSize = 10 << 20
+
 var AllowedExtensions = map[string]bool{
-	"image/jpeg": true,
-	"image/png":  true,
+	"image/jpeg":      true,
+	"image/png":       true,
+	"image/jpg":       true,
+	"video/mp4":       true,
+	"video/quicktime": true,
+	"image/mp4":       true,
 }
 
 func ValidateFileUpload(fileHeader *multipart.FileHeader) error {

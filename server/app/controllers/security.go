@@ -1,29 +1,43 @@
 package controllers
 
 import (
+	"bytes"
+	"crypto/rand"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-	"bytes"
-	"io/ioutil"
+	"app/db"
+	"app/db/models"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"encoding/json"
-	"crypto/rand"
-	"encoding/hex"
+	"github.com/google/uuid"
 )
 
 var jwtKey = []byte(os.Getenv("JWT_KEY"))
 
-func GenerateJWT(userID uint, email, role string) (string, error) {
-	expirationTime := time.Now().Add(5 * time.Hour)
-	claims := &jwt.RegisteredClaims{
-		ID:        fmt.Sprintf("%v", userID),
-		Subject:   email,
-		ExpiresAt: jwt.NewNumericDate(expirationTime),
-		Audience:  []string{role},
+type CustomClaims struct {
+	jwt.RegisteredClaims
+	Pseudo string `json:"pseudo"`
+	Role   string `json:"role"`
+}
+
+func GenerateJWT(userID uuid.UUID, email, role, pseudo string) (string, error) {
+	expirationTime := time.Now().Add(10000 * time.Hour)
+	claims := CustomClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        fmt.Sprintf("%v", userID),
+			Subject:   email,
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			Audience:  []string{role},
+		},
+		Pseudo: pseudo,
+		Role:   role,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -46,11 +60,11 @@ func getJwt(c *gin.Context) (string, error) {
 }
 
 func GenerateVerificationToken() (string, error) {
-    bytes := make([]byte, 16)
-    if _, err := rand.Read(bytes); err != nil {
-        return "", err
-    }
-    return hex.EncodeToString(bytes), nil
+	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }
 
 func TokenAuthMiddleware(requiredRole string) gin.HandlerFunc {
@@ -148,5 +162,244 @@ func FilterBodyMiddleware(fieldsToFilter ...string) gin.HandlerFunc {
 			c.Request.ContentLength = int64(len(modifiedBodyBytes))
 		}
 		c.Next()
+	}
+}
+
+func PermissionMiddleware(requiredPermission string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reqToken, err := getJwt(c)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.Abort()
+			return
+		}
+
+		token, err := jwt.Parse(reqToken, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, http.ErrNotSupported
+			}
+			return jwtKey, nil
+		})
+
+		if err != nil || !token.Valid {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
+
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			userIDStr, ok := claims["jti"].(string)
+			if !ok {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+				c.Abort()
+				return
+			}
+
+			userID, err := uuid.Parse(userIDStr)
+			if err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID"})
+				c.Abort()
+				return
+			}
+
+			// Extraire serverID de l'URL ou du corps de la requête
+			serverIDStr := c.Param("id")
+			if serverIDStr == "" {
+				// Lire le corps de la requête
+				bodyBytes, err := ioutil.ReadAll(c.Request.Body)
+				if err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+					c.Abort()
+					return
+				}
+				// Réinitialiser le corps de la requête pour le rendre disponible pour les autres middlewares/handlers
+				c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+				var requestBody map[string]interface{}
+				if err := json.Unmarshal(bodyBytes, &requestBody); err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+					c.Abort()
+					return
+				}
+				serverIDInterface, exists := requestBody["serverId"]
+				if !exists {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Missing parameters (serverId must be present)"})
+					c.Abort()
+					return
+				}
+				serverIDStr, ok = serverIDInterface.(string)
+				if !ok {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid server ID"})
+					c.Abort()
+					return
+				}
+			}
+
+			serverID, err := uuid.Parse(serverIDStr)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid server ID"})
+				c.Abort()
+				return
+			}
+
+			var roleUser models.RoleUser
+			// Joindre avec la table Role pour filtrer par server_id
+			if err := db.GetDB().Joins("JOIN roles ON roles.id = role_users.role_id").Where("role_users.user_id = ? AND roles.server_id = ?", userID, serverID).First(&roleUser).Error; err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "User role not found"})
+				c.Abort()
+				return
+			}
+
+			var rolePermissions []models.RolePermissions
+			if err := db.GetDB().Where("role_id = ?", roleUser.RoleID).Preload("Permissions").Find(&rolePermissions).Error; err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Role permissions not found"})
+				c.Abort()
+				return
+			}
+
+			isAuthorized := false
+			for _, rp := range rolePermissions {
+				if rp.Permissions.Label == requiredPermission {
+					if requiredPermission == "admin" && roleUser.Role.Label == "admin" {
+						isAuthorized = true
+					} else if rp.Power == 1 {
+						isAuthorized = true
+					}
+					break
+				}
+			}
+
+			if !isAuthorized {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Insufficient permissions"})
+				c.Abort()
+				return
+			}
+
+			c.Set("jwt_claims", token.Claims)
+			c.Next()
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+		}
+	}
+}
+
+func PermissionChannelMiddleware(requiredPermission string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reqToken, err := getJwt(c)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.Abort()
+			return
+		}
+
+		token, err := jwt.Parse(reqToken, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, http.ErrNotSupported
+			}
+			return jwtKey, nil
+		})
+
+		if err != nil || !token.Valid {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
+
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			userIDStr, ok := claims["jti"].(string)
+			if !ok {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+				c.Abort()
+				return
+			}
+
+			userID, err := uuid.Parse(userIDStr)
+			if err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID"})
+				c.Abort()
+				return
+			}
+
+			channelIDStr := c.Param("id")
+			if channelIDStr == "" {
+				bodyBytes, err := ioutil.ReadAll(c.Request.Body)
+				if err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+					c.Abort()
+					return
+				}
+				c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+				var requestBody map[string]interface{}
+				if err := json.Unmarshal(bodyBytes, &requestBody); err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+					c.Abort()
+					return
+				}
+				channelIDInterface, exists := requestBody["channelId"]
+				if !exists {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Missing parameters (channelId must be present)"})
+					c.Abort()
+					return
+				}
+				channelIDStr, ok = channelIDInterface.(string)
+				if !ok {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid channel ID"})
+					c.Abort()
+					return
+				}
+			}
+
+			channelID, err := uuid.Parse(channelIDStr)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid channel ID"})
+				c.Abort()
+				return
+			}
+
+			var roleUser models.RoleUser
+			if err := db.GetDB().Joins("JOIN roles ON roles.id = role_users.role_id").Where("role_users.user_id = ?", userID).First(&roleUser).Error; err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "User role not found"})
+				c.Abort()
+				return
+			}
+
+			var rolePermissions []models.RolePermissions
+			if err := db.GetDB().Where("role_id = ?", roleUser.RoleID).Preload("Permissions").Find(&rolePermissions).Error; err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Role permissions not found"})
+				c.Abort()
+				return
+			}
+
+			var channelPermissions models.ChannelChannelPermissions
+			if err := db.GetDB().Joins("JOIN channel_permissions ON channel_permissions.id = channel_channel_permissions.channel_permission_id").
+				Where("channel_channel_permissions.channel_id = ? AND channel_permissions.label = ?", channelID, requiredPermission).
+				First(&channelPermissions).Error; err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Channel permissions not found"})
+				c.Abort()
+				return
+			}
+
+			isAuthorized := false
+			for _, rp := range rolePermissions {
+				if rp.Permissions.Label == requiredPermission && rp.Power >= channelPermissions.Power {
+					isAuthorized = true
+					break
+				}
+			}
+
+			if !isAuthorized {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Insufficient permissions"})
+				c.Abort()
+				return
+			}
+
+			c.Set("jwt_claims", token.Claims)
+			c.Next()
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+		}
 	}
 }

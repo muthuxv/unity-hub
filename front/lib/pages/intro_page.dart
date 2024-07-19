@@ -1,13 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'home_page.dart';
 import 'security/login_page.dart';
 import 'security/register_page.dart';
+import 'package:github_sign_in_plus/github_sign_in_plus.dart';
+import '../components/google_sign_in_button.dart';
+import '../components/github_sign_in_button.dart';
 
 class IntroPage extends StatelessWidget {
   const IntroPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+
+/*
+    Future<void> handleSignIn(BuildContext context) async {
+      final GitHubSignIn gitHubSignIn = GitHubSignIn(
+        clientId: dotenv.env['CLIENT_ID_GITHUB_AUTH']!,
+        clientSecret: dotenv.env['CLIENT_SECRET_GITHUB_AUTH']!,
+        redirectUrl: dotenv.env['GITHUB_REDIRECT_URL']!,
+      );
+
+      final result = await gitHubSignIn.signIn(context);
+      final accessToken = result.token;
+
+      print('GitHub accesstoken: $accessToken');
+
+      try {
+        final result = await gitHubSignIn.signIn(context);
+
+        if (result.status == GitHubSignInResultStatus.ok) {
+          print('GitHub token: $accessToken');
+        } else {
+          // Handle sign-in failure
+          print('GitHub sign-in failed: ${result.errorMessage}');
+        }
+      } catch (error) {
+        // Handle any errors that occur during sign-in process
+        print('Error signing in with GitHub: $error');
+      }
+    }
+ */
+
     return Scaffold(
         body: Center(
         child: Container(
@@ -32,7 +66,7 @@ class IntroPage extends StatelessWidget {
 
                   ),
 
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 16),
                   //title
                   const Text(
                     'Bienvenue sur Unity Hub!',
@@ -115,6 +149,30 @@ class IntroPage extends StatelessWidget {
                                   )
                               ),
                             ),
+                          ),
+                        ),
+                        //Oauth2
+                        Container(
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          child: const Column(
+                            children: [
+                              SizedBox(height: 16),
+                              Text(
+                                'Ou connecte-toi avec',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(height: 16),
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    GithubSignInButton(),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
