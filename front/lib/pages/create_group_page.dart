@@ -48,10 +48,11 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       final apiPath = dotenv.env['API_PATH']!;
 
       final dio = Dio();
-      dio.options.headers['Content-Type'] = 'application/json';
-      dio.options.headers['Authorization'] = 'Bearer $token';
 
-      final response = await dio.get('$apiPath/friends/users/$userId');
+      final response = await dio.get('$apiPath/friends/users/$userId',
+          options: Options(
+              headers: {'Authorization': 'Bearer $token'})
+      );
 
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
@@ -132,15 +133,16 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     }
 
     final dio = Dio();
-    dio.options.headers['Content-Type'] = 'application/json';
-    dio.options.headers['Authorization'] = 'Bearer $token';
 
     if (selectedFriends.length == 1 && widget.groupId.isEmpty) {
       Provider.of<GroupProvider>(context, listen: false).createDM(selectedFriends.first);
     } else {
       List<String> memberIds = selectedFriends;
       if (widget.groupId.isNotEmpty) {
-        final response = await dio.get('$apiPath/groups/${widget.groupId}');
+        final response = await dio.get('$apiPath/groups/${widget.groupId}',
+            options: Options(
+                headers: {'Authorization': 'Bearer $token'})
+        );
         if (response.statusCode == 200) {
           final groupData = response.data;
           if (groupData['Type'] == 'dm') {

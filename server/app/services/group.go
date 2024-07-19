@@ -4,7 +4,6 @@ import (
 	"app/db"
 	"app/db/models"
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 
@@ -37,6 +36,17 @@ func CreateOrGetDM() gin.HandlerFunc {
 			return
 		}
 
+		var friend models.Friend
+		err = db.GetDB().Where("(user_id1 = ? AND user_id2 = ? OR user_id1 = ? AND user_id2 = ?) AND status = ?", userID1, userID2, userID2, userID1, "accepted").First(&friend).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Users are not friends"})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			}
+			return
+		}
+
 		var group models.Group
 		err = db.GetDB().Where("type = ? AND (id IN (SELECT group_id FROM group_members WHERE user_id = ?) AND id IN (SELECT group_id FROM group_members WHERE user_id = ?))", "dm", userID1, userID2).First(&group).Error
 		if err == nil {
@@ -49,9 +59,9 @@ func CreateOrGetDM() gin.HandlerFunc {
 		}
 
 		channel := models.Channel{
-			Name:       "Direct Message",
-			Type:       "dm",
-			ServerID:   uuid.Nil,
+			Name:     "Direct Message",
+			Type:     "dm",
+			ServerID: uuid.Nil,
 		}
 		if err := db.GetDB().Create(&channel).Error; err != nil {
 			c.Error(err)
@@ -82,28 +92,21 @@ func CreateOrGetDM() gin.HandlerFunc {
 
 func CreatePublicGroup() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Println("Creating public group")
 		userID, err := uuid.Parse(c.Param("userID"))
 		if err != nil {
 			c.Error(err)
 			return
 		}
 
-		log.Println("User ID:", userID)
-
 		var request struct {
 			MemberIDs []string `json:"member_ids" binding:"required"`
 			GroupID   *string  `json:"group_id"`
 		}
 
-		log.Println("Request:", request)
-
 		if err := c.ShouldBindJSON(&request); err != nil {
 			c.Error(err)
 			return
 		}
-
-		log.Println("Request2:", request)
 
 		memberIDs := request.MemberIDs
 		memberIDs = append(memberIDs, userID.String())
@@ -118,8 +121,6 @@ func CreatePublicGroup() gin.HandlerFunc {
 
 			memberIDs[i] = uuidMemberID.String()
 		}
-
-		log.Println("Member IDs:", memberIDs)
 
 		//check for duplicates
 		uniqueMemberIDs := []string{}
@@ -138,13 +139,26 @@ func CreatePublicGroup() gin.HandlerFunc {
 
 		memberIDs = uniqueMemberIDs
 
+		for _, memberID := range memberIDs {
+			if memberID == userID.String() {
+				continue
+			}
+			var friend models.Friend
+			err = db.GetDB().Where("(user_id1 = ? AND user_id2 = ? OR user_id1 = ? AND user_id2 = ?) AND status = ?", userID, memberID, memberID, userID, "accepted").First(&friend).Error
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Users are not friends"})
+				} else {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				}
+				return
+			}
+		}
+
 		var group models.Group
 		var channel models.Channel
 
-		log.Println("Group ID:", request.GroupID)
-
 		if *request.GroupID == "" {
-			log.Println("Creating new group")
 			var members []models.User
 			if err := db.GetDB().Where("id IN (?)", memberIDs).Find(&members).Error; err != nil {
 				c.Error(err)
@@ -158,20 +172,16 @@ func CreatePublicGroup() gin.HandlerFunc {
 
 			channelName := strings.Join(memberNames, ", ")
 
-			log.Println("Channel name:", channelName)
-
 			channel = models.Channel{
-				Name:       channelName,
-				Type:       "group",
-				ServerID:   uuid.Nil,
+				Name:     channelName,
+				Type:     "group",
+				ServerID: uuid.Nil,
 			}
 
 			if err := db.GetDB().Create(&channel).Error; err != nil {
 				c.Error(err)
 				return
 			}
-
-			log.Println("New channel created")
 
 			parsedUUID := uuid.MustParse(userID.String())
 
@@ -181,8 +191,6 @@ func CreatePublicGroup() gin.HandlerFunc {
 				return
 			}
 
-			log.Println("New group created")
-			// Ajouter les membres au groupe
 			for _, memberID := range memberIDs {
 				groupMember := models.GroupMember{UserID: uuid.MustParse(memberID), GroupID: group.ID}
 				if err := db.GetDB().Create(&groupMember).Error; err != nil {
@@ -190,8 +198,6 @@ func CreatePublicGroup() gin.HandlerFunc {
 					return
 				}
 			}
-
-			log.Println("New group created")
 
 			c.JSON(http.StatusCreated, group)
 		} else {
@@ -234,9 +240,9 @@ func CreatePublicGroup() gin.HandlerFunc {
 				channelName := strings.Join(memberNames, ", ")
 
 				channel = models.Channel{
-					Name:       channelName,
-					Type:       "group",
-					ServerID:   uuid.Nil,
+					Name:     channelName,
+					Type:     "group",
+					ServerID: uuid.Nil,
 				}
 
 				if err := db.GetDB().Create(&channel).Error; err != nil {
@@ -384,26 +390,26 @@ func RemoveGroupMember() gin.HandlerFunc {
 				return
 			}
 
-			c.JSON(http.StatusOK, gin.H{"message": "Group deleted"})
+			err = dbConn.Unscoped().Delete(&groupMember).Error
+			if err != nil {
+				handleError(err)
+				return
+			}
+
+			c.JSON(http.StatusNoContent, nil)
 			return
 		}
 
 		parsedUUID := uuid.MustParse(userID.String())
 
-		log.Println("Owner:", group.OwnerID)
-
 		if group.OwnerID == nil || *group.OwnerID == parsedUUID {
 
-			log.Println("User is owner")
-			// Trouver un nouveau propriétaire qui n'est pas l'utilisateur supprimé
 			for _, gm := range groupMembers {
 				if gm.UserID != userID {
 					group.OwnerID = &gm.UserID
 					break
 				}
 			}
-
-			log.Println("New owner:", group.OwnerID)
 
 			err = dbConn.Save(&group).Error
 			if err != nil {
@@ -418,7 +424,7 @@ func RemoveGroupMember() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Member removed"})
+		c.JSON(http.StatusNoContent, nil)
 	}
 }
 

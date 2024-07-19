@@ -25,7 +25,12 @@ class GroupProvider with ChangeNotifier {
     final apiPath = dotenv.env['API_PATH']!;
 
     try {
-      final response = await Dio().get('$apiPath/groups/users/$userId');
+      final response = await Dio().get(
+          '$apiPath/groups/users/$userId',
+          options: Options(
+              headers:
+              {'Authorization' : 'Bearer $token'}
+          ));
       if (response.statusCode == 200) {
         List<dynamic>? data = response.data;
 
@@ -95,7 +100,13 @@ class GroupProvider with ChangeNotifier {
     final apiPath = dotenv.env['API_PATH']!;
 
     final response = await Dio().post('$apiPath/groups/private/$userId1',
-        data: {'userID': userId2});
+        data: {'userID': userId2},
+        options: Options(
+            headers:
+            {'Authorization': 'Bearer $token'}
+        )
+    );
+
     if (response.statusCode == 201 || response.statusCode == 200) {
       fetchGroups();
     }
@@ -111,7 +122,12 @@ class GroupProvider with ChangeNotifier {
     final apiPath = dotenv.env['API_PATH']!;
 
     final response = await Dio().post('$apiPath/groups/public/$userId',
-        data: {'group_id': groupId, 'member_ids': memberIds});
+        data: {'group_id': groupId, 'member_ids': memberIds},
+        options: Options(
+            headers:
+            {'Authorization': 'Bearer $token'}
+        )
+    );
     if (response.statusCode == 200 || response.statusCode == 201) {
       fetchGroups();
     }
@@ -124,9 +140,17 @@ class GroupProvider with ChangeNotifier {
     final apiPath = dotenv.env['API_PATH']!;
 
     final url = '$apiPath/groups/$groupId/members/$userId';
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
 
     try {
-      final response = await dio.delete(url);
+      final response = await dio.delete(
+          url,
+          options: Options(
+              headers:
+              {'Authorization': 'Bearer $token'}
+          )
+      );
 
       if (response.statusCode == 200) {
         groups.removeWhere((group) => group.id == groupId);

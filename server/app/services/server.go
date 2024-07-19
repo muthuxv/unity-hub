@@ -924,12 +924,24 @@ func GetServerMembers() gin.HandlerFunc {
 			return
 		}
 
-		for i := range users {
-			users[i].Password = ""
-			users[i].FcmToken = ""
+		type UserResponse struct {
+			ID      uuid.UUID `json:"id"`
+			Pseudo  string    `json:"pseudo"`
+			Role    string    `json:"role"`
+			Profile string    `json:"profile"`
 		}
 
-		c.JSON(http.StatusOK, gin.H{"data": users})
+		var response []UserResponse
+		for _, user := range users {
+			response = append(response, UserResponse{
+				ID:      user.ID,
+				Pseudo:  user.Pseudo,
+				Role:    user.Role,
+				Profile: user.Profile,
+			})
+		}
+
+		c.JSON(http.StatusOK, gin.H{"data": response})
 	}
 }
 

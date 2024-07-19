@@ -60,9 +60,17 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
     final apiPath = dotenv.env['API_PATH']!;
 
     final url = '$apiPath/groups/${widget.group.id}/members/$memberId';
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
 
     try {
-      final response = await dio.delete(url);
+      final response = await dio.delete(url,
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $token',
+            }
+          )
+      );
 
       if (response.statusCode == 200) {
         setState(() {
