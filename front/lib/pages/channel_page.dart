@@ -350,7 +350,6 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     final apiPath = dotenv.env['API_PATH']!;
     try {
       final response = await Dio().get('$apiPath/reacts');
-      print(response);
       return response.data;
     } catch (error) {
       print('Erreur lors de la récupération des réactions : $error');

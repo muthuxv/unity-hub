@@ -24,7 +24,6 @@ Future<String?> getCurrentUserId() async {
       final currentUserId = decodedToken['jti'];
       return currentUserId;
     } else {
-      print('Token not found');
       return null;
     }
   } catch (e) {

@@ -23,7 +23,6 @@ class _AuthPageState extends State<AuthPage> {
     //final ghToken = await storage.read(key: 'gh_token');
 
     if (token == null || token.isEmpty) {
-      print('Token is null');
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const IntroPage()),

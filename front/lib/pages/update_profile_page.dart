@@ -184,7 +184,6 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   void _generateRandomAvatar() {
     setState(() {
       _avatar = RandomAvatarString(DateTime.now().millisecondsSinceEpoch.toString());
-      print(_avatar);
     });
   }
 

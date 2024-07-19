@@ -84,7 +84,12 @@ class _PermissionsPageState extends State<PermissionsPage> {
       );
 
       if (response.statusCode == 200) {
-        print("Permissions updated successfully");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Les permissions ont été mises à jour'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     } catch (e) {
       print(e);

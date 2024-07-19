@@ -51,11 +51,8 @@ class MessagingService {
       );
     }
 
-    debugPrint('User granted notifications permission: ${settings.authorizationStatus}');
-
     try {
       fcmToken = await _fcm.getToken();
-      log('fcmToken: $fcmToken');
     } catch (e) {
       debugPrint('Error getting FCM token: $e');
       return;
@@ -81,7 +78,6 @@ class MessagingService {
         ),
       );
 
-      debugPrint('FCM token stored in the server: ${response.statusCode}');
     } catch (e) {
       debugPrint('Failed to store FCM token in the server: $e');
     }
@@ -114,7 +110,6 @@ class MessagingService {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('onMessage: ${message.notification!.title.toString()}');
       final notification = message.notification;
       final android = message.notification!.android;
 
@@ -155,7 +150,6 @@ class MessagingService {
 
     // Handling a notification click event when the app is in the background
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint('onMessageOpenedApp: ${message.notification!.title.toString()}');
       _handleNotificationClick(context, message);
     });
   }

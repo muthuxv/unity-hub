@@ -688,7 +688,6 @@ class _ServerPageState extends State<ServerPage> {
         _userPermissions = response.data;
       });
 
-      print(_userPermissions);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -57,9 +57,18 @@ class _ServerMembersListState extends State<ServerMembersList> {
 
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
 
     try {
-      final response = await _dio.get('$apiPath/servers/${widget.serverId}/members');
+      final response = await _dio.get('$apiPath/servers/${widget.serverId}/members',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
 
       if (response.statusCode == 200) {
         setState(() {
@@ -107,9 +116,9 @@ class _ServerMembersListState extends State<ServerMembersList> {
         ),
       ),
       builder: (BuildContext context) {
-        bool isCurrentUser = member['ID'] == currentUserId;
-        bool isServerCreator = member['ID'] == widget.serverCreatorId;
-        bool isAdmin = member['Role'] == 'admin';
+        bool isCurrentUser = member['id'] == currentUserId;
+        bool isServerCreator = member['id'] == widget.serverCreatorId;
+        bool isAdmin = member['role'] == 'admin';
 
         return Container(
           height: MediaQuery.of(context).size.height / 2,
@@ -128,7 +137,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
                 child: Row(
                   children: [
                     Text(
-                      member['Pseudo'],
+                      member['pseudo'],
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     if (isServerCreator)
@@ -320,7 +329,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
   Future<void> _showUserRoleDialog(Map member, List roles, String token, String apiPath) async {
     try {
       final userRoleResponse = await Dio().get(
-        '$apiPath/user/${member['ID']}/servers/${widget.serverId}/roles',
+        '$apiPath/user/${member['id']}/servers/${widget.serverId}/roles',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -342,7 +351,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  title: Row(
+                  title: const Row(
                     children: [
                       Icon(Icons.update, color: Colors.blue),
                       SizedBox(width: 8),
@@ -355,7 +364,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
                       Icon(Icons.warning_amber_rounded, size: 48, color: Colors.orange),
                       SizedBox(height: 16),
                       Text(
-                        "Voulez-vous vraiment modifier le rôle de ${member['Pseudo']} ?",
+                        "Voulez-vous vraiment modifier le rôle de ${member['pseudo']} ?",
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                       ),
@@ -445,7 +454,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
           },
         ),
         data: {
-          'user-id': member['ID'],
+          'user-id': member['id'],
         },
       );
 
@@ -476,7 +485,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
 
     try {
       final response = await dio.post(
-        '$apiPath/servers/${widget.serverId}/ban/users/${member['ID']}',
+        '$apiPath/servers/${widget.serverId}/ban/users/${member['id']}',
         options: Options(headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -512,7 +521,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
 
     try {
       final response = await _dio.delete(
-        '$apiPath/servers/${widget.serverId}/kick/users/${member['ID']}',
+        '$apiPath/servers/${widget.serverId}/kick/users/${member['id']}',
         options: Options(headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -564,9 +573,9 @@ class _ServerMembersListState extends State<ServerMembersList> {
         itemCount: _serverMembers.length,
         itemBuilder: (context, index) {
           final member = _serverMembers[index];
-          bool isServerCreator = member['ID'] == widget.serverCreatorId;
-          bool isCurrentUser = member['ID'] == currentUserId;
-          bool isAdmin = member['Role'] == 'admin';
+          bool isServerCreator = member['id'] == widget.serverCreatorId;
+          bool isCurrentUser = member['id'] == currentUserId;
+          bool isAdmin = member['role'] == 'admin';
           return GestureDetector(
             onTap: () {
               if (!isServerCreator) {
@@ -576,7 +585,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
             child: ListTile(
               title: Row(
                 children: [
-                  Text(member['Pseudo']),
+                  Text(member['pseudo']),
                   if (isServerCreator)
                     const Icon(Icons.star, color: Colors.amber),
                   if (isCurrentUser)
@@ -585,15 +594,15 @@ class _ServerMembersListState extends State<ServerMembersList> {
                 ],
               ),
               leading: CircleAvatar(
-                child: member['Profile'] != null && member['Profile'].contains('<svg')
+                child: member['profile'] != null && member['profile'].contains('<svg')
                     ? SvgPicture.string(
-                  member['Profile'],
+                  member['profile'],
                   height: 40,
                   width: 40,
                 )
                     : CircleAvatar(
                   radius: 50,
-                  backgroundImage: NetworkImage(member['Profile']),
+                  backgroundImage: NetworkImage(member['profile']),
                 ),
               ),
             ),
