@@ -72,7 +72,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
           )
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 204) {
         setState(() {
           widget.group.members.removeWhere((member) => member.id == memberId);
         });

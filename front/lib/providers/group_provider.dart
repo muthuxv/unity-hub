@@ -152,7 +152,7 @@ class GroupProvider with ChangeNotifier {
           )
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 204) {
         groups.removeWhere((group) => group.id == groupId);
         notifyListeners();
       } else {
