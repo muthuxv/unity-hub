@@ -974,18 +974,6 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                     }
                   } : null,
                 ),
-                IconButton(
-                  icon: const Icon(Icons.photo),
-                  onPressed: widget.canSendMessage ? () async {
-                    final picker = ImagePicker();
-                    final pickedFile = await picker.pickMedia();
-
-                    if (pickedFile != null) {
-                      final file = File(pickedFile.path);
-                      await _sendImage(file);
-                    }
-                  } : null,
-                ),
               ],
             ),
           )

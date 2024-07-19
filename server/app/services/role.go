@@ -3,6 +3,7 @@ package services
 import (
 	"app/db"
 	"app/db/models"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -98,20 +99,25 @@ func UpdateRolePermissions(c *gin.Context) {
 		return
 	}
 
+	log.Println("Request body:", requestBody)
+
 	for key := range availablePermissions {
-		power, exists := requestBody[key]
-		if !exists {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing parameters"})
+		power, ok := requestBody[key]
+		if !ok {
+			log.Println("Missing power value for", key)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing power value for " + key})
 			return
 		}
 
 		if key == "editChannel" || key == "accessChannel" || key == "sendMessage" {
-			if power != 0 && power != 99 {
+			if power < 0 || power > 99 {
+				log.Println("Invalid power value for", key)
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid power value for " + key})
 				return
 			}
 		} else {
 			if power != 0 && power != 1 {
+				log.Println("Invalid power value for", key)
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid power value for " + key})
 				return
 			}
@@ -149,6 +155,8 @@ func UpdateRolePermissions(c *gin.Context) {
 			Power: power,
 		})
 	}
+
+	log.Println("Updated permissions:", updatedPermissions)
 
 	tx.Commit()
 	c.JSON(http.StatusOK, updatedPermissions)

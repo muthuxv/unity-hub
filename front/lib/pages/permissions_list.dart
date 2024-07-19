@@ -65,9 +65,9 @@ class _PermissionsPageState extends State<PermissionsPage> {
       if (permission['label'] != 'sendMessage' &&
           permission['label'] != 'editChannel' &&
           permission['label'] != 'accessChannel') {
-        updatedPermissions[permission['label']] = permission['power'].toString() == '1' ? 1 : 0;
+        updatedPermissions[permission['label']] = permission['power'] == '1' ? 1 : 0;
       } else {
-        updatedPermissions[permission['label']] = int.parse(_controllers[permission['label']]!.text);
+        updatedPermissions[permission['label']] = int.parse(permission['power'].toString());
       }
     }
 
@@ -157,7 +157,6 @@ class _PermissionsPageState extends State<PermissionsPage> {
       List<Widget> permissionTiles = [];
 
       for (var permission in permissionsList) {
-        print(permission);
         permissionTiles.add(ListTile(
           title: Text(permission['label']),
           trailing: (permission['label'] != 'sendMessage' &&

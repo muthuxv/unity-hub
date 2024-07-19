@@ -28,6 +28,11 @@ type ServerSwagger struct {
 	Tags       []TagSwagger `json:"tags"`
 }
 
+func (s *Server) BeforeCreate(tx *gorm.DB) (err error) {
+	s.ID = uuid.New()
+	return nil
+}
+
 // ErrorServerResponse represents an error response.
 type ErrorServerResponse struct {
 	Error string `json:"error"`
