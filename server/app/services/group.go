@@ -301,39 +301,6 @@ func CreatePublicGroup() gin.HandlerFunc {
 	}
 }
 
-func GetGroupMembers() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		groupID, err := uuid.Parse(c.Param("groupID"))
-		if err != nil {
-			c.Error(err)
-			return
-		}
-
-		var groupMembers []models.GroupMember
-		err = db.GetDB().Where("group_id = ?", groupID).Find(&groupMembers).Error
-		if err != nil {
-			c.Error(err)
-			return
-		}
-
-		var users []models.User
-		for _, gm := range groupMembers {
-			var user models.User
-			err = db.GetDB().Where("id = ?", gm.UserID).First(&user).Error
-			if err != nil {
-				c.Error(err)
-				return
-			}
-			user.Email = ""
-			user.Password = ""
-			user.FcmToken = ""
-			users = append(users, user)
-		}
-
-		c.JSON(http.StatusOK, users)
-	}
-}
-
 func RemoveGroupMember() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		handleError := func(err error) {
@@ -430,7 +397,7 @@ func RemoveGroupMember() gin.HandlerFunc {
 
 func GetUserGroups() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, err := uuid.Parse(c.Param("userID"))
+		userID, err := uuid.Parse(c.Param("id"))
 		if err != nil {
 			c.Error(err)
 			return
