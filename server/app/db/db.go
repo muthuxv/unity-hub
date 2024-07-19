@@ -70,6 +70,7 @@ func MakeMigrations() {
 
 	models.CreateInitialPermissions(db)
 	models.CreateInitialChannelPermissions(db)
+	models.CreateInitialFeatures(db)
 
 	log.Println("database create")
 }
