@@ -988,8 +988,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       message['User']['Profile'],
       height: 40,
       width: 40,
-    )
-        : CircleAvatar(
+    ) : CircleAvatar(
       backgroundImage: NetworkImage(message['User']['Profile']),
     );
   }
