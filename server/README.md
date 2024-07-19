@@ -1,4 +1,5 @@
 ## Init app
+- docker compose up -d
 - docker compose exec app go mod init app
 - docker compose exec app go mod tidy
 - docker compose exec app go mod vendor
