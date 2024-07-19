@@ -56,7 +56,6 @@ func AcceptFriend() gin.HandlerFunc {
 				"FriendID":   friend.UserID2,
 				"Status":     friend.Status,
 				"UserPseudo": friend.User2.Pseudo,
-				"UserMail":   friend.User2.Email,
 				"Profile":    friend.User2.Profile,
 			}
 		} else {
@@ -65,7 +64,6 @@ func AcceptFriend() gin.HandlerFunc {
 				"FriendID":   friend.UserID1,
 				"Status":     friend.Status,
 				"UserPseudo": friend.User1.Pseudo,
-				"UserMail":   friend.User1.Email,
 				"Profile":    friend.User1.Profile,
 			}
 		}
@@ -160,17 +158,15 @@ func GetFriendsByUser() gin.HandlerFunc {
 
 		friendsResponse := make([]map[string]interface{}, 0)
 		for _, friend := range friends {
-			var friendPseudo, friendEmail, friendProfile string
+			var friendPseudo, friendProfile string
 			var friendID uuid.UUID
 
 			if friend.UserID1 == userID {
 				friendPseudo = friend.User2.Pseudo
-				friendEmail = friend.User2.Email
 				friendID = friend.UserID2
 				friendProfile = friend.User2.Profile
 			} else {
 				friendPseudo = friend.User1.Pseudo
-				friendEmail = friend.User1.Email
 				friendID = friend.UserID1
 				friendProfile = friend.User1.Profile
 			}
@@ -180,7 +176,6 @@ func GetFriendsByUser() gin.HandlerFunc {
 				"FriendID":   friendID,
 				"Status":     friend.Status,
 				"UserPseudo": friendPseudo,
-				"UserMail":   friendEmail,
 				"Profile":    friendProfile,
 			}
 			friendsResponse = append(friendsResponse, friendData)
@@ -222,7 +217,6 @@ func GetPendingFriendsByUser() gin.HandlerFunc {
 				"FriendUser1ID": friend.User1.ID,
 				"Status":        friend.Status,
 				"UserPseudo":    friend.User1.Pseudo,
-				"UserMail":      friend.User1.Email,
 				"Profile":       friend.User1.Profile,
 			}
 			friendsResponse[i] = friendData
@@ -262,7 +256,6 @@ func GetPendingFriendsFromUser() gin.HandlerFunc {
 				"FriendID":   friend.User2.ID,
 				"Status":     friend.Status,
 				"UserPseudo": friend.User2.Pseudo,
-				"UserMail":   friend.User2.Email,
 				"Profile":    friend.User2.Profile,
 			}
 			friendsResponse[i] = friendData

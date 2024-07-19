@@ -270,5 +270,6 @@
   "acceptance": "En utilisant UnityHub, vous acceptez les pratiques décrites dans cette politique de confidentialité et de sécurité.",
   "create_new_tag": "Créer un nouveau tag",
   "select_tags": "Sélectionner des tags",
-  "enter_tag_name": "Entrez le nom du tag"
+  "enter_tag_name": "Entrez le nom du tag",
+  "no_servers_found_for_friend": "Aucun serveur trouvé pour cet ami"
 }
