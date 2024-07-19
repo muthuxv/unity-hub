@@ -94,3 +94,66 @@ func CreateReactMessage() gin.HandlerFunc {
 		c.JSON(http.StatusCreated, gin.H{"data": reactMessage})
 	}
 }
+
+func DeleteReactMessage() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		// Vérifier si l'UUID est valide
+		uid, err := uuid.Parse(id)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID format"})
+			return
+		}
+
+		// Récupérer les informations JWT
+		claims, exists := c.Get("jwt_claims")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		jwtClaims, ok := claims.(jwt.MapClaims)
+		if !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse JWT claims"})
+			return
+		}
+
+		userIDStr, ok := jwtClaims["jti"].(string)
+		if !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user ID from JWT"})
+			return
+		}
+
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user ID from JWT"})
+			return
+		}
+
+		// Vérifier si le ReactMessage existe
+		var reactMessage models.ReactMessage
+		if err := db.GetDB().Where("id = ?", uid).First(&reactMessage).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "ReactMessage not found"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve ReactMessage"})
+			return
+		}
+
+		// Vérifier si l'utilisateur est autorisé à supprimer le ReactMessage
+		if reactMessage.UserID != userID {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You are not authorized to delete this ReactMessage"})
+			return
+		}
+
+		// Supprimer le ReactMessage
+		if err := db.GetDB().Delete(&reactMessage).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete ReactMessage"})
+			return
+		}
+
+		c.Status(http.StatusNoContent)
+	}
+}
