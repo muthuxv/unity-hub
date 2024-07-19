@@ -80,9 +80,18 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
 
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
 
     try {
-      final response = await Dio().get('$apiPath/channels/${widget.group.channelId}/messages');
+      final response = await Dio().get('$apiPath/channels/${widget.group.channelId}/messages',
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ));
+
       final List<dynamic> messages = response.data;
 
       setState(() {

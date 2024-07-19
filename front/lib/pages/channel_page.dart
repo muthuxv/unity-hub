@@ -84,9 +84,18 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
 
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
+    final token = await FlutterSecureStorage().read(key: 'token');
 
     try {
-      final response = await Dio().get('$apiPath/channels/${widget.channelId}/messages');
+      final response = await Dio().get('$apiPath/channels/${widget.channelId}/messages',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      
       final List<dynamic> messages = response.data;
 
       setState(() {
