@@ -230,7 +230,7 @@ func ChangePassword() gin.HandlerFunc {
 
 		userID := c.Param("id")
 		var user models.User
-		result := db.GetDB().First(&user, userID)
+		result := db.GetDB().First(&user, "id = ?", userID)
 		if result.Error != nil {
 			c.JSON(http.StatusNotFound, models.ErrorUserResponse{Error: "User not found"})
 			return
@@ -321,6 +321,31 @@ func UpdateUserAdmin() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, user)
+	}
+}
+
+func GetUserInfos() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.Param("id")
+
+		// Déclarer une variable pour stocker l'utilisateur
+		var user models.User
+
+		// Rechercher l'utilisateur par ID
+		if err := db.GetDB().First(&user, "id = ?", userID).Error; err != nil {
+			c.JSON(http.StatusNotFound, models.ErrorUserResponse{Error: "User not found"})
+			return
+		}
+
+		// Préparer la réponse
+		userResponse := models.UserResponse{
+			ID:      user.ID,
+			Pseudo:  user.Pseudo,
+			Profile: user.Profile,
+		}
+
+		// Retourner la réponse
+		c.JSON(http.StatusOK, userResponse)
 	}
 }
 

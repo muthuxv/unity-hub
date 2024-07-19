@@ -16,3 +16,21 @@ func (f *Feature) BeforeCreate(tx *gorm.DB) (err error) {
 	f.ID = uuid.New()
 	return nil
 }
+
+func CreateInitialFeatures(db *gorm.DB) {
+	initialFeatures := []Feature{
+		{Name: "Serveurs", Status: "true"},
+		{Name: "Notifications", Status: "true"},
+		{Name: "Profil", Status: "true"},
+		{Name: "Messages", Status: "true"},
+	}
+
+	for _, perm := range initialFeatures {
+		var existing Feature
+		if err := db.Where("name = ? AND status = ?", perm.Name, perm.Status).First(&existing).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				db.Create(&perm)
+			}
+		}
+	}
+}

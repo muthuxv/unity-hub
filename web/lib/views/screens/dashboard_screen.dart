@@ -68,7 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Filter users created within the last 30 days
         final now = DateTime.now();
         final recentUsers = users.where((user) {
-          final createdAt = DateTime.parse(user['CreatedAt']);
+          final createdAt = DateTime.parse(user['created_at']);
           return now.difference(createdAt).inDays <= 30;
         }).toList();
 
@@ -204,13 +204,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     DataColumn(label: Text('Rôle')),
                                     DataColumn(label: Text('Crée le')),
                                     DataColumn(label: Text('Modifié le')),
-                                    DataColumn(label: Text('Supprimé le')),
                                   ],
                                   rows: List.generate(recentUsersData.length, (index) {
                                     final user = recentUsersData[index];
-                                    final createdAt = DateTime.parse(user['CreatedAt']);
-                                    final updatedAt = DateTime.parse(user['UpdatedAt']);
-                                    final deletedAt = user['DeletedAt'] != null ? DateTime.parse(user['DeletedAt']) : null;
+                                    final createdAt = DateTime.parse(user['created_at']);
+                                    final updatedAt = DateTime.parse(user['updated_at']);
 
                                     return DataRow.byIndex(
                                       index: index,
@@ -235,7 +233,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         DataCell(Text(user['Role'])),
                                         DataCell(Text(DateFormat('dd/MM/yyyy HH:mm').format(createdAt))),
                                         DataCell(Text(DateFormat('dd/MM/yyyy HH:mm').format(updatedAt))),
-                                        DataCell(deletedAt != null ? Text(DateFormat('dd/MM/yyyy HH:mm').format(deletedAt)) : Text('-')),
                                       ],
                                     );
                                   }),
