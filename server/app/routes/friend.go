@@ -9,8 +9,7 @@ import (
 )
 
 func FriendRoutes(r *gin.Engine) {
-	r.GET("/friends", controllers.TokenAuthMiddleware("user"), controllers.GetAll(func() interface{} { return &[]models.Friend{} }))
-	r.DELETE("/friends/:id", controllers.TokenAuthMiddleware("user"), controllers.IsFriendMiddleware(), controllers.Delete(func() interface{} { return &models.Friend{} }))
+	r.DELETE("/friends/:id", controllers.TokenAuthMiddleware("user"), controllers.Delete(func() interface{} { return &models.Friend{} }))
 
 	r.POST("/friends/accept", controllers.TokenAuthMiddleware("user"), services.AcceptFriend())
 	r.POST("/friends/refuse", controllers.TokenAuthMiddleware("user"), services.RefuseFriend())

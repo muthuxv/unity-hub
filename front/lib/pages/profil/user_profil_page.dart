@@ -19,7 +19,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   late String currentUserID;
   bool isFriend = false;
   bool isLoading = true;
-  bool isPending = false; // Ajout de cet état pour les invitations en attente
+  bool isPending = false;
   Map<String, dynamic> userInfo = {};
   Map<String, dynamic> _friendInfo = {};
 
@@ -33,7 +33,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     await _getCurrentUserID();
     await _fetchUserInfo();
     await _checkFriendStatus();
-    await _checkPendingInvitations(); // Ajout de cette ligne pour vérifier les invitations en attente
+    await _checkPendingInvitations();
   }
 
   Future<void> _getCurrentUserID() async {
@@ -54,7 +54,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
     try {
       final response = await Dio().get(
-        '$apiPath/users/${widget.userId}',
+        '$apiPath/users/info/${widget.userId}',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -81,7 +81,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     final apiPath = dotenv.env['API_PATH']!;
 
     final response = await Dio().get(
-      '$apiPath/friends',
+      '$apiPath/friends/users/${widget.userId}',
       options: Options(
         headers: {
           'Authorization': 'Bearer $token',
@@ -89,19 +89,17 @@ class _UserProfilePageState extends State<UserProfilePage> {
       ),
     );
 
-    if (response.data != null) {
-      final friends = response.data as List;
-      final friend = friends.firstWhere(
-            (friend) => friend['FriendID'] == widget.userId,
-        orElse: () => null,
-      );
+    if (response.statusCode == 200 && response.data != null) {
+      final friend = response.data[0];
 
-      if (friend != null) {
-        setState(() {
-          isFriend = true;
-          _friendInfo = friend;
-        });
-      }
+      setState(() {
+        isFriend = true;
+        _friendInfo = friend;
+      });
+    } else if (response.statusCode == 404) {
+      setState(() {
+        isFriend = false;
+      });
     }
   }
 
@@ -200,6 +198,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
       );
       _checkFriendStatus();
       _checkPendingInvitations();
+      setState(() {
+        isFriend = false;
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error removing friend: $e')),
