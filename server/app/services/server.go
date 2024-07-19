@@ -244,6 +244,17 @@ func GetServersFriendNotIn() gin.HandlerFunc {
 			return
 		}
 
+		// Vérification de l'existence du friendID dans la base de données
+		var friendUser models.User
+		if err := db.GetDB().Where("id = ?", friendID).First(&friendUser).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				handleError(c, http.StatusNotFound, "Friend not found")
+			} else {
+				handleError(c, http.StatusInternalServerError, "Failed to fetch friend")
+			}
+			return
+		}
+
 		var currentUserServers []models.Server
 		if err := db.GetDB().
 			Table("servers").
@@ -289,6 +300,12 @@ func GetServersFriendNotIn() gin.HandlerFunc {
 					resultServers = append(resultServers, server)
 				}
 			}
+		}
+
+		// Vérification que resultServers ne soit pas vide
+		if len(resultServers) == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"message": "Aucun serveur trouvé pour cet ami"})
+			return
 		}
 
 		c.JSON(http.StatusOK, gin.H{"data": resultServers})

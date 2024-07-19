@@ -161,7 +161,6 @@ class _FriendPageState extends State<FriendPage> {
           'FriendID': response.data['FriendID'],
           'Status': response.data['Status'],
           'UserPseudo': response.data['UserPseudo'],
-          'Email': response.data['UserMail'],
           'Profile': response.data['Profile']
         };
 
@@ -488,6 +487,8 @@ class _FriendPageState extends State<FriendPage> {
 
       if (response.statusCode == 200) {
         _showServerListDialog(response.data['data'], friendId);
+      } else if (response.statusCode == 404) {
+        _showErrorDialog(response.data['message'] ?? AppLocalizations.of(context)!.no_servers_found_for_friend);
       } else {
         _showErrorDialog(response.data['message'] ?? 'Failed to fetch friend servers');
       }
@@ -499,6 +500,7 @@ class _FriendPageState extends State<FriendPage> {
       _showLoading = false;
     });
   }
+
 
   void _showServerListDialog(List<dynamic> servers, String friendId) {
     showDialog(
