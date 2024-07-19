@@ -69,9 +69,18 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
   Future<void> fetchAllTags() async {
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
 
     try {
-      Response response = await Dio().get('$apiPath/tags');
+      Response response = await Dio().get('$apiPath/tags',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+        );
       setState(() {
         _allTags = response.data;
       });
@@ -84,10 +93,19 @@ class _ServerUpdateTagsPageState extends State<ServerUpdateTagsPage> {
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
 
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
     try {
       Response response = await Dio().put(
         '$apiPath/servers/${widget.serverId}',
         data: {'tag_ids': tagIds},
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
       );
       if (response.statusCode == 200) {
         showDialog(
