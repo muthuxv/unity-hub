@@ -6,11 +6,16 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/julienschmidt/httprouter"
 )
+
+var jwtKey = []byte(os.Getenv("JWT_KEY"))
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -45,6 +50,37 @@ func WsHandler(w http.ResponseWriter, r *http.Request) {
 
 var channelConnections = make(map[uuid.UUID][]*websocket.Conn)
 
+func verifyWebSocketPermission(userID uuid.UUID, channelID uuid.UUID, requiredPermission string, serverID uuid.UUID) (bool, error) {
+	var roleUser models.RoleUser
+	if err := db.GetDB().Joins("JOIN roles ON roles.id = role_users.role_id").Where("role_users.user_id = ? AND roles.server_id = ?", userID, serverID).First(&roleUser).Error; err != nil {
+		return false, err
+	}
+
+	var rolePermissions []models.RolePermissions
+	if err := db.GetDB().Where("role_id = ?", roleUser.RoleID).Preload("Permissions").Find(&rolePermissions).Error; err != nil {
+		return false, err
+	}
+
+	var channelPermissions models.ChannelChannelPermissions
+	if err := db.GetDB().Joins("JOIN channel_permissions ON channel_permissions.id = channel_channel_permissions.channel_permission_id").
+		Where("channel_channel_permissions.channel_id = ? AND channel_permissions.label = ?", channelID, requiredPermission).
+		First(&channelPermissions).Error; err != nil {
+		return false, err
+	}
+
+	for _, rp := range rolePermissions {
+		log.Println(rp.Permissions.Label)
+		log.Println(requiredPermission)
+		log.Println(rp.Power)
+		log.Println(channelPermissions.Power)
+		if rp.Permissions.Label == requiredPermission && rp.Power >= channelPermissions.Power {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func ChannelWsHandler(w http.ResponseWriter, r *http.Request, channelId string) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -59,10 +95,62 @@ func ChannelWsHandler(w http.ResponseWriter, r *http.Request, channelId string) 
 		return
 	}
 
-	log.Printf("WebSocket connected for channel ID: %d\n", channelIDuuid)
+	log.Printf("WebSocket connected for channel ID: %s\n", channelIDuuid)
 
-	channelID := uuid.UUID(channelIDuuid)
-	channelConnections[channelID] = append(channelConnections[channelID], conn)
+	reqToken := r.URL.Query().Get("token")
+	if reqToken == "" {
+		log.Println("Missing token")
+		return
+	}
+
+	token, err := jwt.Parse(reqToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, http.ErrNotSupported
+		}
+		return jwtKey, nil
+	})
+
+	if err != nil || !token.Valid {
+		log.Println("Invalid token")
+		return
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		log.Println("Invalid token claims")
+		return
+	}
+
+	userIDStr, ok := claims["jti"].(string)
+	if !ok {
+		log.Println("Invalid token claims")
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		log.Println("Invalid user ID")
+		return
+	}
+
+	var channel models.Channel
+	if err := db.GetDB().Where("id = ?", channelIDuuid).First(&channel).Error; err != nil {
+		log.Println("Channel not found")
+		return
+	}
+
+	var canSendMessage bool
+	if channel.ServerID == uuid.Nil {
+		canSendMessage = true
+	} else {
+		canSendMessage, err = verifyWebSocketPermission(userID, channelIDuuid, "sendMessage", channel.ServerID)
+		if err != nil {
+			log.Println("Error verifying permissions:", err)
+			canSendMessage = false
+		}
+	}
+
+	channelConnections[channelIDuuid] = append(channelConnections[channelIDuuid], conn)
 
 	for {
 		_, msgBytes, err := conn.ReadMessage()
@@ -70,8 +158,6 @@ func ChannelWsHandler(w http.ResponseWriter, r *http.Request, channelId string) 
 			log.Println("Read message error:", err)
 			break
 		}
-
-		log.Printf("Received message on channel %d: %s\n", channelID, msgBytes)
 
 		var receivedMessage map[string]interface{}
 		err = json.Unmarshal(msgBytes, &receivedMessage)
@@ -83,43 +169,47 @@ func ChannelWsHandler(w http.ResponseWriter, r *http.Request, channelId string) 
 		userID, _ := uuid.Parse(receivedMessage["UserID"].(string))
 		messageContent := receivedMessage["Content"].(string)
 
-		log.Printf("Received message on channel %d: %s\n", channelID, messageContent)
+		log.Printf("Received message on channel %s: %s\n", channelIDuuid, messageContent)
 
-		saveMessageToChannel(channelID, receivedMessage, userID)
+		if canSendMessage {
+			saveMessageToChannel(channelIDuuid, receivedMessage, userID)
 
-		var user models.User
-		db.GetDB().Where("id = ?", userID).First(&user)
-		receivedMessage["User"] = map[string]interface{}{
-			"ID":      user.ID,
-			"Pseudo":  user.Pseudo,
-			"Profile": user.Profile,
-		}
-
-		var message models.Message
-		db.GetDB().Where("content = ? AND user_id = ? AND channel_id = ?", messageContent, userID, channelID).First(&message)
-		receivedMessage["ID"] = message.ID
-
-		msgBytes, err = json.Marshal(receivedMessage)
-		if err != nil {
-			log.Println("Error encoding JSON:", err)
-			continue
-		}
-
-		for _, c := range channelConnections[channelID] {
-			err = c.WriteMessage(websocket.TextMessage, msgBytes)
-			if err != nil {
-				log.Println("Write message error:", err)
-				break
+			var user models.User
+			db.GetDB().Where("id = ?", userID).First(&user)
+			receivedMessage["User"] = map[string]interface{}{
+				"ID":      user.ID,
+				"Pseudo":  user.Pseudo,
+				"Profile": user.Profile,
 			}
-		}
 
-		log.Printf("Sent message on channel %d: %s\n", channelID, messageContent)
+			var message models.Message
+			db.GetDB().Where("content = ? AND user_id = ? AND channel_id = ?", messageContent, userID, channelIDuuid).First(&message)
+			receivedMessage["ID"] = message.ID
+
+			msgBytes, err = json.Marshal(receivedMessage)
+			if err != nil {
+				log.Println("Error encoding JSON:", err)
+				continue
+			}
+
+			for _, c := range channelConnections[channelIDuuid] {
+				err = c.WriteMessage(websocket.TextMessage, msgBytes)
+				if err != nil {
+					log.Println("Write message error:", err)
+					break
+				}
+			}
+
+			log.Printf("Sent message on channel %s: %s\n", channelIDuuid, messageContent)
+		} else {
+			log.Println("User does not have permission to send messages on this channel")
+		}
 	}
 
-	connections := channelConnections[channelID]
+	connections := channelConnections[channelIDuuid]
 	for i, c := range connections {
 		if c == conn {
-			channelConnections[channelID] = append(connections[:i], connections[i+1:]...)
+			channelConnections[channelIDuuid] = append(connections[:i], connections[i+1:]...)
 			break
 		}
 	}
@@ -143,11 +233,10 @@ type WebSocketMessage struct {
 }
 
 type Channel struct {
-	ID         int    `json:"ID,omitempty"`
-	Name       string `json:"Name"`
-	Type       string `json:"Type"`
-	Permission string `json:"Permission"`
-	ServerID   uint   `json:"ServerID"`
+	ID       int    `json:"ID,omitempty"`
+	Name     string `json:"Name"`
+	Type     string `json:"Type"`
+	ServerID uint   `json:"ServerID"`
 }
 
 type Server struct {
@@ -241,20 +330,18 @@ func AddChannelHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 
 	// Create the channel in the database
 	newChannel := models.Channel{
-		Name:       channel.Name,
-		Type:       channel.Type,
-		Permission: channel.Permission,
-		ServerID:   serverIDU,
+		Name:     channel.Name,
+		Type:     channel.Type,
+		ServerID: serverIDU,
 	}
 
 	servers[serverIDU].Broadcast <- WebSocketMessage{
 		Type: "new_channel",
 		Channel: map[string]interface{}{
-			"ID":         newChannel.ID,
-			"Name":       newChannel.Name,
-			"Type":       newChannel.Type,
-			"Permission": newChannel.Permission,
-			"ServerID":   newChannel.ServerID,
+			"ID":       newChannel.ID,
+			"Name":     newChannel.Name,
+			"Type":     newChannel.Type,
+			"ServerID": newChannel.ServerID,
 		},
 	}
 

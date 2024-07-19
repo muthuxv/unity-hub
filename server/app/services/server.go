@@ -26,6 +26,14 @@ type BanUserInput struct {
 	Duration int    `json:"duration" binding:"required"`
 }
 
+// GetAllServers godoc
+// @Summary Get all servers
+// @Description Get all servers
+// @Tags servers
+// @Produce json
+// @Success 200 {array} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers [get]
 func GetAllServers() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims, exists := c.Get("jwt_claims")
@@ -69,6 +77,15 @@ func GetAllServers() gin.HandlerFunc {
 	}
 }
 
+// GetServerBans godoc
+// @Summary Get server bans
+// @Description Get all bans for a specific server
+// @Tags servers
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {array} models.BanSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/{id}/bans [get]
 func GetServerBans() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverID := c.Param("id")
@@ -185,6 +202,15 @@ func BanUser() gin.HandlerFunc {
 	}
 }
 
+// GetServersFriendNotIn godoc
+// @Summary Get servers friend is not in
+// @Description Get servers that a specific friend is not a member of
+// @Tags servers
+// @Produce json
+// @Param friendID path string true "Friend ID"
+// @Success 200 {object} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/friend/{friendID} [get]
 func GetServersFriendNotIn() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims, exists := c.Get("jwt_claims")
@@ -269,6 +295,18 @@ func GetServersFriendNotIn() gin.HandlerFunc {
 	}
 }
 
+// UnbanUser godoc
+// @Summary Unban a user from a server
+// @Description Unban a user from a specific server
+// @Tags servers
+// @Accept json
+// @Produce json
+// @Param id path string true "Server ID"
+// @Param userID path string true "User ID"
+// @Success 200 {object} models.SuccessServerResponse
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 404 {object} models.ErrorServerResponse
+// @Router /servers/{id}/unban/{userID} [delete]
 func UnbanUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverID := c.Param("id")
@@ -301,6 +339,16 @@ func UnbanUser() gin.HandlerFunc {
 	}
 }
 
+// GetServerByID godoc
+// @Summary Get a server by ID
+// @Description Get details of a specific server by ID
+// @Tags servers
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {object} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 404 {object} models.ErrorServerResponse
+// @Router /servers/{id} [get]
 func GetServerByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
@@ -320,6 +368,15 @@ func GetServerByID() gin.HandlerFunc {
 	}
 }
 
+// SearchServerByName godoc
+// @Summary Search servers by name
+// @Description Search for servers by name
+// @Tags servers
+// @Produce json
+// @Param name query string true "Server name"
+// @Success 200 {array} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/search [get]
 func SearchServerByName() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		name := c.Query("name")
@@ -338,6 +395,18 @@ func SearchServerByName() gin.HandlerFunc {
 	}
 }
 
+// NewServer godoc
+// @Summary Create a new server
+// @Description Create a new server with specified details
+// @Tags servers
+// @Accept json
+// @Produce json
+// @Param server body models.ServerSwagger true "Server details"
+// @Success 201 {object} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 401 {object} models.ErrorServerResponse
+// @Failure 500 {object} models.ErrorServerResponse
+// @Router /servers [post]
 func NewServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var inputServer models.Server
@@ -447,6 +516,7 @@ func NewServer() gin.HandlerFunc {
 			return
 		}
 
+		// Création du rôle "admin"
 		adminRole := models.Role{
 			ServerID: inputServer.ID,
 			Label:    "admin",
@@ -480,10 +550,9 @@ func NewServer() gin.HandlerFunc {
 		}
 
 		inputChannel := models.Channel{
-			ServerID:   inputServer.ID,
-			Name:       "général",
-			Type:       "text",
-			Permission: "all",
+			ServerID: inputServer.ID,
+			Name:     "général",
+			Type:     "text",
 		}
 		if err := tx.Create(&inputChannel).Error; err != nil {
 			tx.Rollback()
@@ -497,6 +566,18 @@ func NewServer() gin.HandlerFunc {
 	}
 }
 
+// KickUser godoc
+// @Summary Kick a user from a server
+// @Description Kick a user from a specific server
+// @Tags servers
+// @Accept json
+// @Produce json
+// @Param id path string true "Server ID"
+// @Param userID path string true "User ID"
+// @Success 200 {object} models.SuccessServerResponse
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 404 {object} models.ErrorServerResponse
+// @Router /servers/{id}/kick/{userID} [delete]
 func KickUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverID := c.Param("id")
@@ -537,6 +618,17 @@ func KickUser() gin.HandlerFunc {
 	}
 }
 
+// JoinServer godoc
+// @Summary Join a server
+// @Description Join a specific server by ID
+// @Tags servers
+// @Accept json
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {object} models.OnServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 404 {object} models.ErrorServerResponse
+// @Router /servers/join/{id} [post]
 func JoinServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
@@ -638,6 +730,15 @@ func JoinServer() gin.HandlerFunc {
 	}
 }
 
+// GetPublicAvailableServers godoc
+// @Summary Get public available servers
+// @Description Get all public servers that a user is not a member of
+// @Tags servers
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {array} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/public/{id} [get]
 func GetPublicAvailableServers() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDStr := c.Param("id")
@@ -667,6 +768,17 @@ func GetPublicAvailableServers() gin.HandlerFunc {
 	}
 }
 
+// LeaveServer godoc
+// @Summary Leave a server
+// @Description Leave a specific server by ID
+// @Tags servers
+// @Accept json
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {object} models.OnServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 404 {object} models.ErrorServerResponse
+// @Router /servers/leave/{id} [delete]
 func LeaveServer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
@@ -737,6 +849,15 @@ func LeaveServer() gin.HandlerFunc {
 	}
 }
 
+// GetServersByUser godoc
+// @Summary Get servers by user ID
+// @Description Get all servers that a specific user is a member of
+// @Tags servers
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {array} models.ServerSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/user/{id} [get]
 func GetServersByUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDStr := c.Param("id")
@@ -768,6 +889,15 @@ func GetServersByUser() gin.HandlerFunc {
 	}
 }
 
+// GetServerMembers godoc
+// @Summary Get server members
+// @Description Get all members of a specific server
+// @Tags servers
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {array} models.User
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/{id}/members [get]
 func GetServerMembers() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
@@ -803,6 +933,15 @@ func GetServerMembers() gin.HandlerFunc {
 	}
 }
 
+// GetServerChannels godoc
+// @Summary Get server channels
+// @Description Get all channels of a specific server
+// @Tags servers
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {object} map[string][]models.ChannelSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/{id}/channels [get]
 func GetServerChannels() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
@@ -812,20 +951,75 @@ func GetServerChannels() gin.HandlerFunc {
 			return
 		}
 
-		var server models.Server
-		if err := db.GetDB().First(&server, serverID).Error; err != nil {
-			handleError(c, http.StatusBadRequest, "Le serveur n'existe pas.")
+		// Extraire l'ID utilisateur à partir des revendications JWT
+		claims, exists := c.Get("jwt_claims")
+		if !exists {
+			handleError(c, http.StatusUnauthorized, "JWT claims not found")
 			return
 		}
 
+		jwtClaims, ok := claims.(jwt.MapClaims)
+		if !ok {
+			handleError(c, http.StatusInternalServerError, "Failed to parse JWT claims")
+			return
+		}
+
+		userIDStr, ok := jwtClaims["jti"].(string)
+		if !ok {
+			handleError(c, http.StatusInternalServerError, "Failed to get user ID from JWT claims")
+			return
+		}
+
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			handleError(c, http.StatusInternalServerError, "Invalid user ID")
+			return
+		}
+
+		// Récupérer le rôle utilisateur et vérifier les permissions
+		var roleUser models.RoleUser
+		if err := db.GetDB().Joins("JOIN roles ON roles.id = role_users.role_id").
+			Where("role_users.user_id = ? AND roles.server_id = ?", userID, serverID).
+			First(&roleUser).Error; err != nil {
+			handleError(c, http.StatusUnauthorized, "User role not found")
+			return
+		}
+
+		var rolePermissions []models.RolePermissions
+		if err := db.GetDB().Where("role_id = ?", roleUser.RoleID).Preload("Permissions").Find(&rolePermissions).Error; err != nil {
+			handleError(c, http.StatusUnauthorized, "Role permissions not found")
+			return
+		}
+
+		// Obtenir le niveau de pouvoir pour accessChannel
+		accessChannelPower := -1
+		for _, rp := range rolePermissions {
+			if rp.Permissions.Label == "accessChannel" {
+				accessChannelPower = rp.Power
+				break
+			}
+		}
+
+		if accessChannelPower == -1 {
+			handleError(c, http.StatusUnauthorized, "Insufficient permissions")
+			return
+		}
+
+		// Récupérer les channels en fonction des permissions
 		var textChannels []models.Channel
-		if err := db.GetDB().Where("server_id = ? AND type = ?", serverID, "text").Find(&textChannels).Error; err != nil {
+		if err := db.GetDB().Joins("JOIN channel_channel_permissions ccp ON channels.id = ccp.channel_id").
+			Joins("JOIN channel_permissions cp ON ccp.channel_permission_id = cp.id").
+			Where("channels.server_id = ? AND channels.type = ? AND cp.label = ? AND ccp.power <= ?", serverID, "text", "accessChannel", accessChannelPower).
+			Find(&textChannels).Error; err != nil {
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des canaux de texte du serveur.")
 			return
 		}
 
 		var voiceChannels []models.Channel
-		if err := db.GetDB().Where("server_id = ? AND type = ?", serverID, "vocal").Find(&voiceChannels).Error; err != nil {
+		if err := db.GetDB().Joins("JOIN channel_channel_permissions ccp ON channels.id = ccp.channel_id").
+			Joins("JOIN channel_permissions cp ON ccp.channel_permission_id = cp.id").
+			Where("channels.server_id = ? AND channels.type = ? AND cp.label = ? AND ccp.power <= ?", serverID, "vocal", "accessChannel", accessChannelPower).
+			Find(&voiceChannels).Error; err != nil {
 			handleError(c, http.StatusInternalServerError, "Erreur lors de la récupération des canaux vocaux du serveur.")
 			return
 		}
@@ -834,6 +1028,15 @@ func GetServerChannels() gin.HandlerFunc {
 	}
 }
 
+// GetServerLogs godoc
+// @Summary Get server logs
+// @Description Get all logs of a specific server
+// @Tags servers
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {array} models.LogsSwagger
+// @Failure 400 {object} models.ErrorServerResponse
+// @Router /servers/{id}/logs [get]
 func GetServerLogs() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
@@ -951,6 +1154,16 @@ func UpdateServerByID() gin.HandlerFunc {
 	}
 }
 
+// DeleteServerByID godoc
+// @Summary Delete server by ID
+// @Description Delete a specific server by ID
+// @Tags servers
+// @Produce json
+// @Param id path string true "Server ID"
+// @Success 200 {object} models.SuccessServerResponse
+// @Failure 400 {object} models.ErrorServerResponse
+// @Failure 404 {object} models.ErrorServerResponse
+// @Router /servers/{id} [delete]
 func DeleteServerByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		serverIDStr := c.Param("id")
@@ -1014,4 +1227,54 @@ func DeleteServerByID() gin.HandlerFunc {
 
 func handleError(c *gin.Context, statusCode int, message string) {
 	c.JSON(statusCode, gin.H{"error": message})
+}
+
+func SetRoleToUser(c *gin.Context) {
+	serverID := c.Param("serverID")
+	roleID := c.Param("roleID")
+
+	serverUUID, err := uuid.Parse(serverID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid server ID"})
+		return
+	}
+
+	roleUUID, err := uuid.Parse(roleID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+		return
+	}
+
+	var requestBody struct {
+		UserID uuid.UUID `json:"user-id"`
+	}
+
+	if err := c.BindJSON(&requestBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	userUUID := requestBody.UserID
+
+	tx := db.GetDB().Begin()
+
+	if err := tx.Where("user_id = ? AND role_id IN (SELECT id FROM roles WHERE server_id = ?)", userUUID, serverUUID).Delete(&models.RoleUser{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error deleting old role"})
+		return
+	}
+
+	newRoleUser := models.RoleUser{
+		UserID: userUUID,
+		RoleID: roleUUID,
+	}
+
+	if err := tx.Create(&newRoleUser).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error assigning new role"})
+		return
+	}
+
+	tx.Commit()
+	c.JSON(http.StatusOK, gin.H{"message": "Role assigned successfully"})
 }

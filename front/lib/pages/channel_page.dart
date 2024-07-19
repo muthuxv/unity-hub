@@ -22,8 +22,9 @@ class ChannelPage extends StatefulWidget {
   final String channelId;
   final String channelName;
   final String serverId;
+  final bool canSendMessage;
 
-  const ChannelPage({super.key, required this.channelId, required this.channelName, required this.serverId});
+  const ChannelPage({super.key, required this.channelId, required this.channelName, required this.serverId, required this.canSendMessage});
 
   @override
   State<ChannelPage> createState() => _ChannelPageState();
@@ -107,11 +108,22 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
   }
 
   Future<List<dynamic>> getMessageReactions(String messageId) async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
 
     try {
-      final response = await Dio().get('$apiPath/messages/$messageId/reactions');
+      final response = await Dio().get(
+        '$apiPath/messages/$messageId/reactions',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $jwtToken',
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
+      );
       return response.data['data'];
     } catch (error) {
       print('Erreur lors de la récupération des réactions : $error');
@@ -134,9 +146,12 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
     );
   }
 
-  void _connectToWebSocket() {
+  Future<void> _connectToWebSocket() async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+
     _channel = WebSocketChannel.connect(
-      Uri.parse('${dotenv.env['WS_PATH']}/channels/${widget.channelId}/send'),
+      Uri.parse('${dotenv.env['WS_PATH']}/channels/${widget.channelId}/send?token=$jwtToken'),
     );
 
     _channel.stream.listen((message) async {
@@ -239,10 +254,21 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
   }
 
   Future<void> _removeReaction(String reactionId) async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+
     await dotenv.load();
     final apiPath = dotenv.env['API_PATH']!;
     try {
-      await Dio().delete('$apiPath/reactMessages/$reactionId');
+        await Dio().delete(
+          '$apiPath/reactMessages/$reactionId',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $jwtToken',
+              'Content-Type': 'multipart/form-data',
+            },
+          ),
+        );
 
       setState(() {
 
@@ -794,13 +820,13 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                                           ),
                                         if (message['Type'] == 'Photo')
                                           Image.network(
-                                            'http://10.0.2.2:8080/uploads/${message['Content']}?random=${DateTime.now().millisecondsSinceEpoch}',
+                                            'https://unityhub.fr/uploads/${message['Content']}?random=${DateTime.now().millisecondsSinceEpoch}',
                                             width: 200,
                                             height: 200,
                                           ),
                                         if (message['Type'] == 'Video')
                                           VideoPlayerWidget(
-                                            url: 'http://10.0.2.2:8080/uploads/${message['Content']}?random=${DateTime.now().millisecondsSinceEpoch}',
+                                            url: 'https://unityhub.fr/uploads/${message['Content']}?random=${DateTime.now().millisecondsSinceEpoch}',
                                           ),
                                         FutureBuilder<List<dynamic>>(
                                           future: getMessageReactions(message['ID']),
@@ -905,20 +931,21 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                       hintText: 'Message...',
                       border: OutlineInputBorder(),
                     ),
-                    onSubmitted: (value) {
+                    onSubmitted: widget.canSendMessage ? (value) {
                       _sendMessage(value);
-                    },
+                    } : null,
+                    enabled: widget.canSendMessage,
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.send),
-                  onPressed: () {
+                  onPressed: widget.canSendMessage ? () {
                     _sendMessage(_messageController.text);
-                  },
+                  } : null,
                 ),
                 IconButton(
                   icon: const Icon(Icons.gif),
-                  onPressed: () async {
+                  onPressed: widget.canSendMessage ? () async {
                     final GiphyGif? gif = await GiphyPicker.pickGif(
                       context: context,
                       apiKey: dotenv.env['GIPHY_KEY']!,
@@ -933,11 +960,11 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                         'SentAt': DateTime.now().toIso8601String(),
                       }));
                     }
-                  },
+                  } : null,
                 ),
                 IconButton(
                   icon: const Icon(Icons.photo),
-                  onPressed: () async {
+                  onPressed: widget.canSendMessage ? () async {
                     final picker = ImagePicker();
                     final pickedFile = await picker.pickMedia();
 
@@ -945,11 +972,11 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
                       final file = File(pickedFile.path);
                       await _sendImage(file);
                     }
-                  },
+                  } : null,
                 ),
               ],
             ),
-          ),
+          )
         ],
       ),
     );
@@ -961,8 +988,7 @@ class _ChannelPageState extends State<ChannelPage> with WidgetsBindingObserver {
       message['User']['Profile'],
       height: 40,
       width: 40,
-    )
-        : CircleAvatar(
+    ) : CircleAvatar(
       backgroundImage: NetworkImage(message['User']['Profile']),
     );
   }

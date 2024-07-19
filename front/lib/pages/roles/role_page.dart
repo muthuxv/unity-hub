@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:unity_hub/pages/permissions_list.dart';
 import 'role_form_page.dart';
 import 'role_update_form_page.dart';
 
@@ -12,10 +13,10 @@ class RolePage extends StatefulWidget {
   final String servercreatorUserId;
 
   const RolePage({
-    Key? key,
+    super.key,
     required this.serverId,
     required this.servercreatorUserId,
-  }) : super(key: key);
+  });
 
   @override
   _RolePageState createState() => _RolePageState();
@@ -148,11 +149,27 @@ class _RolePageState extends State<RolePage> {
                 return ListTile(
                   title: Text(roleLabel),
                   tileColor: Colors.purple.shade50,
-                  trailing: isEnabled && !isBaseRole && !isAdminRole
-                      ? Row(
+                  trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(
+                      !isAdminRole && isEnabled ? IconButton(
+                        icon: const Icon(Icons.admin_panel_settings),
+                        onPressed: (
+                            () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PermissionsPage(
+                                roleId: roleId,
+                              ),
+                            ),
+                          );
+                          if (result != null && result) {
+                            _getRoles();
+                          }
+                        }),
+                      ) : const SizedBox(),
+                      isEnabled && !isBaseRole && !isAdminRole ? IconButton(
                         icon: const Icon(Icons.edit),
                         onPressed: () async {
                           final result = await Navigator.push(
@@ -168,8 +185,8 @@ class _RolePageState extends State<RolePage> {
                             _getRoles();
                           }
                         },
-                      ),
-                      IconButton(
+                      ) : const SizedBox(),
+                      isEnabled && !isBaseRole && !isAdminRole ? IconButton(
                         icon: const Icon(Icons.delete),
                         onPressed: () async {
                           final response = await Dio().delete(
@@ -193,10 +210,9 @@ class _RolePageState extends State<RolePage> {
                             );
                           }
                         },
-                      ),
+                      ) : const SizedBox(),
                     ],
-                  )
-                      : null,
+                  ),
                 );
               },
               separatorBuilder: (context, index) {

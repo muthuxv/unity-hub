@@ -118,9 +118,12 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
     );
   }
 
-  void _connectToWebSocket() {
+  Future<void> _connectToWebSocket() async {
+    const storage = FlutterSecureStorage();
+    final jwtToken = await storage.read(key: 'token');
+
     _channel = WebSocketChannel.connect(
-      Uri.parse('${dotenv.env['WS_PATH']}/channels/${widget.group.channelId}/send'),
+      Uri.parse('${dotenv.env['WS_PATH']}/channels/${widget.group.channelId}/send?token=$jwtToken'),
     );
 
     _channel.stream.listen((message) async {
@@ -508,10 +511,8 @@ class _GroupChatPageState extends State<GroupChatPage> with WidgetsBindingObserv
       message['User']['Profile'],
       height: 40,
       width: 40,
-    )
-        : Text(
-      message['User']['Profile'] ?? 'No Profile',
-      style: const TextStyle(fontSize: 20),
+    ) : CircleAvatar(
+      backgroundImage: NetworkImage(message['User']['Profile'] ?? ''),
     );
   }
 }

@@ -25,9 +25,11 @@ class _ServerPageState extends State<ServerPage> {
   bool _isLoading = false;
   List _servers = [];
   Map _selectedServer = {};
+  late String _userRoleId = '';
+  late String _userRoleLabel = '';
+  late List<dynamic> _userPermissions = [];
 
   void _getUserServers() async {
-    // Ensure the widget is still mounted before calling setState
     if (!mounted) return;
 
     setState(() {
@@ -55,7 +57,7 @@ class _ServerPageState extends State<ServerPage> {
       ),
     );
 
-    if (!mounted) return; // Ensure the widget is still mounted before calling setState again
+    if (!mounted) return;
 
     if (response.statusCode == 200) {
       setState(() {
@@ -63,6 +65,9 @@ class _ServerPageState extends State<ServerPage> {
         _selectedServer = _servers.isNotEmpty ? _servers[0] : {};
         _isLoading = false;
       });
+
+      _getUserRole();
+
     } else {
       setState(() {
         _isLoading = false;
@@ -108,6 +113,8 @@ class _ServerPageState extends State<ServerPage> {
         setState(() {
           _servers.removeWhere((server) => server['ID'] == _selectedServer['ID']);
           _selectedServer = _servers.isNotEmpty ? _servers[0] : {};
+
+          _getUserRole();
         });
         Navigator.pop(context);
       } else {
@@ -286,7 +293,7 @@ class _ServerPageState extends State<ServerPage> {
                           itemCount: _servers.length,
                           itemBuilder: (context, index) {
                             String filename = _servers[index]['Media']['FileName'];
-                            String imageUrl = 'http://10.0.2.2:8080/uploads/$filename?rand=${DateTime.now().millisecondsSinceEpoch}';
+                            String imageUrl = 'https://unityhub.fr/uploads/$filename?rand=${DateTime.now().millisecondsSinceEpoch}';
 
                             return Padding(
                               padding: const EdgeInsets.all(2.5),
@@ -295,6 +302,8 @@ class _ServerPageState extends State<ServerPage> {
                                   setState(() {
                                     _selectedServer =
                                     _servers[index];
+
+                                    _getUserRole();
                                   });
                                 },
                                 child: Container(
@@ -345,30 +354,27 @@ class _ServerPageState extends State<ServerPage> {
                             Row(
                               children: [
                                 Flexible(
-                                  child: Container(
-                                    child: Text(
-                                      _selectedServer['Name'] != null
-                                          ? (_selectedServer['Name'].length > 50
-                                          ? _selectedServer['Name'] + '...'
-                                          : _selectedServer['Name'])
-                                          : 'No server selected',
-                                      style: TextStyle(
-                                        fontSize: 20.0,
-                                        fontWeight: FontWeight.bold,
-                                        foreground: Paint()
-                                          ..shader = const LinearGradient(
-                                            colors: <Color>[
-                                              Colors.blue,
-                                              Colors.purple,
-                                              Colors.pink,
-                                            ],
-                                          ).createShader(
-                                              const Rect.fromLTWH(
-                                                  0.0, 0.0, 200.0, 70.0)),
-                                      ),
-                                      softWrap: true,
+                                  child: Text(
+                                    _selectedServer['Name'] != null
+                                        ? (_selectedServer['Name'].length > 50
+                                        ? _selectedServer['Name'] + '...'
+                                        : _selectedServer['Name'])
+                                        : 'No server selected',
+                                    style: TextStyle(
+                                      fontSize: 20.0,
+                                      fontWeight: FontWeight.bold,
+                                      foreground: Paint()
+                                        ..shader = const LinearGradient(
+                                          colors: <Color>[
+                                            Colors.blue,
+                                            Colors.purple,
+                                            Colors.pink,
+                                          ],
+                                        ).createShader(
+                                            const Rect.fromLTWH(
+                                                0.0, 0.0, 200.0, 70.0)),
                                     ),
-
+                                    softWrap: true,
                                   ),
                                 ),
                                 IconButton(
@@ -385,7 +391,7 @@ class _ServerPageState extends State<ServerPage> {
                                                 ListTile(
                                                   leading: CircleAvatar(
                                                     backgroundImage: NetworkImage(
-                                                      'http://10.0.2.2:8080/uploads/${_selectedServer['Media']['FileName']}?rand=${DateTime.now().millisecondsSinceEpoch}',
+                                                      'https://unityhub.fr/uploads/${_selectedServer['Media']['FileName']}?rand=${DateTime.now().millisecondsSinceEpoch}',
                                                     ),
                                                   ),
                                                   title: Text(
@@ -427,12 +433,13 @@ class _ServerPageState extends State<ServerPage> {
                                                           serverAvatar: _selectedServer['Media']['FileName'],
                                                           serverVisibility: _selectedServer['Visibility'],
                                                           servercreatorUserId: _selectedServer['UserID'],
+                                                          getPermissionPower: _getPermission,
                                                         ),
                                                       ),
                                                     );
 
                                                     result.then((value) {
-                                                      if (value != null) {
+                                                      if (value != null && mounted) { // Check if the widget is still mounted
                                                         setState(() {
                                                           _selectedServer['Media']['FileName'] = value['avatar'];
                                                         });
@@ -455,6 +462,8 @@ class _ServerPageState extends State<ServerPage> {
                                                             ServerMembersList(
                                                               serverId: _selectedServer['ID'],
                                                               serverCreatorId: _selectedServer['UserID'],
+                                                              getPermissionPower: _getPermission,
+                                                              userRole: _userRoleLabel,
                                                             ),
                                                       ),
                                                     );
@@ -504,6 +513,8 @@ class _ServerPageState extends State<ServerPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
+                                _getPermission('createChannel') > 0
+                                    ?
                                 GestureDetector(
                                   onTap: () {
                                     Navigator.push(
@@ -541,7 +552,7 @@ class _ServerPageState extends State<ServerPage> {
                                       ],
                                     ),
                                   ),
-                                ),
+                                ) : const SizedBox(),
                                 GestureDetector(
                                   onTap: () {
                                     Navigator.push(
@@ -592,6 +603,7 @@ class _ServerPageState extends State<ServerPage> {
                             ChannelsPanel(
                               key: ChannelsPanel.globalKey,
                               serverId: _selectedServer['ID'],
+                              getPermissionPower: _getPermission,
                             ),
                           ],
                         ),
@@ -611,6 +623,88 @@ class _ServerPageState extends State<ServerPage> {
     setState(() {
       _servers.add(newServer);
       _selectedServer = newServer;
+
+      _getUserRole();
     });
+  }
+
+  void _getUserRole() async {
+    if (_selectedServer.isEmpty) {
+      return;
+    }
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+    final Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+    final userId = decodedToken['jti'];
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    final response = await Dio().get(
+      '$apiPath/user/$userId/servers/${_selectedServer['ID']}/roles',
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        _userRoleId = response.data['id'];
+        _userRoleLabel = response.data['label'];
+      });
+      _getUserPermissions(_userRoleId);
+
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${response.data['error']}'),
+        ),
+      );
+    }
+  }
+
+  void _getUserPermissions(String roleId) async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    final response = await Dio().get(
+      '$apiPath/roles/$roleId/permissions',
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        _userPermissions = response.data;
+      });
+
+      print(_userPermissions);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${response.data['error']}'),
+        ),
+      );
+    }
+  }
+
+  int _getPermission(String permission) {
+    for (var perm in _userPermissions) {
+      if (perm['label'] == permission) {
+        return perm['power'];
+      }
+    }
+
+    return 0;
   }
 }

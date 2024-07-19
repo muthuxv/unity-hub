@@ -13,15 +13,14 @@ import (
 func AcceptFriend() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var inputFriend struct {
-			ID      uuid.UUID `json:"id"`      // ID of the friend request
-			UserID2 uuid.UUID `json:"userId2"` // ID of the user who is supposed to accept the friend request
+			ID      uuid.UUID `json:"id"`
+			UserID2 uuid.UUID `json:"userId2"`
 		}
 		if err := c.ShouldBindJSON(&inputFriend); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalide JSON data"})
 			return
 		}
 
-		// Verification of existence
 		var friend models.Friend
 		result := db.GetDB().Where("id = ?", inputFriend.ID).Preload("User1").Preload("User2").First(&friend)
 		if result.Error != nil {
@@ -29,26 +28,27 @@ func AcceptFriend() gin.HandlerFunc {
 			return
 		}
 
-		// Verify if the correct user is accepting the friend request
 		if friend.UserID2 != inputFriend.UserID2 {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "Demande d'ami non autorisée"})
 			return
 		}
 
-		// Verification of the status to avoid redundant modifications
+		if friend.Status == "accepted" {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Demande d'ami déjà acceptée, impossible de refuser"})
+			return
+		}
+
 		if friend.Status == "accepted" {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Demande d'ami déjà acceptée"})
 			return
 		}
 
-		// Update the status
 		result = db.GetDB().Model(&friend).UpdateColumn("status", "accepted")
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update friend request"})
 			return
 		}
 
-		// Prepare the friend data for the response
 		var friendData map[string]interface{}
 		if friend.UserID1 == inputFriend.UserID2 {
 			friendData = map[string]interface{}{
@@ -77,15 +77,14 @@ func AcceptFriend() gin.HandlerFunc {
 func RefuseFriend() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var inputFriend struct {
-			ID      uuid.UUID `json:"id"`      // ID of the friend request
-			UserID2 uuid.UUID `json:"userId2"` // ID of the user who is supposed to refuse the friend request
+			ID      uuid.UUID `json:"id"`
+			UserID2 uuid.UUID `json:"userId2"`
 		}
 		if err := c.ShouldBindJSON(&inputFriend); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalide JSON data"})
 			return
 		}
 
-		// Verification of the existence of the friend request
 		var friend models.Friend
 		result := db.GetDB().Preload("User1").Preload("User2").First(&friend, inputFriend.ID)
 		if result.Error != nil {
@@ -93,19 +92,16 @@ func RefuseFriend() gin.HandlerFunc {
 			return
 		}
 
-		// Verify if the correct user is refusing the friend request
 		if friend.UserID2 != inputFriend.UserID2 {
 			c.JSON(http.StatusUnauthorized, gin.H{"message": "Demande d'ami non autorisée"})
 			return
 		}
 
-		// Verification of the status to avoid redundant modifications
 		if friend.Status == "refused" {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Demande d'ami déjà refusée"})
 			return
 		}
 
-		// Update the status to "refused"
 		result = db.GetDB().Model(&friend).UpdateColumn("status", "refused")
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update friend request"})
@@ -121,17 +117,14 @@ func SearchUser() gin.HandlerFunc {
 		pseudo := c.Param("pseudo")
 		var users []models.User
 
-		// Normaliser l'entrée pour ignorer la casse
 		pseudo = strings.ToLower(pseudo)
 
-		// Utiliser LIKE pour chercher des pseudos qui commencent par la chaîne spécifiée, insensible à la casse
 		result := db.GetDB().Where("LOWER(pseudo) LIKE ?", pseudo+"%").Find(&users)
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to search users"})
 			return
 		}
 
-		// Vérifier si aucun utilisateur n'a été trouvé
 		if len(users) == 0 {
 			c.JSON(http.StatusOK, gin.H{"message": "Pas d'utilisateurs trouvés avec ce pseudo"})
 			return
@@ -150,6 +143,13 @@ func GetFriendsByUser() gin.HandlerFunc {
 			return
 		}
 
+		// Vérifier si l'utilisateur existe en base de données
+		var user models.User
+		if err := db.GetDB().Where("id = ?", userID).First(&user).Error; err != nil {
+			handleError(c, http.StatusNotFound, "Utilisateur non trouvé")
+			return
+		}
+
 		var friends []models.Friend
 		result := db.GetDB().Preload("User1").Preload("User2").
 			Where("(user_id1 = ? OR user_id2 = ?) AND status = ?", userID, userID, "accepted").Find(&friends)
@@ -163,7 +163,7 @@ func GetFriendsByUser() gin.HandlerFunc {
 			var friendPseudo, friendEmail, friendProfile string
 			var friendID uuid.UUID
 
-			if friend.UserID1 == uuid.MustParse(userIDStr) {
+			if friend.UserID1 == userID {
 				friendPseudo = friend.User2.Pseudo
 				friendEmail = friend.User2.Email
 				friendID = friend.UserID2
@@ -196,6 +196,12 @@ func GetPendingFriendsByUser() gin.HandlerFunc {
 		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
 			handleError(c, http.StatusBadRequest, "ID utilisateur invalide")
+			return
+		}
+
+		var user models.User
+		if err := db.GetDB().Where("id = ?", userID).First(&user).Error; err != nil {
+			handleError(c, http.StatusNotFound, "Utilisateur non trouvé")
 			return
 		}
 
@@ -235,6 +241,12 @@ func GetPendingFriendsFromUser() gin.HandlerFunc {
 			return
 		}
 
+		var user models.User
+		if err := db.GetDB().Where("id = ?", userID).First(&user).Error; err != nil {
+			handleError(c, http.StatusNotFound, "Utilisateur non trouvé")
+			return
+		}
+
 		var friends []models.Friend
 		result := db.GetDB().Preload("User1").Preload("User2").
 			Where("user_id1 = ? AND status = ?", userID, "pending").Find(&friends)
@@ -245,7 +257,6 @@ func GetPendingFriendsFromUser() gin.HandlerFunc {
 
 		friendsResponse := make([]map[string]interface{}, len(friends))
 		for i, friend := range friends {
-
 			friendData := map[string]interface{}{
 				"ID":         friend.ID,
 				"FriendID":   friend.User2.ID,
@@ -273,7 +284,16 @@ func CreateFriendRequest() gin.HandlerFunc {
 			return
 		}
 
-		// Check for the existence of the user with the given pseudo
+		if input.UserID == uuid.Nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Le champ UserID ne peut pas être vide"})
+			return
+		}
+
+		if input.UserPseudo == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Le champ UserPseudo ne peut pas être vide"})
+			return
+		}
+
 		var user models.User
 		result := db.GetDB().Where("pseudo = ?", input.UserPseudo).First(&user)
 		if result.Error != nil {
@@ -281,13 +301,11 @@ func CreateFriendRequest() gin.HandlerFunc {
 			return
 		}
 
-		// Prevent sending a friend request to oneself
 		if input.UserID == user.ID {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Vous ne pouvez pas vous ajouter en tant qu'ami"})
 			return
 		}
 
-		// Check if there's already a pending or accepted friend request between these two users
 		var existingFriend models.Friend
 		result = db.GetDB().Where("((user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)) AND status = 'pending'",
 			input.UserID, user.ID, user.ID, input.UserID).First(&existingFriend)
@@ -297,7 +315,6 @@ func CreateFriendRequest() gin.HandlerFunc {
 			return
 		}
 
-		// Check if the users are already friends
 		var existingFriendship models.Friend
 		result = db.GetDB().Where("((user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)) AND status = 'accepted'",
 			input.UserID, user.ID, user.ID, input.UserID).First(&existingFriendship)
@@ -307,7 +324,6 @@ func CreateFriendRequest() gin.HandlerFunc {
 			return
 		}
 
-		// Create the friend request
 		friend := models.Friend{
 			UserID1: input.UserID,
 			UserID2: user.ID,
@@ -320,7 +336,6 @@ func CreateFriendRequest() gin.HandlerFunc {
 			return
 		}
 
-		// Preload the user information
 		db.GetDB().Preload("User1").Preload("User2").First(&friend)
 
 		c.JSON(http.StatusOK, gin.H{"message": "Demande d'ami envoyée avec succès", "friend": friend})

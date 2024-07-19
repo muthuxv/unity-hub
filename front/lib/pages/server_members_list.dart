@@ -10,8 +10,10 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class ServerMembersList extends StatefulWidget {
   final String serverId;
   final String serverCreatorId;
+  final Function(String) getPermissionPower;
+  final String userRole;
 
-  const ServerMembersList({Key? key, required this.serverId, required this.serverCreatorId}) : super(key: key);
+  const ServerMembersList({super.key, required this.serverId, required this.serverCreatorId, required this.getPermissionPower, required this.userRole});
 
   @override
   State<ServerMembersList> createState() => _ServerMembersListState();
@@ -106,7 +108,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
       ),
       builder: (BuildContext context) {
         bool isCurrentUser = member['ID'] == currentUserId;
-        bool isServerCreator = currentUserId == widget.serverCreatorId;
+        bool isServerCreator = member['ID'] == widget.serverCreatorId;
         bool isAdmin = member['Role'] == 'admin';
 
         return Container(
@@ -148,20 +150,7 @@ class _ServerMembersListState extends State<ServerMembersList> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      if (isServerCreator)
-                        ListTile(
-                          title: Text(AppLocalizations.of(context)!.youAreServerCreator),
-                        ),
-                      if (isCurrentUser)
-                        ListTile(
-                          title: Text(AppLocalizations.of(context)!.youAreCurrentUser),
-                          onTap: (){
-                            print("--------------");
-                            print(isServerCreator);
-                            print(isCurrentUser);
-                          },
-                        ),
-                      if (!isCurrentUser)
+                      widget.getPermissionPower('banUser') > 0 && !isCurrentUser ?
                         ListTile(
                           leading: const Icon(Icons.delete),
                           title: Text(AppLocalizations.of(context)!.banMember),
@@ -169,8 +158,8 @@ class _ServerMembersListState extends State<ServerMembersList> {
                             Navigator.pop(context);
                             _showBanConfirmationDialog(member);
                           },
-                        ),
-                      if (!isServerCreator && !isCurrentUser)
+                        ) : const SizedBox.shrink(),
+                      widget.getPermissionPower('kickUser') > 0 && !isCurrentUser ?
                         ListTile(
                           leading: const Icon(Icons.remove_circle),
                           title: Text(AppLocalizations.of(context)!.kickMember),
@@ -178,11 +167,16 @@ class _ServerMembersListState extends State<ServerMembersList> {
                             Navigator.pop(context);
                             _kickMember(member);
                           },
-                        ),
-                      if (!isServerCreator && !isCurrentUser)
+                        ) : const SizedBox.shrink(),
+                      widget.userRole == 'admin' && !isServerCreator ?
                         ListTile(
-                          title: Text(AppLocalizations.of(context)!.onlyServerCreator),
-                        ),
+                          leading: const Icon(Icons.edit),
+                          title: const Text("Modifier le rôle"),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _showUpdateMemberRoleDialog(member);
+                          },
+                        ) : const SizedBox.shrink(),
                     ],
                   ),
                 ),
@@ -291,6 +285,179 @@ class _ServerMembersListState extends State<ServerMembersList> {
         );
       },
     );
+  }
+
+  Future<void> _showUpdateMemberRoleDialog(Map member) async {
+    // Get server roles
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    try {
+      final rolesResponse = await Dio().get(
+        '$apiPath/roles/server/${widget.serverId}',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (rolesResponse.statusCode == 200) {
+        final List roles = rolesResponse.data;
+        await _showUserRoleDialog(member, roles, token!, apiPath);
+      } else {
+        _showErrorDialog("Failed to load roles.");
+      }
+    } catch (e) {
+      _showErrorDialog('An error occurred while fetching roles: $e');
+    }
+  }
+
+  Future<void> _showUserRoleDialog(Map member, List roles, String token, String apiPath) async {
+    try {
+      final userRoleResponse = await Dio().get(
+        '$apiPath/user/${member['ID']}/servers/${widget.serverId}/roles',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (userRoleResponse.statusCode == 200) {
+        final userRole = userRoleResponse.data;
+        String selectedRole = userRole['id'];
+
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return StatefulBuilder(
+              builder: (context, setState) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  title: Row(
+                    children: [
+                      Icon(Icons.update, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text("Modification rôle", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(Icons.warning_amber_rounded, size: 48, color: Colors.orange),
+                      SizedBox(height: 16),
+                      Text(
+                        "Voulez-vous vraiment modifier le rôle de ${member['Pseudo']} ?",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                      SizedBox(height: 24),
+                      DropdownButtonFormField<String>(
+                        value: selectedRole,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[200],
+                        ),
+                        items: roles.map<DropdownMenuItem<String>>((role) {
+                          return DropdownMenuItem<String>(
+                            value: role['ID'],
+                            child: Text(role['Label']),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedRole = value!;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _updateMemberRole(member, selectedRole);
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.green,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                      ),
+                      child: Text("Oui"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.red,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                      ),
+                      child: Text("Non"),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      } else {
+        _showErrorDialog("Failed to load user role.");
+      }
+    } catch (e) {
+      _showErrorDialog('An error occurred while fetching user role: $e');
+    }
+  }
+
+
+  void _updateMemberRole(Map member, String roleId) async {
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'token');
+
+    await dotenv.load();
+    final apiPath = dotenv.env['API_PATH']!;
+
+    try {
+      final response = await Dio().post(
+        '$apiPath/server/${widget.serverId}/setRole/$roleId',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+        data: {
+          'user-id': member['ID'],
+        },
+      );
+
+      if (response.statusCode == 200) {
+        _showSuccessDialog("Member role updated successfully");
+        _fetchServerMembers();
+      } else {
+        _showErrorDialog("Failed to update member role");
+      }
+    } catch (e) {
+      _showErrorDialog('An error occurred while updating member role: $e');
+    }
   }
 
   void _banMember(Map member, String reason, int duration) async {
