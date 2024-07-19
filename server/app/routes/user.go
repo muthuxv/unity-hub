@@ -22,4 +22,5 @@ func UserRoutes(r *gin.Engine) {
 	r.GET("/users/pseudo/:pseudo", controllers.TokenAuthMiddleware("user"), services.GetUserByPseudo())
 	r.POST("/users", controllers.TokenAuthMiddleware("admin"), services.CreateUserByAdmin())
 	r.GET("/user/:userID/servers/:serverID/roles", controllers.TokenAuthMiddleware("user"), services.GetUserServerRole())
+	r.GET("/users/info/:id", controllers.TokenAuthMiddleware("user"), services.GetUserInfos())
 }

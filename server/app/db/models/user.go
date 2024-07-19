@@ -96,3 +96,9 @@ type TokenResponse struct {
 type FcmTokenPayload struct {
 	FcmToken string `json:"fcmToken" binding:"required"`
 }
+
+type UserResponse struct {
+	ID      uuid.UUID `json:"ID"`
+	Pseudo  string    `json:"Pseudo"`
+	Profile string    `json:"Profile"`
+}
