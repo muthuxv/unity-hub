@@ -53,8 +53,6 @@ func main() {
 	routes.MediaRoutes(r)
 	routes.UserRoutes(r)
 	routes.ChannelRoutes(r)
-	routes.EventRoutes(r)
-	routes.EventServerRoutes(r)
 	routes.FriendRoutes(r)
 	routes.InvitationRoutes(r)
 	routes.LogsRoutes(r)
@@ -69,8 +67,6 @@ func main() {
 	routes.TagRoutes(r)
 	routes.FeatureRoutes(r)
 	routes.GroupRoutes(r)
-	routes.GroupMemberRoutes(r)
-	routes.BanRoutes(r)
 	/*workers*/
 	routes.WebSocketRoutes(r)
 	routes.AuthV2Routes(r)
