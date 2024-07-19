@@ -36,7 +36,7 @@ class MyBottomNavBar extends StatelessWidget {
             leading: notificationCount > 0
                 ? Stack(
               children: [
-                Icon(Icons.notifications),
+                Icon(Icons.notifications, color: Colors.grey[400]),
                 Positioned(
                   right: 0,
                   child: Container(
@@ -62,7 +62,7 @@ class MyBottomNavBar extends StatelessWidget {
                 )
               ],
             )
-                : Icon(Icons.notifications),
+                : Icon(Icons.notifications, color: Colors.grey[400]),
           ),
           GButton(
             icon: Icons.person,

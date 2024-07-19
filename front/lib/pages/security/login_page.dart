@@ -252,20 +252,6 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-
-                    const SizedBox(height: 16),
-
-                    //forgot password
-                    GestureDetector(
-                      onTap: () => print('Forgot password'),
-                      child: const Text(
-                        'Mot de passe oublié?',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 100),
                   ],
                 ),
