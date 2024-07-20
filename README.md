@@ -26,6 +26,7 @@ Bienvenue dans l'Unity Hub, une application puissante et flexible conçue pour v
 - **Feature flipping** : Activer ou désactiver certaines fonctionnalités de sans redémarrer l’application.
 - **Multilingue** : Français ou Anglais
 - **Swagger**
+- **Back Office**
 
 
 ## Contributions
