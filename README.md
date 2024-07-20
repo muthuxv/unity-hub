@@ -24,6 +24,8 @@ Bienvenue dans l'Unity Hub, une application puissante et flexible conçue pour v
 - **Notifications** : Recevez des notifications instantanées pour rester à jour avec les activités de votre serveur.
 - **Intégrations** : Intégrez des outils et services tiers pour améliorer l'expérience de votre serveur.
 - **Feature flipping** : Activer ou désactiver certaines fonctionnalités de sans redémarrer l’application.
+- **Multilingue** : Français ou Anglais
+- **Swagger**
 
 
 ## Contributions
